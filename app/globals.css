@@ -1871,3 +1871,324 @@ button {
   min-height: 80px;
   color: var(--foreground);
 }
+
+/* ==========================================================================
+   Platform pass: dark theme, focus rings, reduced motion, backup link.
+   Kept as one appended block so the rules above stay untouched. Dark mode
+   follows the OS setting; the layout also mirrors it onto <html class="dark">.
+   ========================================================================== */
+
+.rail-export {
+  width: fit-content;
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rail-export:hover {
+  color: var(--foreground);
+}
+
+/* Focus: one clear ring for buttons, chips, cards, links and fields, in both themes. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 1px;
+}
+/* Room for the ring inside the horizontally scrolling chip row, which would otherwise clip it. */
+.category-list {
+  margin: -4px;
+  padding: 4px;
+}
+.occasion-list {
+  margin-block: -4px;
+  padding-block: 4px;
+}
+.item-card:focus-visible,
+.look-collage:focus-visible,
+.calendar-grid > button:focus-visible,
+.category-list button:focus-visible,
+.occasion-list button:focus-visible {
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-card:hover,
+  .look-collage:hover img {
+    transform: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: #121411;
+    --foreground: #ecede8;
+    --card: #1b1d1a;
+    --card-foreground: #ecede8;
+    --popover: #1f221e;
+    --popover-foreground: #ecede8;
+    --primary: #ecede8;
+    --primary-foreground: #161815;
+    --secondary: #262924;
+    --secondary-foreground: #ecede8;
+    --muted: #262924;
+    --muted-foreground: #a6aaa0;
+    --accent: #252b55;
+    --accent-foreground: #ccd3ff;
+    --destructive: #f0645a;
+    --border: #2e312b;
+    --input: #3b3f37;
+    --ring: #8593ff;
+    --blue: #5568f5;
+    --blue-soft: #1d2242;
+    --ink-soft: #a6aaa0;
+    /* Light blue for text on dark surfaces, where --blue is too dim. */
+    --blue-text: #9eaaff;
+    /* Garment tiles: a lifted surface with a soft pool of light so dark pieces stay legible. */
+    --garment-tile: radial-gradient(circle at 50% 46%, #3b3f37 0%, #2a2d27 55%, #232620 100%);
+    --garment-shadow: drop-shadow(0 0 1px rgba(255, 255, 255, 0.28)) drop-shadow(0 12px 14px rgba(0, 0, 0, 0.45));
+  }
+  ::selection {
+    background: #3a4699;
+    color: #fff;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3b3f37;
+  }
+
+  /* Chrome */
+  .topbar {
+    background: rgba(18, 20, 17, 0.92);
+  }
+  .rail-tabs button[data-state="active"],
+  .view-switch button.active,
+  .look-notes button.primary {
+    color: #161815 !important;
+    box-shadow: none !important;
+  }
+  /* A full light day cell glares on a dark calendar, so the selected day uses the accent instead. */
+  .calendar-grid > button.selected {
+    color: #fff;
+    background: var(--blue);
+  }
+  .brand-mark {
+    box-shadow: none;
+  }
+  /* Shadcn overlays draw `border` in currentColor, which turns into a bright line on dark. */
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="sheet-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"] {
+    border-color: var(--border);
+  }
+
+  /* Text that used --blue on light backgrounds */
+  .item-meta p,
+  .detail-copy p,
+  .look-card > div > span,
+  .day-panel > p,
+  .calendar-grid > button.today:not(.selected) > span,
+  .month-nav button:hover {
+    color: var(--blue-text);
+  }
+  .month-nav button:hover {
+    border-color: var(--blue-text);
+  }
+
+  /* Surfaces: cards, panels, sheet, workspaces */
+  .detail-panel,
+  .piece-sheet,
+  .day-panel {
+    background: #181a16;
+  }
+  .styling-workspace,
+  .calendar-workspace {
+    background: var(--card);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  }
+  .detail-sticky dl,
+  .detail-sticky dl div {
+    border-color: var(--border);
+  }
+  .detail-tags li {
+    background: var(--secondary);
+  }
+  .palette i {
+    box-shadow: 0 0 0 1px #464a41;
+  }
+
+  /* Inputs and controls */
+  .search-wrap input,
+  .sort-control select,
+  .plan-control select,
+  .view-switch,
+  .month-nav button,
+  .detail-actions button {
+    background: var(--card);
+  }
+  .edit-fields select {
+    background: color-mix(in srgb, var(--input), transparent 70%);
+  }
+  .look-notes button:not(.primary) {
+    background: var(--secondary);
+  }
+  .category-list button:hover {
+    background: var(--secondary);
+  }
+
+  /* Garment images */
+  .item-image,
+  .detail-image,
+  .extracted-thumb,
+  .look-collage,
+  .day-look {
+    background: var(--garment-tile);
+  }
+  .item-image img,
+  .detail-image img,
+  .extracted-thumb img,
+  .look-collage img,
+  .day-look img,
+  .calendar-grid > button img,
+  .piece-rail img {
+    filter: var(--garment-shadow);
+  }
+  .item-card.selected .item-image {
+    box-shadow:
+      inset 0 0 0 2px var(--ring),
+      0 18px 36px rgba(0, 0, 0, 0.35);
+  }
+  .heart-button,
+  .look-heart {
+    color: #c9ccc4;
+    background: rgba(24, 26, 22, 0.85);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  }
+  .heart-button.active,
+  .look-heart.active {
+    color: #ff6b5c;
+  }
+
+  /* Outfit canvas */
+  .outfit-canvas::before {
+    background: radial-gradient(circle at 50% 36%, rgba(150, 162, 255, 0.2), rgba(150, 162, 255, 0) 45%);
+  }
+  .canvas-header,
+  .canvas-empty h2 {
+    color: #d6dbff;
+  }
+  .canvas-header p,
+  .canvas-empty {
+    color: #9da5d8;
+  }
+  .canvas-header button {
+    border-color: rgba(160, 170, 255, 0.22);
+    color: #d6dbff;
+    background: rgba(20, 24, 48, 0.6);
+  }
+  .outfit-slot {
+    border-color: rgba(160, 170, 255, 0.26);
+    color: #aab2e6;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .outfit-slot:hover,
+  .outfit-slot.active {
+    border-color: #8593ff;
+    background: rgba(255, 255, 255, 0.07);
+  }
+  .outfit-slot.active {
+    box-shadow: inset 0 0 0 1px #8593ff;
+  }
+  .outfit-slot.filled {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .outfit-slot img,
+  .look-piece img {
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.3)) drop-shadow(0 18px 18px rgba(0, 0, 0, 0.45));
+  }
+  .slot-label {
+    color: #bcc3f2;
+  }
+  .remove-slot,
+  .look-piece button {
+    color: #d6dbff;
+    background: rgba(29, 34, 66, 0.9);
+  }
+  .canvas-floor {
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  /* Calendar */
+  .calendar-grid > button {
+    background: #22251f;
+  }
+  .calendar-grid > button:hover {
+    border-color: #4a4e45;
+  }
+  .day-empty {
+    border-color: #3b3f37;
+  }
+  .remove-plan {
+    color: #f2a59c;
+  }
+
+  /* Import dialog */
+  .drop-zone {
+    border-color: #3f4886;
+    color: #aab2e6;
+    background: #181c36;
+  }
+  .drop-zone:hover {
+    background: var(--blue-soft);
+  }
+  .drop-zone strong {
+    color: #e0e4ff;
+  }
+  .processing-photo {
+    background: #1f221d;
+  }
+  .processing-copy ul {
+    color: #80847b;
+  }
+  .processing-copy li span {
+    background: #3b3f37;
+  }
+  .tag-row span,
+  .import-message {
+    color: #ccd3ff;
+  }
+  .import-message {
+    border-color: #333c7a;
+  }
+  .import-message.error {
+    border-color: #6b2c25;
+    background: #2a1614;
+    color: #f4b4ac;
+  }
+  .extraction-review > label {
+    background: var(--card);
+  }
+  .extraction-review > label.selected {
+    border-color: var(--blue);
+    background: #1c2140;
+  }
+}
+@media (prefers-color-scheme: dark) and (max-width: 760px) {
+  .rail {
+    background: rgba(18, 20, 17, 0.97);
+  }
+  .piece-rail {
+    background: var(--card);
+  }
+  .styling-workspace,
+  .calendar-workspace {
+    background: transparent;
+    box-shadow: none;
+  }
+}

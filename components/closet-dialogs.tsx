@@ -70,6 +70,7 @@ function PieceForm({
 
   return (
     <form
+      aria-busy={saving}
       onSubmit={async (event) => {
         event.preventDefault();
         setSaving(true);
@@ -165,6 +166,7 @@ function LookForm({
 
   return (
     <form
+      aria-busy={saving}
       onSubmit={async (event) => {
         event.preventDefault();
         setSaving(true);
