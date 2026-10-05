@@ -42,6 +42,18 @@ const colorPalette = [
   ["Cream", 229, 218, 188],
 ] as const;
 
+const extraSwatches: Record<string, string> = {
+  Charcoal: "#36383a",
+  Multicolor: "conic-gradient(#d0463b, #e0b23a, #4b8f5a, #3e6fc4, #d0463b)",
+};
+
+/** CSS background for a color name, falling back to a neutral when the name is unknown. */
+export function colorSwatch(name: string) {
+  const match = colorPalette.find((color) => color[0].toLowerCase() === name.trim().toLowerCase());
+  if (match) return `rgb(${match[1]}, ${match[2]}, ${match[3]})`;
+  return extraSwatches[name.trim()] ?? "#c9ccc4";
+}
+
 let segmenterPromise: Promise<(image: string) => Promise<Segment[]>> | null = null;
 
 async function getSegmenter(onProgress: (message: string) => void) {
@@ -71,7 +83,7 @@ function maskValue(mask: SegmentMask, x: number, y: number) {
 }
 
 function nearestColor(red: number, green: number, blue: number) {
-  let best = colorPalette[0];
+  let best: (typeof colorPalette)[number] = colorPalette[0];
   let bestDistance = Number.POSITIVE_INFINITY;
   for (const color of colorPalette) {
     const distance = (red - color[1]) ** 2 + (green - color[2]) ** 2 + (blue - color[3]) ** 2;

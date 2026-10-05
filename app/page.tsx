@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Grid2X2,
   Heart,
   Layers3,
@@ -32,7 +34,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { processWardrobeImage } from "@/lib/local-wardrobe";
+import { toast } from "sonner";
+import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
 
 type WardrobeItem = {
   id: number | string;
@@ -48,65 +51,6 @@ type WardrobeItem = {
 };
 type SavedLook = { id: string; name: string; itemIds: Array<number | string>; occasion: string; favorite?: boolean };
 
-const initialItems: WardrobeItem[] = [
-  {
-    id: 1,
-    name: "Washed denim jacket",
-    category: "Outerwear",
-    color: "Blue",
-    season: "All season",
-    image: "/wardrobe/denim-jacket.png",
-    favorite: true,
-    description: "Relaxed medium-wash denim jacket with a cropped, structured shape.",
-  },
-  {
-    id: 2,
-    name: "Scarlet knit",
-    category: "Tops",
-    color: "Red",
-    season: "Fall / winter",
-    image: "/wardrobe/red-knit.png",
-    description: "Fine-knit crewneck in saturated scarlet red with a clean ribbed finish.",
-  },
-  {
-    id: 3,
-    name: "Wide-leg trousers",
-    category: "Bottoms",
-    color: "Charcoal",
-    season: "All season",
-    image: "/wardrobe/black-trousers.png",
-    favorite: true,
-    description: "High-rise tailored trousers with a fluid wide leg and front pleats.",
-  },
-  {
-    id: 4,
-    name: "Indigo layer",
-    category: "Outerwear",
-    color: "Blue",
-    season: "Spring / fall",
-    image: "/wardrobe/denim-jacket.png",
-    description: "Everyday denim layer with silver hardware and clean seam detailing.",
-  },
-  {
-    id: 5,
-    name: "Weekend crewneck",
-    category: "Tops",
-    color: "Red",
-    season: "Fall / winter",
-    image: "/wardrobe/red-knit.png",
-    favorite: true,
-    description: "Soft red crewneck with an easy fit for layering over shirts or tees.",
-  },
-  {
-    id: 6,
-    name: "Studio trouser",
-    category: "Bottoms",
-    color: "Black",
-    season: "All season",
-    image: "/wardrobe/black-trousers.png",
-    description: "Long tailored trouser with a strong drape and minimal waistband.",
-  },
-];
 const categories = ["All", "Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other", "Favorites"];
 const occasions = ["All", "Casual", "Work", "Dinner", "Event"];
 const slotDefs = [
@@ -114,37 +58,61 @@ const slotDefs = [
   { label: "Top", category: "Tops" },
   { label: "Bottom", category: "Bottoms" },
   { label: "Shoes", category: "Shoes" },
+  { label: "Extras", category: "Accessories" },
 ];
+// Dresses fill the top slot; anything uncategorized rides along as an extra.
+function slotFor(category: string) {
+  if (category === "Dresses") return "Tops";
+  if (category === "Other") return "Accessories";
+  return category;
+}
+
+async function sendJson(url: string, method: string, body?: unknown) {
+  const response = await fetch(url, {
+    method,
+    headers: body === undefined ? undefined : { "content-type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const payload = (await response.json().catch(() => ({}))) as { error?: string };
+  if (!response.ok) throw new Error(payload.error || "Rove could not complete that request.");
+  return payload;
+}
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
 const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function starterLooks(source: WardrobeItem[]): SavedLook[] {
-  return [
-    {
-      id: "everyday-contrast",
-      name: "Everyday contrast",
-      itemIds: source.slice(0, 3).map((item) => item.id),
-      occasion: "Casual",
-      favorite: true,
-    },
-    { id: "studio-day", name: "Studio day", itemIds: source.slice(3, 6).map((item) => item.id), occasion: "Work" },
-  ].filter((look) => look.itemIds.length);
+function isoDate(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+function monthKey(date: Date) {
+  return isoDate(date).slice(0, 7);
+}
+function sameId(a: number | string, b: number | string) {
+  return String(a) === String(b);
 }
 
 export default function Home() {
-  const [items, setItems] = useState(initialItems);
+  const [items, setItems] = useState<WardrobeItem[]>([]);
+  const [closetStatus, setClosetStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [closetError, setClosetError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("closet");
   const [activeCategory, setActiveCategory] = useState("All");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("Recently added");
-  const [selectedId, setSelectedId] = useState<number | string>(1);
-  const [outfit, setOutfit] = useState<Array<number | string>>([1, 2, 3]);
+  const [selectedId, setSelectedId] = useState<number | string | null>(null);
+  const [outfit, setOutfit] = useState<Array<number | string>>([]);
   const [activeSlot, setActiveSlot] = useState("Tops");
   const [outfitMode, setOutfitMode] = useState<"canvas" | "saved">("canvas");
-  const [savedLooks, setSavedLooks] = useState<SavedLook[]>(starterLooks(initialItems));
-  const [selectedDay, setSelectedDay] = useState(5);
+  const [savedLooks, setSavedLooks] = useState<SavedLook[]>([]);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+  const [selectedDate, setSelectedDate] = useState(() => isoDate(new Date()));
   const [occasionFilter, setOccasionFilter] = useState("All");
-  const [plans, setPlans] = useState<Record<number, string>>({ 5: "everyday-contrast", 12: "studio-day" });
-  const [planLookId, setPlanLookId] = useState("everyday-contrast");
+  const [plans, setPlans] = useState<Record<string, string>>({});
+  const [planLookId, setPlanLookId] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processed, setProcessed] = useState(false);
@@ -161,44 +129,62 @@ export default function Home() {
   useEffect(() => {
     const controller = new AbortController();
     void fetch("/api/wardrobe", { signal: controller.signal })
-      .then(async (response) => (response.ok ? (response.json() as Promise<{ items?: WardrobeItem[] }>) : null))
-      .then((payload) => {
-        if (!payload?.items?.length) return;
-        setItems(payload.items);
-        setSelectedId(payload.items[0].id);
-        setOutfit(payload.items.slice(0, 3).map((item) => item.id));
-        const looks = starterLooks(payload.items);
-        setSavedLooks(looks);
-        setPlanLookId(looks[0]?.id ?? "");
-        setPlans(looks[0] ? { 5: looks[0].id, ...(looks[1] ? { 12: looks[1].id } : {}) } : {});
+      .then(async (response) => {
+        const payload = (await response.json().catch(() => ({}))) as { items?: WardrobeItem[]; error?: string };
+        if (!response.ok) throw new Error(payload.error || "Your closet could not be loaded. Try again.");
+        const loaded = payload.items ?? [];
+        setItems(loaded);
+        setSelectedId(loaded[0]?.id ?? null);
+        setClosetStatus("ready");
       })
-      .catch(() => undefined);
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setClosetError(error instanceof Error ? error.message : "Your closet could not be loaded. Try again.");
+        setClosetStatus("error");
+      });
     return () => controller.abort();
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    void Promise.all([
-      fetch("/api/outfits", { signal: controller.signal }).then((response) =>
-        response.ok ? (response.json() as Promise<{ looks?: SavedLook[] }>) : null,
-      ),
-      fetch("/api/plans", { signal: controller.signal }).then((response) =>
-        response.ok ? (response.json() as Promise<{ plans?: Record<number, string> }>) : null,
-      ),
-    ])
-      .then(([lookPayload, planPayload]) => {
-        if (lookPayload?.looks?.length) {
-          setSavedLooks((current) => [
-            ...lookPayload.looks!,
-            ...current.filter((look) => !lookPayload.looks!.some((saved) => saved.id === look.id)),
-          ]);
-          setPlanLookId(lookPayload.looks[0].id);
-        }
-        if (planPayload?.plans && Object.keys(planPayload.plans).length) setPlans(planPayload.plans);
+    void fetch("/api/outfits", { signal: controller.signal })
+      .then((response) => (response.ok ? (response.json() as Promise<{ looks?: SavedLook[] }>) : null))
+      .then((payload) => {
+        const looks = payload?.looks ?? [];
+        setSavedLooks(looks);
+        setPlanLookId((current) => current || looks[0]?.id || "");
       })
       .catch(() => undefined);
     return () => controller.abort();
   }, []);
+
+  const visibleMonth = monthKey(calendarMonth);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch(`/api/plans?month=${visibleMonth}`, { signal: controller.signal })
+      .then((response) => (response.ok ? (response.json() as Promise<{ plans?: Record<string, string> }>) : null))
+      .then((payload) => {
+        if (payload?.plans) setPlans((current) => ({ ...current, ...payload.plans }));
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [visibleMonth]);
+
+  const addToOutfit = useCallback(
+    (id: number | string) => {
+      const item = items.find((piece) => sameId(piece.id, id));
+      if (!item) return;
+      const slotCategory = slotFor(item.category);
+      setOutfit((current) => [
+        ...current.filter((pieceId) => {
+          const piece = items.find((candidate) => sameId(candidate.id, pieceId));
+          return piece && slotFor(piece.category) !== slotCategory;
+        }),
+        item.id,
+      ]);
+    },
+    [items],
+  );
 
   useEffect(() => {
     const modelContext = (
@@ -256,7 +242,7 @@ export default function Home() {
       },
     });
     return () => lifecycle.abort();
-  }, [items]);
+  }, [items, addToOutfit]);
 
   const visibleItems = useMemo(() => {
     let next = items.filter(
@@ -270,70 +256,68 @@ export default function Home() {
     if (sort === "Color") next = [...next].sort((a, b) => a.color.localeCompare(b.color));
     return next;
   }, [activeCategory, items, query, sort]);
-  const selected = items.find((item) => item.id === selectedId) ?? items[0];
-  const railItems = items.filter(
-    (item) => item.category === activeSlot || (activeSlot === "Shoes" && item.category === "Accessories"),
-  );
+  const selected = items.find((item) => selectedId !== null && sameId(item.id, selectedId)) ?? items[0];
+  const railItems = items.filter((item) => slotFor(item.category) === activeSlot);
+  const outfitItems = outfit
+    .map((id) => items.find((item) => sameId(item.id, id)))
+    .filter((item): item is WardrobeItem => Boolean(item));
+  const outfitColors = [...new Set(outfitItems.map((item) => item.color))];
   const filteredLooks = savedLooks.filter((look) => occasionFilter === "All" || look.occasion === occasionFilter);
-  const plannedLook = savedLooks.find((look) => look.id === plans[selectedDay]);
+  const plannedLook = savedLooks.find((look) => look.id === plans[selectedDate]);
+  const lookToPlan = filteredLooks.some((look) => look.id === planLookId) ? planLookId : (filteredLooks[0]?.id ?? "");
+  const calendarYear = calendarMonth.getFullYear();
+  const calendarMonthIndex = calendarMonth.getMonth();
+  const leadingBlanks = new Date(calendarYear, calendarMonthIndex, 1).getDay();
+  const daysInMonth = new Date(calendarYear, calendarMonthIndex + 1, 0).getDate();
+  const monthDates = Array.from({ length: daysInMonth }, (_, index) =>
+    isoDate(new Date(calendarYear, calendarMonthIndex, index + 1)),
+  );
+  const plannedThisMonth = monthDates.filter((date) => savedLooks.some((look) => look.id === plans[date])).length;
+  const todayIso = isoDate(new Date());
+  const selectedDateLabel = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+  });
 
+  function updateItem(id: number | string, changes: Partial<WardrobeItem>) {
+    setItems((current) => current.map((piece) => (sameId(piece.id, id) ? { ...piece, ...changes } : piece)));
+  }
   function toggleFavorite(id: number | string) {
-    const item = items.find((piece) => piece.id === id);
+    const item = items.find((piece) => sameId(piece.id, id));
     if (!item) return;
     const favorite = !item.favorite;
-    setItems((current) => current.map((piece) => (piece.id === id ? { ...piece, favorite } : piece)));
-    if (typeof id === "string")
-      void fetch("/api/wardrobe", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, favorite }),
-      })
-        .then((response) => {
-          if (!response.ok)
-            setItems((current) =>
-              current.map((piece) => (piece.id === id ? { ...piece, favorite: !favorite } : piece)),
-            );
-        })
-        .catch(() =>
-          setItems((current) => current.map((piece) => (piece.id === id ? { ...piece, favorite: !favorite } : piece))),
-        );
-  }
-  function addToOutfit(id: number | string) {
-    const item = items.find((piece) => piece.id === id);
-    if (!item) return;
-    setOutfit((current) =>
-      [
-        ...current.filter((pieceId) => items.find((piece) => piece.id === pieceId)?.category !== item.category),
-        id,
-      ].slice(-4),
-    );
+    updateItem(id, { favorite });
+    sendJson("/api/wardrobe", "PATCH", { id, favorite }).catch((error: unknown) => {
+      updateItem(id, { favorite: !favorite });
+      toast.error(errorMessage(error, "That favorite could not be saved."));
+    });
   }
   function shuffleLook() {
     const choices = slotDefs
       .map((slot) => {
-        const matches = items.filter((item) => item.category === slot.category);
+        const matches = items.filter((item) => slotFor(item.category) === slot.category);
         return matches[Math.floor(Math.random() * matches.length)]?.id;
       })
       .filter((id): id is number | string => id !== undefined);
     setOutfit(choices);
   }
   function saveCurrentLook() {
-    if (!outfit.length) return;
+    if (!outfitItems.length) return;
     const id = crypto.randomUUID();
-    const next = {
+    const next: SavedLook = {
       id,
       name: `Look ${String(savedLooks.length + 1).padStart(2, "0")}`,
-      itemIds: outfit,
+      itemIds: outfitItems.map((item) => item.id),
       occasion: "Casual",
     };
     setSavedLooks((current) => [next, ...current]);
     setPlanLookId(id);
     setOutfitMode("saved");
-    void fetch("/api/outfits", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(next),
-    }).catch(() => undefined);
+    sendJson("/api/outfits", "POST", next).catch((error: unknown) => {
+      setSavedLooks((current) => current.filter((look) => look.id !== id));
+      setPlanLookId((current) => (current === id ? "" : current));
+      toast.error(errorMessage(error, "That look could not be saved."));
+    });
   }
   function loadLook(look: SavedLook) {
     setOutfit(look.itemIds);
@@ -342,31 +326,47 @@ export default function Home() {
   }
   function toggleLookFavorite(look: SavedLook) {
     const favorite = !look.favorite;
-    setSavedLooks((current) =>
-      current.map((candidate) => (candidate.id === look.id ? { ...candidate, favorite } : candidate)),
-    );
-    void fetch("/api/outfits", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: look.id, favorite }),
-    }).catch(() => undefined);
+    const setFavorite = (value: boolean) =>
+      setSavedLooks((current) =>
+        current.map((candidate) => (candidate.id === look.id ? { ...candidate, favorite: value } : candidate)),
+      );
+    setFavorite(favorite);
+    sendJson("/api/outfits", "PATCH", { id: look.id, favorite }).catch((error: unknown) => {
+      setFavorite(!favorite);
+      toast.error(errorMessage(error, "That favorite could not be saved."));
+    });
   }
-  function planSelectedLook() {
-    if (!planLookId) return;
-    setPlans((current) => ({ ...current, [selectedDay]: planLookId }));
-    void fetch("/api/plans", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ day: selectedDay, outfitId: planLookId }),
-    }).catch(() => undefined);
-  }
-  function removePlan() {
+  function setPlan(date: string, outfitId: string | undefined) {
     setPlans((current) => {
       const next = { ...current };
-      delete next[selectedDay];
+      if (outfitId) next[date] = outfitId;
+      else delete next[date];
       return next;
     });
-    void fetch(`/api/plans?day=${selectedDay}`, { method: "DELETE" }).catch(() => undefined);
+  }
+  function planSelectedLook() {
+    if (!lookToPlan) return;
+    const date = selectedDate;
+    const previous = plans[date];
+    setPlan(date, lookToPlan);
+    sendJson("/api/plans", "POST", { date, outfitId: lookToPlan }).catch((error: unknown) => {
+      setPlan(date, previous);
+      toast.error(errorMessage(error, "That day could not be planned."));
+    });
+  }
+  function removePlan() {
+    const date = selectedDate;
+    const previous = plans[date];
+    setPlan(date, undefined);
+    sendJson(`/api/plans?date=${date}`, "DELETE").catch((error: unknown) => {
+      setPlan(date, previous);
+      toast.error(errorMessage(error, "That plan could not be removed."));
+    });
+  }
+  function shiftMonth(offset: number) {
+    const next = new Date(calendarYear, calendarMonthIndex + offset, 1);
+    setCalendarMonth(next);
+    setSelectedDate(monthKey(next) === todayIso.slice(0, 7) ? todayIso : isoDate(next));
   }
 
   async function handleFile(file?: File) {
@@ -574,7 +574,7 @@ export default function Home() {
                 {visibleItems.map((item) => (
                   <article
                     key={item.id}
-                    className={`item-card ${selectedId === item.id ? "selected" : ""}`}
+                    className={`item-card ${selected && sameId(selected.id, item.id) ? "selected" : ""}`}
                     draggable
                     onDragStart={(event) => event.dataTransfer.setData("text/plain", String(item.id))}
                     onClick={() => setSelectedId(item.id)}
@@ -600,44 +600,70 @@ export default function Home() {
                   </article>
                 ))}
               </div>
-            ) : (
+            ) : closetStatus === "loading" ? (
+              <div className="empty-state" role="status">
+                <Shirt />
+                <h2>Opening your closet…</h2>
+              </div>
+            ) : closetStatus === "error" ? (
+              <div className="empty-state" role="alert">
+                <X />
+                <h2>Your closet could not be loaded</h2>
+                <p>{closetError}</p>
+              </div>
+            ) : items.length ? (
               <div className="empty-state">
                 <Grid2X2 />
                 <h2>No pieces found</h2>
                 <p>Try another search or category.</p>
               </div>
+            ) : (
+              <div className="empty-state">
+                <ScanSearch />
+                <h2>Your closet is empty</h2>
+                <p>Add a photo of a piece or a full outfit and Rove will cut out each garment.</p>
+                <Button className="empty-action" onClick={() => setDialogOpen(true)}>
+                  <Plus /> Add your first photo
+                </Button>
+              </div>
             )}
           </section>
           <aside className="detail-panel" aria-label="Selected item details">
-            <div className="detail-sticky">
-              <div className="detail-image">
-                <img src={selected.image} alt={selected.name} />
-              </div>
-              <div className="detail-copy">
-                <p>{selected.category}</p>
-                <h2>{selected.name}</h2>
-                <span>{selected.description}</span>
-              </div>
-              <dl>
-                <div>
-                  <dt>Color</dt>
-                  <dd>{selected.color}</dd>
+            {selected ? (
+              <div className="detail-sticky">
+                <div className="detail-image">
+                  <img src={selected.image} alt={selected.name} />
                 </div>
-                <div>
-                  <dt>Season</dt>
-                  <dd>{selected.season}</dd>
+                <div className="detail-copy">
+                  <p>{selected.category}</p>
+                  <h2>{selected.name}</h2>
+                  <span>{selected.description}</span>
                 </div>
-              </dl>
-              <Button
-                className="outfit-button"
-                onClick={() => {
-                  addToOutfit(selected.id);
-                  setActiveTab("outfits");
-                }}
-              >
-                <Plus /> Style this piece
-              </Button>
-            </div>
+                <dl>
+                  <div>
+                    <dt>Color</dt>
+                    <dd>{selected.color}</dd>
+                  </div>
+                  <div>
+                    <dt>Season</dt>
+                    <dd>{selected.season}</dd>
+                  </div>
+                </dl>
+                <Button
+                  className="outfit-button"
+                  onClick={() => {
+                    addToOutfit(selected.id);
+                    setActiveTab("outfits");
+                  }}
+                >
+                  <Plus /> Style this piece
+                </Button>
+              </div>
+            ) : (
+              <div className="detail-sticky detail-empty">
+                <p>Pick a piece to see its details here.</p>
+              </div>
+            )}
           </aside>
         </TabsContent>
         <TabsContent value="outfits" className="outfit-view">
@@ -702,35 +728,37 @@ export default function Home() {
                 </div>
                 <div className="slot-stack">
                   {slotDefs.map((slot) => {
-                    const item = items.find((piece) => outfit.includes(piece.id) && piece.category === slot.category);
+                    const item = outfitItems.find((piece) => slotFor(piece.category) === slot.category);
                     return (
-                      <button
+                      <div
                         key={slot.label}
                         className={`outfit-slot ${activeSlot === slot.category ? "active" : ""} ${item ? "filled" : ""}`}
-                        onClick={() => setActiveSlot(slot.category)}
                       >
-                        <span className="slot-label">{slot.label}</span>
-                        {item ? (
-                          <>
-                            <img src={item.image} alt={item.name} />
-                            <span
-                              className="remove-slot"
-                              role="button"
-                              aria-label={`Remove ${item.name}`}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setOutfit((current) => current.filter((id) => id !== item.id));
-                              }}
-                            >
-                              <X />
+                        <button
+                          className="slot-select"
+                          aria-label={item ? `${slot.label}: ${item.name}` : `Choose ${slot.label.toLowerCase()}`}
+                          aria-pressed={activeSlot === slot.category}
+                          onClick={() => setActiveSlot(slot.category)}
+                        >
+                          <span className="slot-label">{slot.label}</span>
+                          {item ? (
+                            <img src={item.image} alt="" />
+                          ) : (
+                            <span className="empty-slot">
+                              <Plus /> Add {slot.label.toLowerCase()}
                             </span>
-                          </>
-                        ) : (
-                          <span className="empty-slot">
-                            <Plus /> Add {slot.label.toLowerCase()}
-                          </span>
+                          )}
+                        </button>
+                        {item && (
+                          <button
+                            className="remove-slot"
+                            aria-label={`Remove ${item.name}`}
+                            onClick={() => setOutfit((current) => current.filter((id) => !sameId(id, item.id)))}
+                          >
+                            <X />
+                          </button>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -738,24 +766,33 @@ export default function Home() {
               </section>
               <aside className="look-notes">
                 <p>Current look</p>
-                <h2>{outfit.length ? "Ready to refine" : "Start with one piece"}</h2>
+                <h2>{outfitItems.length ? "Ready to refine" : "Start with one piece"}</h2>
                 <span>
-                  {outfit.length
-                    ? `${outfit.length} pieces selected. Tap a slot to swap pieces without rebuilding the whole look.`
+                  {outfitItems.length
+                    ? `${outfitItems.length} ${outfitItems.length === 1 ? "piece" : "pieces"} selected. Tap a slot to swap pieces without rebuilding the whole look.`
                     : "Choose a slot, then pick something from your closet."}
                 </span>
-                <div className="palette">
-                  <i />
-                  <i />
-                  <i />
-                </div>
-                <button disabled={!outfit.length} onClick={saveCurrentLook}>
+                {outfitColors.length > 0 && (
+                  <div className="palette" aria-label={`Colors: ${outfitColors.join(", ")}`}>
+                    {outfitColors.map((color) => (
+                      <i key={color} title={color} style={{ background: colorSwatch(color) }} />
+                    ))}
+                  </div>
+                )}
+                <button disabled={!outfitItems.length} onClick={saveCurrentLook}>
                   <Heart /> Save this look
                 </button>
               </aside>
             </div>
           ) : (
             <section className="saved-look-grid">
+              {!savedLooks.length && (
+                <div className="empty-state saved-empty">
+                  <Layers3 />
+                  <h2>No saved looks yet</h2>
+                  <p>Build an outfit on the canvas and save it to see it here.</p>
+                </div>
+              )}
               {savedLooks.map((look) => (
                 <article className="look-card" key={look.id}>
                   <button
@@ -767,7 +804,7 @@ export default function Home() {
                   </button>
                   <button className="look-collage" onClick={() => loadLook(look)}>
                     {look.itemIds.slice(0, 4).map((id) => {
-                      const item = items.find((piece) => piece.id === id);
+                      const item = items.find((piece) => sameId(piece.id, id));
                       return item ? <img key={id} src={item.image} alt={item.name} /> : null;
                     })}
                   </button>
@@ -802,8 +839,18 @@ export default function Home() {
           <div className="calendar-workspace">
             <section className="month-panel">
               <div className="month-heading">
-                <h2>October 2026</h2>
-                <span>{Object.keys(plans).length} looks planned</span>
+                <div className="month-nav">
+                  <button aria-label="Previous month" onClick={() => shiftMonth(-1)}>
+                    <ChevronLeft />
+                  </button>
+                  <h2>{calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h2>
+                  <button aria-label="Next month" onClick={() => shiftMonth(1)}>
+                    <ChevronRight />
+                  </button>
+                </div>
+                <span>
+                  {plannedThisMonth} {plannedThisMonth === 1 ? "look" : "looks"} planned
+                </span>
               </div>
               <div className="calendar-grid">
                 {weekdayLabels.map((day) => (
@@ -811,19 +858,21 @@ export default function Home() {
                     {day}
                   </span>
                 ))}
-                {Array.from({ length: 4 }, (_, index) => (
+                {Array.from({ length: leadingBlanks }, (_, index) => (
                   <span key={`blank-${index}`} />
                 ))}
-                {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => {
-                  const look = savedLooks.find((candidate) => candidate.id === plans[day]);
-                  const thumb = look && items.find((item) => look.itemIds.includes(item.id));
+                {monthDates.map((date) => {
+                  const look = savedLooks.find((candidate) => candidate.id === plans[date]);
+                  const thumb = look && items.find((item) => look.itemIds.some((id) => sameId(id, item.id)));
                   return (
                     <button
-                      key={day}
-                      className={`${selectedDay === day ? "selected" : ""} ${look ? "planned" : ""}`}
-                      onClick={() => setSelectedDay(day)}
+                      key={date}
+                      className={`${selectedDate === date ? "selected" : ""} ${look ? "planned" : ""} ${date === todayIso ? "today" : ""}`}
+                      aria-label={new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "full" })}
+                      aria-pressed={selectedDate === date}
+                      onClick={() => setSelectedDate(date)}
                     >
-                      <span>{day}</span>
+                      <span>{Number(date.slice(-2))}</span>
                       {thumb && <img src={thumb.image} alt="" />}
                     </button>
                   );
@@ -831,13 +880,13 @@ export default function Home() {
               </div>
             </section>
             <aside className="day-panel">
-              <p>October {selectedDay}</p>
+              <p>{selectedDateLabel}</p>
               <h2>{plannedLook ? plannedLook.name : "Nothing planned"}</h2>
               {plannedLook ? (
                 <>
                   <div className="day-look">
                     {plannedLook.itemIds.map((id) => {
-                      const item = items.find((piece) => piece.id === id);
+                      const item = items.find((piece) => sameId(piece.id, id));
                       return item ? <img key={id} src={item.image} alt={item.name} /> : null;
                     })}
                   </div>
@@ -856,14 +905,22 @@ export default function Home() {
               )}
               <div className="plan-control">
                 <label htmlFor="plan-look">Saved look</label>
-                <select id="plan-look" value={planLookId} onChange={(event) => setPlanLookId(event.target.value)}>
+                <select
+                  id="plan-look"
+                  value={lookToPlan}
+                  disabled={!filteredLooks.length}
+                  onChange={(event) => setPlanLookId(event.target.value)}
+                >
+                  {!filteredLooks.length && (
+                    <option value="">{savedLooks.length ? "No looks for this occasion" : "Save a look first"}</option>
+                  )}
                   {filteredLooks.map((look) => (
                     <option key={look.id} value={look.id}>
                       {look.name} · {look.occasion}
                     </option>
                   ))}
                 </select>
-                <Button disabled={!planLookId} onClick={planSelectedLook}>
+                <Button disabled={!lookToPlan} onClick={planSelectedLook}>
                   {plannedLook ? "Replace planned look" : "Plan this look"}
                 </Button>
                 {plannedLook && (
@@ -879,6 +936,8 @@ export default function Home() {
     </main>
   );
 }
+
+const detectionPositions = ["detection-one", "detection-two", "detection-three"];
 
 type UploadDialogProps = {
   dialogOpen: boolean;
@@ -1005,9 +1064,11 @@ function UploadDialog({
               {isProcessing && <div className="scan-line" />}
               {uploadMode === "look" && processed && (
                 <>
-                  <span className="detection-label detection-one">Outerwear</span>
-                  <span className="detection-label detection-two">Top</span>
-                  <span className="detection-label detection-three">Bottoms</span>
+                  {[...new Set(detectedItems.map((piece) => piece.category))].slice(0, 3).map((category, index) => (
+                    <span key={category} className={`detection-label ${detectionPositions[index]}`}>
+                      {category}
+                    </span>
+                  ))}
                 </>
               )}
             </div>

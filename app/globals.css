@@ -1065,7 +1065,7 @@ button {
   z-index: 2;
   inset: 67px 7% 40px;
   display: grid;
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-rows: repeat(5, 1fr);
   gap: 6px;
 }
 .outfit-slot {
@@ -1096,7 +1096,7 @@ button {
 }
 .outfit-slot img {
   width: 58%;
-  height: 128%;
+  height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 12px 12px rgba(33, 45, 127, 0.16));
 }
@@ -1582,7 +1582,6 @@ button {
   }
   .outfit-slot img {
     width: 56%;
-    height: 125%;
   }
   .saved-look-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1652,4 +1651,76 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Slot selection sits under the remove button rather than wrapping it. */
+.slot-select {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 22px 12px 8px;
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+.slot-select img {
+  max-height: 100%;
+  min-height: 0;
+}
+.remove-slot {
+  z-index: 1;
+  border: 0;
+  cursor: pointer;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.month-nav button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.month-nav button:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.month-nav svg {
+  width: 16px;
+}
+.month-nav h2 {
+  min-width: 10ch;
+  text-align: center;
+}
+.calendar-grid > button.today:not(.selected) > span {
+  color: var(--blue);
+  font-weight: 750;
+}
+
+.empty-state .empty-action svg {
+  width: 16px;
+  margin: 0;
+}
+.empty-action {
+  margin-top: 18px;
+  height: 42px;
+  border-radius: 11px;
+}
+.saved-empty {
+  grid-column: 1 / -1;
+}
+.detail-empty {
+  color: var(--ink-soft);
+  font-size: 0.86rem;
 }
