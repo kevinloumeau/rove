@@ -18,6 +18,7 @@ import {
   Plus,
   ScanSearch,
   Search,
+  Share2,
   Shirt,
   Shuffle,
   Sparkles,
@@ -47,7 +48,9 @@ import { ClosetInsights } from "@/components/closet-insights";
 import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
 import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
+import { suggestLook } from "@/lib/outfit-shuffle";
 import { photoHash, shrinkPhoto } from "@/lib/photo-resize";
+import { renderLookImage, shareLookImage } from "@/lib/share-look";
 import { pieceCategories, seasons, type SavedLook, type WardrobeItem } from "@/lib/wardrobe-types";
 
 const categories = ["All", "Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other", "Favorites"];
@@ -521,13 +524,33 @@ export default function Home() {
       });
   }
   function shuffleLook() {
-    const choices = slotDefs
-      .map((slot) => {
-        const matches = items.filter((item) => slotFor(item.category) === slot.category && !item.inLaundry);
-        return matches[Math.floor(Math.random() * matches.length)]?.id;
-      })
-      .filter((id): id is number | string => id !== undefined);
-    setOutfit(choices);
+    // Color- and season-aware, skips the wash, and avoids repeating the look already on the canvas.
+    const look = suggestLook(items, { today: todayIso, current: outfit });
+    if (!look.length) {
+      toast("Add a top or a dress to get outfit ideas.");
+      return;
+    }
+    setOutfit(look.map((item) => item.id));
+  }
+  async function shareLook(name: string, subtitle: string, pieces: WardrobeItem[]) {
+    if (!pieces.length) return;
+    try {
+      const blob = await renderLookImage(
+        name,
+        subtitle,
+        pieces.map((piece) => piece.image),
+      );
+      const fileName = `${
+        name
+          .replace(/[^\w-]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .toLowerCase() || "look"
+      }.png`;
+      const result = await shareLookImage(blob, fileName, name);
+      if (result === "downloaded") toast.success("Saved the look as an image");
+    } catch (error) {
+      toast.error(errorMessage(error, "That look could not be shared."));
+    }
   }
   function saveCurrentLook() {
     if (!outfitItems.length) return;
@@ -1292,6 +1315,18 @@ export default function Home() {
                     ? "Worn today"
                     : "Wear this look today"}
                 </button>
+                <button
+                  disabled={!outfitItems.length}
+                  onClick={() =>
+                    shareLook(
+                      savedLooks.find((look) => look.id === canvasLookId)?.name ?? "My look",
+                      outfitItems.map((item) => item.name).join(" · "),
+                      outfitItems,
+                    )
+                  }
+                >
+                  <Share2 /> Share as image
+                </button>
                 {canvasLookId && savedLooks.some((look) => look.id === canvasLookId) ? (
                   <>
                     <button className="primary" disabled={!outfitItems.length} onClick={updateCanvasLook}>
@@ -1337,6 +1372,20 @@ export default function Home() {
                     <h2>{look.name}</h2>
                     <div className="look-actions">
                       <button onClick={() => loadLook(look)}>Edit look</button>
+                      <button
+                        aria-label={`Share ${look.name}`}
+                        onClick={() =>
+                          shareLook(
+                            look.name,
+                            look.occasion,
+                            look.itemIds
+                              .map((id) => items.find((piece) => sameId(piece.id, id)))
+                              .filter((piece): piece is WardrobeItem => Boolean(piece)),
+                          )
+                        }
+                      >
+                        <Share2 />
+                      </button>
                       <button aria-label={`Rename ${look.name}`} onClick={() => setEditingLook(look)}>
                         <Pencil />
                       </button>

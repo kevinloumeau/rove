@@ -2390,6 +2390,40 @@ button {
   margin: 0 0 20px;
   font-size: 0.9rem;
 }
+.ootd-weather {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: -8px 0 18px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.ootd-weather span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--foreground);
+  background: #fff;
+  font-weight: 650;
+}
+.ootd-weather svg,
+.ootd-weather-ask svg {
+  width: 15px;
+}
+.ootd-weather-ask {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -8px 0 18px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.78rem;
+}
 .ootd-collage {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
