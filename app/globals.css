@@ -4179,3 +4179,104 @@ textarea:focus-visible {
     background: transparent;
   }
 }
+
+/* Wishlist and closet gaps on the Insights tab */
+.gap-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gap-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--secondary);
+}
+.gap-list li > div,
+.wish-main {
+  display: grid;
+  flex: 1 1 200px;
+  gap: 2px;
+  min-width: 0;
+}
+.gap-list strong,
+.wish-main strong {
+  font-size: 0.85rem;
+}
+.gap-list small,
+.wish-main small {
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+}
+.gap-list button {
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+.wish-form input,
+.wish-form button {
+  height: 36px;
+  font-size: 0.82rem;
+}
+.wish-total {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.wish-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.wish-form select {
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+}
+.wish-list li {
+  padding: 8px 0;
+}
+.wish-main a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+.wish-main a svg {
+  width: 12px;
+  height: 12px;
+}
+.wish-list li.bought .wish-main strong {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+}
+@media (max-width: 760px) {
+  .wish-form {
+    grid-template-columns: 1fr 1fr;
+  }
+  /* Name, then category and price side by side, then link, then the button. */
+  .wish-form > :first-child,
+  .wish-form > :nth-child(3),
+  .wish-form > button {
+    grid-column: 1 / -1;
+  }
+  .wish-form > :nth-child(3) {
+    order: 1;
+  }
+  .wish-form > button {
+    order: 2;
+  }
+}

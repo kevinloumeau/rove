@@ -4,20 +4,21 @@ import { ZipWriter } from "@/lib/zip";
 export const dynamic = "force-dynamic";
 
 /**
- * Downloads the signed-in user's closet as a ZIP: closet.json with their pieces, looks, plans, wear log and
- * journal, plus every piece's image and journal photo under images/. Images are read from R2 one at a time as the archive
+ * Downloads the signed-in user's closet as a ZIP: closet.json with their pieces, looks, plans, wear log,
+ * journal and wishlist, plus every piece's image and journal photo under images/. Images are read from R2 one at a time as the archive
  * streams out, so only one image is held in memory at once.
  */
 export async function GET() {
   try {
     const user = await requireApiUser();
     const { db, bucket } = getWardrobeBindings();
-    const [items, outfits, plans, wears, journal] = await db.batch<Record<string, unknown>>([
+    const [items, outfits, plans, wears, journal, wishlist] = await db.batch<Record<string, unknown>>([
       db.prepare(`SELECT * FROM wardrobe_items WHERE user_id = ? ORDER BY created_at`).bind(user.userId),
       db.prepare(`SELECT * FROM wardrobe_outfits WHERE user_id = ? ORDER BY created_at`).bind(user.userId),
       db.prepare(`SELECT * FROM wardrobe_plans WHERE user_id = ? ORDER BY planned_date`).bind(user.userId),
       db.prepare(`SELECT * FROM wardrobe_wears WHERE user_id = ? ORDER BY worn_on`).bind(user.userId),
       db.prepare(`SELECT * FROM wardrobe_journal WHERE user_id = ? ORDER BY day`).bind(user.userId),
+      db.prepare(`SELECT * FROM wardrobe_wishlist WHERE user_id = ? ORDER BY created_at`).bind(user.userId),
     ]);
     const exportedAt = new Date();
     const imageKeys = [
@@ -40,6 +41,7 @@ export async function GET() {
       wears: wears.results,
       // Each journal photo_key is its file name under images/.
       journal: journal.results,
+      wishlist: wishlist.results,
     };
 
     const zip = new ZipWriter();
