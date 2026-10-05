@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Camera, Layers3, Plus, ScanSearch, Shirt, Sparkles, WandSparkles, X } from "lucide-react";
+import { Check, Camera, Footprints, Glasses, Plus, ScanSearch, Shirt, WandSparkles, Watch, X } from "lucide-react";
+import { importStepFor, importSteps } from "@/lib/import-steps";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -88,6 +89,7 @@ export function UploadDialog({
   setSkipDuplicates,
   cancelBatch,
 }: UploadDialogProps) {
+  const step = importStepFor(importNotice);
   const batchRunning = Boolean(batch?.some((entry) => entry.status === "waiting" || entry.status === "working"));
   return (
     <Dialog
@@ -229,43 +231,51 @@ export function UploadDialog({
               )}
             </div>
             <div className="processing-copy" aria-live="polite">
-              {isProcessing && (
-                <div className="styling-icons" aria-hidden>
-                  <span>
-                    <Shirt />
-                  </span>
-                  <span>
-                    <Layers3 />
-                  </span>
-                  <span>
-                    <Sparkles />
-                  </span>
-                  <span>
-                    <WandSparkles />
-                  </span>
+              {isProcessing ? (
+                <div className="styling-status">
+                  <div className="styling-icons" aria-hidden>
+                    <span>
+                      <Shirt />
+                    </span>
+                    <span>
+                      <Glasses />
+                    </span>
+                    <span>
+                      <Footprints />
+                    </span>
+                    <span>
+                      <Watch />
+                    </span>
+                  </div>
+                  <h3>Styling your look…</h3>
+                  <p>{importNotice ?? "Matching your style with the perfect fit"}</p>
                 </div>
-              )}
-              <p className="process-status">
-                {isProcessing ? <WandSparkles /> : importError ? <X /> : <Check />}
-                {isProcessing
-                  ? "Detecting, cleaning, and tagging…"
-                  : importError
+              ) : (
+                <p className="process-status">
+                  {importError ? <X /> : <Check />}
+                  {importError
                     ? "Import needs attention"
                     : uploadMode === "look"
                       ? `${detectedItems.length} pieces found`
                       : "1 piece ready"}
-              </p>
-              <ul>
-                <li className={processed ? "done" : "active"}>
-                  <span /> Understanding the photo
-                </li>
-                <li className={processed ? "done" : ""}>
-                  <span /> Separating and cleaning pieces
-                </li>
-                <li className={processed ? "done" : ""}>
-                  <span /> Writing names and tags
-                </li>
-              </ul>
+                </p>
+              )}
+              <ol className="import-steps">
+                {importSteps.map((label, index) => (
+                  <li
+                    key={label}
+                    className={
+                      processed || (isProcessing && index < step)
+                        ? "done"
+                        : isProcessing && index === step
+                          ? "active"
+                          : ""
+                    }
+                  >
+                    <span /> {label}
+                  </li>
+                ))}
+              </ol>
               {importError && (
                 <div className="import-message error" role="alert">
                   <p>{importError}</p>
@@ -300,7 +310,7 @@ export function UploadDialog({
                   </p>
                 </div>
               )}
-              {importNotice && (
+              {importNotice && !isProcessing && (
                 <div className="import-message" role="status">
                   <p>{importNotice}</p>
                 </div>
