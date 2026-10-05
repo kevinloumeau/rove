@@ -5,6 +5,8 @@ import {
   Archive,
   CalendarDays,
   Check,
+  ArrowUpDown,
+  Camera,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -35,10 +37,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog, EditLookDialog, EditPieceDialog } from "@/components/closet-dialogs";
 import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
+import { shrinkPhoto } from "@/lib/photo-resize";
 import type { SavedLook, WardrobeItem } from "@/lib/wardrobe-types";
 
 const categories = ["All", "Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other", "Favorites"];
@@ -82,6 +86,15 @@ function sameId(a: number | string, b: number | string) {
   return String(a) === String(b);
 }
 
+function isNarrow(maxWidth: number) {
+  return typeof window !== "undefined" && window.matchMedia(`(max-width: ${maxWidth}px)`).matches;
+}
+
+/** Scrolls an element into view after React has rendered the change that revealed it. */
+function scrollIntoViewSoon(element: HTMLElement | null) {
+  requestAnimationFrame(() => element?.scrollIntoView({ behavior: "smooth", block: "start" }));
+}
+
 export default function Home() {
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [closetStatus, setClosetStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -93,6 +106,10 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const [outfit, setOutfit] = useState<Array<number | string>>([]);
   const [activeSlot, setActiveSlot] = useState("Tops");
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+  const pieceRailRef = useRef<HTMLElement>(null);
+  const dayPanelRef = useRef<HTMLElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const [outfitMode, setOutfitMode] = useState<"canvas" | "saved">("canvas");
   const [savedLooks, setSavedLooks] = useState<SavedLook[]>([]);
   const [calendarMonth, setCalendarMonth] = useState(() => {
@@ -445,12 +462,16 @@ export default function Home() {
     setSelectedDate(monthKey(next) === todayIso.slice(0, 7) ? todayIso : isoDate(next));
   }
 
-  async function handleFile(file?: File) {
-    if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+  async function handleFile(picked?: File) {
+    if (!picked) return;
+    if (fileRef.current) fileRef.current.value = "";
+    if (cameraRef.current) cameraRef.current.value = "";
+    if (!["image/jpeg", "image/png", "image/webp"].includes(picked.type)) {
       setImportError("Use a JPEG, PNG, or WebP image.");
       return;
     }
+    // Phone photos are often 4000px+; a smaller copy segments faster and uploads quicker.
+    const file = await shrinkPhoto(picked);
     if (file.size > 12 * 1024 * 1024) {
       setImportError("Choose an image smaller than 12 MB.");
       return;
@@ -541,6 +562,67 @@ export default function Home() {
     }
   }
 
+  const pieceDetails = selected ? (
+    <>
+      <div className="detail-image">
+        <img src={selected.image} alt={selected.name} />
+      </div>
+      <div className="detail-copy">
+        <p>{selected.category}</p>
+        <h2>{selected.name}</h2>
+        <span>{selected.description}</span>
+      </div>
+      <dl>
+        <div>
+          <dt>Color</dt>
+          <dd>{selected.color}</dd>
+        </div>
+        <div>
+          <dt>Season</dt>
+          <dd>{selected.season}</dd>
+        </div>
+      </dl>
+      {selected.tags?.length ? (
+        <ul className="detail-tags" aria-label="Tags">
+          {selected.tags.map((tag) => (
+            <li key={tag}>{tag}</li>
+          ))}
+        </ul>
+      ) : null}
+      <Button
+        className="outfit-button"
+        onClick={() => {
+          setDetailSheetOpen(false);
+          addToOutfit(selected.id);
+          setActiveTab("outfits");
+        }}
+      >
+        <Plus /> Style this piece
+      </Button>
+      <div className="detail-actions">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setDetailSheetOpen(false);
+            setEditingItem(selected);
+          }}
+        >
+          <Pencil /> Edit
+        </Button>
+        <Button
+          variant="outline"
+          className="danger"
+          onClick={() => {
+            setDetailSheetOpen(false);
+            setDeletingItem(selected);
+          }}
+        >
+          <Trash2 /> Delete
+        </Button>
+      </div>
+    </>
+  ) : null;
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -551,7 +633,8 @@ export default function Home() {
           <span>Rove</span>
         </a>
         <p className="closet-count">
-          <span>{items.length}</span> pieces · <span>{savedLooks.length}</span> saved looks
+          <span>{items.length}</span> {items.length === 1 ? "piece" : "pieces"} · <span>{savedLooks.length}</span>{" "}
+          {savedLooks.length === 1 ? "saved look" : "saved looks"}
         </p>
         <UploadDialog
           {...{
@@ -576,6 +659,7 @@ export default function Home() {
             setImportNotice,
             isSavingImport,
             fileRef,
+            cameraRef,
             handleFile,
             saveUploadedItem,
           }}
@@ -642,7 +726,8 @@ export default function Home() {
                   <option>A–Z</option>
                   <option>Color</option>
                 </select>
-                <ChevronDown />
+                <ChevronDown className="sort-chevron" />
+                <ArrowUpDown className="sort-icon" />
               </label>
             </div>
             {visibleItems.length ? (
@@ -653,7 +738,11 @@ export default function Home() {
                     className={`item-card ${selected && sameId(selected.id, item.id) ? "selected" : ""}`}
                     draggable
                     onDragStart={(event) => event.dataTransfer.setData("text/plain", String(item.id))}
-                    onClick={() => setSelectedId(item.id)}
+                    onClick={() => {
+                      setSelectedId(item.id);
+                      // Below this width the details panel is hidden, so details open in a sheet.
+                      if (isNarrow(1100)) setDetailSheetOpen(true);
+                    }}
                   >
                     <button
                       className={`heart-button ${item.favorite ? "active" : ""}`}
@@ -706,49 +795,20 @@ export default function Home() {
           </section>
           <aside className="detail-panel" aria-label="Selected item details">
             {selected ? (
-              <div className="detail-sticky">
-                <div className="detail-image">
-                  <img src={selected.image} alt={selected.name} />
-                </div>
-                <div className="detail-copy">
-                  <p>{selected.category}</p>
-                  <h2>{selected.name}</h2>
-                  <span>{selected.description}</span>
-                </div>
-                <dl>
-                  <div>
-                    <dt>Color</dt>
-                    <dd>{selected.color}</dd>
-                  </div>
-                  <div>
-                    <dt>Season</dt>
-                    <dd>{selected.season}</dd>
-                  </div>
-                </dl>
-                <Button
-                  className="outfit-button"
-                  onClick={() => {
-                    addToOutfit(selected.id);
-                    setActiveTab("outfits");
-                  }}
-                >
-                  <Plus /> Style this piece
-                </Button>
-                <div className="detail-actions">
-                  <Button variant="outline" onClick={() => setEditingItem(selected)}>
-                    <Pencil /> Edit
-                  </Button>
-                  <Button variant="outline" className="danger" onClick={() => setDeletingItem(selected)}>
-                    <Trash2 /> Delete
-                  </Button>
-                </div>
-              </div>
+              <div className="detail-sticky">{pieceDetails}</div>
             ) : (
               <div className="detail-sticky detail-empty">
                 <p>Pick a piece to see its details here.</p>
               </div>
             )}
           </aside>
+          <Sheet open={detailSheetOpen && Boolean(selected)} onOpenChange={setDetailSheetOpen}>
+            <SheetContent side="bottom" className="piece-sheet">
+              <SheetTitle className="sr-only">{selected?.name ?? "Piece details"}</SheetTitle>
+              <SheetDescription className="sr-only">Details and actions for this piece.</SheetDescription>
+              <div className="detail-sticky">{pieceDetails}</div>
+            </SheetContent>
+          </Sheet>
         </TabsContent>
         <TabsContent value="outfits" className="outfit-view">
           <section className="outfit-intro">
@@ -767,7 +827,7 @@ export default function Home() {
           </section>
           {outfitMode === "canvas" ? (
             <div className="styling-workspace">
-              <aside className="piece-rail">
+              <aside className="piece-rail" ref={pieceRailRef}>
                 <div className="rail-heading">
                   <h2>{activeSlot}</h2>
                   <span>{railItems.length}</span>
@@ -829,7 +889,11 @@ export default function Home() {
                           className="slot-select"
                           aria-label={item ? `${slot.label}: ${item.name}` : `Choose ${slot.label.toLowerCase()}`}
                           aria-pressed={activeSlot === slot.category}
-                          onClick={() => setActiveSlot(slot.category)}
+                          onClick={() => {
+                            setActiveSlot(slot.category);
+                            // On phones the piece list sits below the canvas.
+                            if (isNarrow(760)) scrollIntoViewSoon(pieceRailRef.current);
+                          }}
                         >
                           <span className="slot-label">{slot.label}</span>
                           {item ? (
@@ -984,7 +1048,10 @@ export default function Home() {
                       className={`${selectedDate === date ? "selected" : ""} ${look ? "planned" : ""} ${date === todayIso ? "today" : ""}`}
                       aria-label={new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "full" })}
                       aria-pressed={selectedDate === date}
-                      onClick={() => setSelectedDate(date)}
+                      onClick={() => {
+                        setSelectedDate(date);
+                        if (isNarrow(760)) scrollIntoViewSoon(dayPanelRef.current);
+                      }}
                     >
                       <span>{Number(date.slice(-2))}</span>
                       {thumb && <img src={thumb.image} alt="" />}
@@ -993,7 +1060,7 @@ export default function Home() {
                 })}
               </div>
             </section>
-            <aside className="day-panel">
+            <aside className="day-panel" ref={dayPanelRef}>
               <p>{selectedDateLabel}</p>
               <h2>{plannedLook ? plannedLook.name : "Nothing planned"}</h2>
               {plannedLook ? (
@@ -1105,6 +1172,7 @@ type UploadDialogProps = {
   setImportNotice: (value: string | null) => void;
   isSavingImport: boolean;
   fileRef: React.RefObject<HTMLInputElement | null>;
+  cameraRef: React.RefObject<HTMLInputElement | null>;
   handleFile: (file?: File) => Promise<void>;
   saveUploadedItem: () => Promise<void>;
 };
@@ -1131,6 +1199,7 @@ function UploadDialog({
   setImportNotice,
   isSavingImport,
   fileRef,
+  cameraRef,
   handleFile,
   saveUploadedItem,
 }: UploadDialogProps) {
@@ -1181,6 +1250,14 @@ function UploadDialog({
           accept="image/*"
           onChange={(event) => handleFile(event.target.files?.[0])}
         />
+        <input
+          ref={cameraRef}
+          className="sr-only"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={(event) => handleFile(event.target.files?.[0])}
+        />
         {!preview ? (
           <button
             className="drop-zone"
@@ -1195,9 +1272,15 @@ function UploadDialog({
             <span className="upload-icon">
               <ScanSearch />
             </span>
-            <strong>Drop any clothing photo here</strong>
+            <strong className="pointer-fine">Drop a clothing photo here, or click to browse</strong>
+            <strong className="pointer-coarse">Tap to choose a clothing photo</strong>
             <span>One piece or a full look—we’ll sort it out</span>
           </button>
+        ) : null}
+        {!preview ? (
+          <Button variant="outline" className="camera-button pointer-coarse" onClick={() => cameraRef.current?.click()}>
+            <Camera /> Take a photo
+          </Button>
         ) : (
           <div className="processing-grid">
             <div className={`processing-photo ${uploadMode === "look" && processed ? "look-detected" : ""}`}>

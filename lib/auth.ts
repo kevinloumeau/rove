@@ -18,17 +18,17 @@ export async function getUser(): Promise<AppUser | null> {
   const teamDomain = normalizeTeamDomain(env.ACCESS_TEAM_DOMAIN);
   const audience = env.ACCESS_AUD?.trim();
 
-  if (!teamDomain || !audience) {
-    // `vinext dev` simulates one signed-in user; production builds never take this branch.
-    if (import.meta.env.DEV) {
-      const email = env.DEV_USER_EMAIL?.trim() || "you@localhost";
-      return { userId: `dev:${email}`, email };
-    }
-    throw new Error("Sign-in is not configured. Set ACCESS_TEAM_DOMAIN and ACCESS_AUD in wrangler.jsonc.");
-  }
-
   const requestHeaders = await headers();
   const token = requestHeaders.get(ACCESS_HEADER) ?? readCookie(requestHeaders.get("cookie"), ACCESS_COOKIE);
+
+  // `vinext dev` never sits behind Access, so it simulates one signed-in user. Production builds
+  // never take this branch.
+  if (import.meta.env.DEV && !token) {
+    const email = env.DEV_USER_EMAIL?.trim() || "you@localhost";
+    return { userId: `dev:${email}`, email };
+  }
+  if (!teamDomain || !audience)
+    throw new Error("Sign-in is not configured. Set ACCESS_TEAM_DOMAIN and ACCESS_AUD in wrangler.jsonc.");
   if (!token) return null;
 
   const claims = await verifyAccessToken(token, teamDomain, audience);
