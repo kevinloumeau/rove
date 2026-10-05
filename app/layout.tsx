@@ -39,6 +39,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: colorSchemeScript }} />
         {/* Sent with credentials so the manifest loads through Cloudflare Access. */}
         <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
+        <link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossOrigin="" />
       </head>
       <body className="antialiased">
         {children}

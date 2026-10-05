@@ -850,6 +850,7 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
 .piece-sheet .detail-sticky {
   position: static;
   padding: 26px 20px max(24px, env(safe-area-inset-bottom));
@@ -2292,6 +2293,467 @@ button {
   color: var(--foreground);
 }
 
+/* ---- Design pass: references Kevin shared on 2026-10-05 ---- */
+/* Anton (SIL Open Font License), self-hosted so it works offline and behind Cloudflare Access. */
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/anton-latin.woff2") format("woff2");
+}
+:root {
+  --font-display: "Anton", "Oswald", "Arial Narrow", Impact, sans-serif;
+}
+.display-title,
+.section-heading h1,
+.outfit-intro h1,
+.calendar-intro h1,
+.insights-intro h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+/* Outfit of the day */
+.ootd {
+  margin-bottom: 40px;
+  padding: 18px 18px 22px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #eef0ff 0%, #f7f8ff 100%);
+  text-align: center;
+}
+.week-strip {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+}
+.week-strip ol {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.week-strip li {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.week-strip li button {
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid #cfd3ef;
+  border-radius: 50%;
+  color: var(--foreground);
+  background: #fff;
+  font-weight: 600;
+}
+.week-strip li button.past {
+  color: var(--ink-soft);
+}
+.week-strip li button.planned {
+  border-color: #8b97f3;
+}
+.week-strip li button.active {
+  border-color: var(--blue);
+  color: #fff;
+  background: var(--blue);
+}
+.week-strip li span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+.week-strip li span.today {
+  color: var(--foreground);
+  font-weight: 700;
+}
+.week-arrow {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  border: 0;
+  color: var(--foreground);
+  background: transparent;
+}
+.week-arrow svg {
+  width: 20px;
+}
+.ootd .display-title {
+  margin: 26px 0 6px;
+  font-size: clamp(2.6rem, 6vw, 3.6rem);
+}
+.ootd-date {
+  margin: 0 0 20px;
+  font-size: 0.9rem;
+}
+.ootd-collage {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 150px;
+  gap: 8px;
+  width: min(420px, 100%);
+  margin: 0 auto;
+  padding: 8px;
+  border: 0;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.7);
+}
+.ootd-collage[data-count="1"] {
+  grid-template-columns: 1fr;
+  grid-auto-rows: 240px;
+}
+.ootd-collage[data-count="3"] span:first-child {
+  grid-row: span 2;
+}
+.ootd-collage span {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff;
+}
+.ootd-collage img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+.ootd-empty {
+  margin: 0 auto;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+}
+.ootd-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+.ootd-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 42px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--foreground);
+  background: #fff;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+.ootd-actions button.primary {
+  color: #fff;
+  background: var(--foreground);
+}
+.ootd-actions button:disabled {
+  opacity: 0.5;
+}
+.ootd-actions svg {
+  width: 16px;
+}
+
+/* Outfit builder: cutouts stacked on a soft grid, with + and × markers */
+.outfit-canvas {
+  background-color: #eceef3;
+  background-image:
+    linear-gradient(rgba(120, 128, 160, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 128, 160, 0.09) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.outfit-canvas::before {
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 55%);
+}
+.outfit-slot,
+.outfit-slot.filled,
+.outfit-slot:hover,
+.outfit-slot.active {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.slot-label {
+  display: none;
+}
+.empty-slot {
+  flex-direction: column;
+  gap: 6px;
+  color: #6b6f80;
+  font-size: 0.68rem;
+}
+.empty-slot svg {
+  width: 26px;
+  height: 26px;
+  padding: 6px;
+  border-radius: 50%;
+  color: #fff;
+  background: #2a2c33;
+}
+.outfit-slot.active .empty-slot svg {
+  box-shadow: 0 0 0 4px rgba(62, 85, 240, 0.25);
+  background: var(--blue);
+}
+.outfit-slot.active.filled .slot-select img {
+  filter: drop-shadow(0 0 0 transparent) drop-shadow(0 12px 14px rgba(62, 85, 240, 0.28));
+}
+.outfit-slot img {
+  filter: drop-shadow(0 14px 14px rgba(30, 32, 45, 0.18));
+}
+.remove-slot {
+  left: 50%;
+  right: auto;
+  top: 2px;
+  width: 24px;
+  height: 24px;
+  color: #fff;
+  background: rgba(42, 44, 51, 0.85);
+  transform: translateX(-50%);
+}
+.look-notes button.primary {
+  min-height: 48px;
+  border-radius: 999px;
+}
+
+/* Piece picker sheet (phones) */
+.picker-sheet {
+  max-height: 80vh;
+  gap: 12px;
+  padding: 18px 16px max(16px, env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: #f1f2f5;
+}
+.picker-sheet h2 {
+  text-align: center;
+  font-size: 1rem;
+  text-transform: capitalize;
+}
+.picker-sheet ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.picker-sheet li button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px 8px 8px;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+  text-align: left;
+}
+.picker-sheet li button.active {
+  box-shadow: inset 0 0 0 2px var(--foreground);
+}
+.picker-sheet li img {
+  width: 54px;
+  height: 54px;
+  flex: none;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #f4f5f7;
+}
+.picker-sheet li span {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.picker-sheet li strong {
+  font-size: 0.86rem;
+}
+.picker-sheet li small {
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+}
+.picker-sheet li svg {
+  width: 18px;
+}
+.picker-done {
+  height: 50px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: #2a2c33;
+  font-weight: 650;
+}
+
+/* Floating "Add clothes" pill, phones only */
+.fab-add {
+  display: none;
+}
+
+/* Friendly icons while an import is processing */
+.styling-icons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.styling-icons span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  animation: styling-bob 1.4s ease-in-out infinite;
+}
+.styling-icons span:nth-child(1) {
+  color: #b2475b;
+  background: #fbd3db;
+}
+.styling-icons span:nth-child(2) {
+  color: #2f7a55;
+  background: #cdeedb;
+  animation-delay: 0.15s;
+}
+.styling-icons span:nth-child(3) {
+  color: #2f5f93;
+  background: #cfe2f6;
+  animation-delay: 0.3s;
+}
+.styling-icons span:nth-child(4) {
+  color: #a35a1c;
+  background: #fbdcc0;
+  animation-delay: 0.45s;
+}
+.styling-icons svg {
+  width: 20px;
+}
+@keyframes styling-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 1100px) {
+  /* The notes column is hidden here, so its save buttons move under the canvas. */
+  .styling-workspace .look-notes {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+  .styling-workspace .look-notes > p,
+  .styling-workspace .look-notes > h2,
+  .styling-workspace .look-notes > span,
+  .styling-workspace .look-notes .palette {
+    display: none;
+  }
+  .styling-workspace .look-notes button {
+    width: auto;
+    flex: 1 1 180px;
+  }
+  .styling-workspace .look-notes button + button {
+    margin-top: 0;
+  }
+  .styling-workspace .look-notes .look-warning {
+    flex-basis: 100%;
+    margin: 0;
+  }
+}
+@media (max-width: 760px) {
+  .topbar .add-button {
+    display: none;
+  }
+  .rail {
+    left: 12px;
+    right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    height: 64px;
+    padding: 5px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 14px 34px rgba(20, 22, 30, 0.14);
+    backdrop-filter: blur(18px) saturate(1.4);
+  }
+  .rail-tabs button {
+    height: 52px !important;
+    border-radius: 999px !important;
+  }
+  .workspace {
+    padding-bottom: 96px;
+  }
+  .fab-add {
+    position: fixed;
+    z-index: 34;
+    left: 50%;
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + 76px);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 50px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--foreground);
+    box-shadow: 0 14px 30px rgba(20, 22, 30, 0.28);
+    font-size: 0.95rem;
+    font-weight: 650;
+    transform: translateX(-50%);
+  }
+  .fab-add svg {
+    width: 18px;
+  }
+  .bulk-bar {
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + 76px);
+  }
+  .ootd {
+    margin-inline: -4px;
+    padding: 14px 8px 18px;
+    border-radius: 24px;
+  }
+  .week-strip {
+    gap: 0;
+  }
+  .week-strip ol {
+    gap: 4px;
+  }
+  .week-strip li button {
+    width: 38px;
+    height: 38px;
+  }
+  .week-arrow {
+    width: 28px;
+    height: 38px;
+  }
+  .ootd-collage {
+    grid-auto-rows: 130px;
+  }
+  .outfit-view .styling-workspace {
+    flex-direction: column;
+  }
+  .styling-workspace .piece-rail {
+    display: none;
+  }
+  .styling-workspace .look-notes {
+    padding: 0;
+    border: 0;
+  }
+  .styling-workspace .look-notes button {
+    min-height: 48px;
+    border-radius: 999px;
+  }
+}
+
 /* ==========================================================================
    Platform pass: dark theme, focus rings, reduced motion, backup link.
    Kept as one appended block so the rules above stay untouched. Dark mode
@@ -2610,5 +3072,124 @@ textarea:focus-visible {
   .calendar-workspace {
     background: transparent;
     box-shadow: none;
+  }
+}
+
+/* Dark mode for the closet details, select mode, insights and design-pass pieces. */
+@media (prefers-color-scheme: dark) {
+  .category-list button,
+  .pill-select select,
+  .insight-card,
+  .week-strip li button,
+  .ootd-actions button,
+  .ootd-weather span,
+  .picker-sheet li button {
+    border-color: var(--border);
+    color: var(--foreground);
+    background: var(--card);
+  }
+  .select-toggle {
+    background: var(--secondary);
+  }
+  /* "Inverted" pills use the light foreground as a fill, so their text goes dark. */
+  .category-list button.active,
+  .pill-select.active select,
+  .select-toggle.active,
+  .ootd-actions button.primary,
+  .fab-add,
+  .item-card.picked .pick-mark {
+    border-color: var(--foreground);
+    color: #161815;
+    background: var(--foreground);
+  }
+  .pill-select.active svg {
+    color: #161815;
+  }
+  .pick-mark {
+    background: rgba(27, 29, 26, 0.9);
+  }
+  .item-card.picked .item-image {
+    box-shadow: inset 0 0 0 2px var(--foreground);
+  }
+  .week-strip li button.active {
+    border-color: var(--blue);
+    color: #fff;
+    background: var(--blue);
+  }
+  .week-arrow {
+    color: var(--foreground);
+  }
+  .ootd {
+    background: linear-gradient(180deg, #1d2242 0%, #181a26 100%);
+  }
+  .ootd-collage {
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .ootd-collage span,
+  .insight-pieces img,
+  .picker-sheet li img {
+    background: var(--garment-tile);
+  }
+  .ootd-weather-ask {
+    color: var(--ink-soft);
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .outfit-canvas {
+    background-color: #1c1e24;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  }
+  .outfit-canvas::before {
+    background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 55%);
+  }
+  .outfit-slot,
+  .outfit-slot.filled,
+  .outfit-slot:hover,
+  .outfit-slot.active {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .empty-slot {
+    color: var(--ink-soft);
+  }
+  .empty-slot svg,
+  .remove-slot {
+    color: #161815;
+    background: var(--foreground);
+  }
+  .picker-sheet {
+    background: #181a16;
+  }
+  .picker-sheet li button.active {
+    box-shadow: inset 0 0 0 2px var(--foreground);
+  }
+  .picker-done {
+    color: #161815;
+    background: var(--foreground);
+  }
+  .rail {
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+  .import-message.warning {
+    border-color: #5a4a20;
+    color: #f0d48a;
+    background: #2a2414;
+  }
+  .duplicate-thumbs img {
+    border-color: #2a2414;
+  }
+  .wear-actions button[aria-pressed="true"],
+  .laundry-badge,
+  .look-warning {
+    color: var(--accent-foreground);
+    background: var(--accent);
+  }
+}
+@media (prefers-color-scheme: dark) and (max-width: 760px) {
+  .rail {
+    background: rgba(27, 29, 26, 0.85);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
   }
 }
