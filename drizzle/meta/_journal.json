@@ -36,6 +36,13 @@
       "when": 1791226171863,
       "tag": "0004_clear_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791231272466,
+      "tag": "0005_outfit_journal",
+      "breakpoints": true
     }
   ]
 }

@@ -12,6 +12,7 @@ export async function GET(_request: Request, context: { params: Promise<{ key: s
         `
       SELECT 1 FROM wardrobe_items WHERE (image_key = ?1 OR thumb_key = ?1) AND user_id = ?2
       UNION SELECT 1 FROM wardrobe_imports WHERE original_key = ?1 AND user_id = ?2
+      UNION SELECT 1 FROM wardrobe_journal WHERE photo_key = ?1 AND user_id = ?2
       LIMIT 1
     `,
       )

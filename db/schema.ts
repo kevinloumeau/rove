@@ -86,3 +86,17 @@ export const wardrobeWears = sqliteTable(
   },
   (table) => [uniqueIndex("wardrobe_wears_user_item_day_idx").on(table.userId, table.itemId, table.wornOn)],
 );
+
+/** One row per day the wearer added a photo or note to their outfit journal. What they wore comes from wardrobe_wears. */
+export const wardrobeJournal = sqliteTable(
+  "wardrobe_journal",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    day: text("day").notNull(),
+    note: text("note").notNull().default(""),
+    photoKey: text("photo_key").notNull().default(""),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [uniqueIndex("wardrobe_journal_user_day_idx").on(table.userId, table.day)],
+);
