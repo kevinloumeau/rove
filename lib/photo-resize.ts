@@ -1,5 +1,7 @@
 "use client";
 
+import { differenceHash } from "./photo-hash";
+
 const MAX_SIDE = 2048;
 
 /**
@@ -32,5 +34,29 @@ export async function shrinkPhoto(file: File): Promise<File> {
     return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
   } finally {
     bitmap.close();
+  }
+}
+
+/** 64-bit difference hash of the photo (see lib/photo-hash.ts), or null if it can't be decoded. */
+export async function photoHash(file: File): Promise<string | null> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = 9;
+    canvas.height = 8;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return null;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, 9, 8);
+    context.drawImage(bitmap, 0, 0, 9, 8);
+    bitmap.close();
+    const { data } = context.getImageData(0, 0, 9, 8);
+    const gray = Array.from({ length: 72 }, (_, index) => {
+      const offset = index * 4;
+      return data[offset] * 0.299 + data[offset + 1] * 0.587 + data[offset + 2] * 0.114;
+    });
+    return differenceHash(gray);
+  } catch {
+    return null;
   }
 }

@@ -36,7 +36,13 @@ export async function PATCH(request: Request) {
   try {
     const user = await requireApiUser();
     const payload = (await request.json()) as Record<string, unknown>;
-    if (typeof payload.id !== "string" || !payload.id)
+    // One piece by `id`, or several at once by `ids` (bulk edit from the closet's select mode).
+    const ids = Array.isArray(payload.ids)
+      ? [...new Set(payload.ids.filter((id): id is string => typeof id === "string" && id.length > 0))]
+      : typeof payload.id === "string" && payload.id
+        ? [payload.id]
+        : [];
+    if (!ids.length || ids.length > 200)
       return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
 
     const columns: string[] = [];
@@ -85,11 +91,15 @@ export async function PATCH(request: Request) {
 
     const { db } = getWardrobeBindings();
     const result = await db
-      .prepare(`UPDATE wardrobe_items SET ${columns.join(", ")} WHERE id = ? AND user_id = ? AND status = 'ready'`)
-      .bind(...values, payload.id, user.userId)
+      .prepare(
+        `UPDATE wardrobe_items SET ${columns.join(", ")} WHERE user_id = ? AND status = 'ready' AND id IN (${ids.map(() => "?").join(", ")})`,
+      )
+      .bind(...values, user.userId, ...ids)
       .run();
     if (!result.meta.changes) return Response.json({ error: "That closet item was not found." }, { status: 404 });
-    return Response.json({ id: payload.id, saved: true });
+    return Response.json(
+      ids.length === 1 && !Array.isArray(payload.ids) ? { id: ids[0], saved: true } : { ids, saved: true },
+    );
   } catch (error) {
     return apiError(error, "That change could not be saved. Try again.");
   }
