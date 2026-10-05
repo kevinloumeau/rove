@@ -60,3 +60,25 @@ export async function photoHash(file: File): Promise<string | null> {
     return null;
   }
 }
+
+/** A small WebP (longest side `size`, transparency kept) for closet grids. */
+export async function makeThumbnail(source: Blob | string, size = 480): Promise<Blob | null> {
+  try {
+    const blob = typeof source === "string" ? await (await fetch(source)).blob() : source;
+    const bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, size / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const thumb = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.85));
+    // Browsers without WebP encoding fall back to PNG; the server only accepts WebP thumbnails.
+    return thumb?.type === "image/webp" ? thumb : null;
+  } catch {
+    return null;
+  }
+}

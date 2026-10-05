@@ -73,6 +73,7 @@ export async function POST(request: Request) {
       season: string;
       description: string;
       image: string;
+      thumb?: string;
       favorite: boolean;
       tags: string[];
     }>;
@@ -95,6 +96,15 @@ export async function POST(request: Request) {
         });
         cleanedCount += 1;
       }
+      const thumb = form.get(`thumb-${index}`);
+      let thumbKey = "";
+      if (thumb instanceof File && thumb.type === "image/webp" && thumb.size > 0 && thumb.size <= 512 * 1024) {
+        thumbKey = `${crypto.randomUUID()}.webp`;
+        await bucket.put(thumbKey, thumb.stream(), {
+          httpMetadata: { contentType: "image/webp", cacheControl: "private, max-age=86400" },
+          customMetadata: { owner: user.userId, importId, generated: "thumb" },
+        });
+      }
       const id = crypto.randomUUID();
       const category = allowedCategories.has(garment.category ?? "") ? garment.category! : "Other";
       const name = (garment.name || `${category} piece`).slice(0, 120);
@@ -110,8 +120,8 @@ export async function POST(request: Request) {
         db
           .prepare(
             `
-        INSERT INTO wardrobe_items (id, user_id, import_id, name, category, color, season, description, image_key, tags, favorite, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'draft', ?)
+        INSERT INTO wardrobe_items (id, user_id, import_id, name, category, color, season, description, image_key, thumb_key, tags, favorite, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'draft', ?)
       `,
           )
           .bind(
@@ -124,6 +134,7 @@ export async function POST(request: Request) {
             season,
             description,
             imageKey,
+            thumbKey,
             JSON.stringify(tags),
             now + index,
           ),
@@ -137,6 +148,7 @@ export async function POST(request: Request) {
         season,
         description,
         image: assetUrl(imageKey),
+        thumb: thumbKey ? assetUrl(thumbKey) : undefined,
         favorite: false,
         tags,
       });

@@ -42,3 +42,13 @@ You only need to do this once.
 3. **Turn on sign-in.** On the deployed Worker, go to Settings > Domains & Routes and enable **Cloudflare Access** for the `workers.dev` route. Then go to Zero Trust > Access > Applications, open that application, and set its policy to allow only your email address. Copy the application's **AUD tag** and your **team domain** (`<team>.cloudflareaccess.com`) into `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` in `wrangler.jsonc`, then push. If you add a custom domain later, protect it with the same Access application.
 
 Until step 3 is done, the deployed app loads but its API answers "Sign-in is not configured".
+
+## Branch previews
+
+Branch previews run on a separate Worker, `rove-preview`, with its own D1 database (`rove-preview`) and R2 bucket (`rove-closet-preview`). Nothing you do on a preview touches your real closet. The `preview` environment in `wrangler.jsonc` sets this up.
+
+To turn it on once:
+
+1. In Workers & Pages, open the `rove` Worker, go to Settings > Builds, and turn off non-production branch builds. Otherwise those builds upload versions that use the real database.
+2. Create a second Worker from this repo (Create > Import a repository), named `rove-preview`. Set its build command to `npm run build`, its deploy command to `npm run deploy:preview`, and its production branch to the branch you want to try. Turn on non-production branch builds with the deploy command `npm run deploy:preview` too.
+3. Add `rove-preview.<your-subdomain>.workers.dev` to the same Cloudflare Access application as the main app, so sign-in works there.

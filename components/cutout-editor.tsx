@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { removeSpecks } from "@/lib/cutout-refine";
+import { makeThumbnail } from "@/lib/photo-resize";
 import type { WardrobeItem } from "@/lib/wardrobe-types";
 
 /** Erase stray bits, paint back what was cut too far, or clear specks, then save a new cutout. */
@@ -22,7 +23,7 @@ export function CutoutEditor({
 }: {
   item: WardrobeItem | null;
   onOpenChange: (open: boolean) => void;
-  onSaved: (id: WardrobeItem["id"], image: string) => void;
+  onSaved: (id: WardrobeItem["id"], image: string, thumb?: string) => void;
 }) {
   return (
     <Dialog open={Boolean(item)} onOpenChange={onOpenChange}>
@@ -40,7 +41,7 @@ function Editor({
 }: {
   item: WardrobeItem;
   onCancel: () => void;
-  onSaved: (id: WardrobeItem["id"], image: string) => void;
+  onSaved: (id: WardrobeItem["id"], image: string, thumb?: string) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const originalRef = useRef<HTMLCanvasElement | null>(null);
@@ -155,10 +156,16 @@ function Editor({
       const form = new FormData();
       form.set("id", String(item.id));
       form.set("image", new File([blob], "cutout.png", { type: "image/png" }));
+      const thumb = await makeThumbnail(blob);
+      if (thumb) form.set("thumb", new File([thumb], "thumb.webp", { type: "image/webp" }));
       const response = await fetch("/api/wardrobe/image", { method: "POST", body: form });
-      const payload = (await response.json().catch(() => ({}))) as { image?: string; error?: string };
+      const payload = (await response.json().catch(() => ({}))) as {
+        image?: string;
+        thumb?: string | null;
+        error?: string;
+      };
       if (!response.ok || !payload.image) throw new Error(payload.error || "That cutout could not be saved.");
-      onSaved(item.id, payload.image);
+      onSaved(item.id, payload.image, payload.thumb ?? undefined);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "That cutout could not be saved.");
       setStatus("ready");

@@ -6,6 +6,8 @@ export type WardrobeItem = {
   color: string;
   season: string;
   image: string;
+  /** Small grid image; falls back to `image` when missing. */
+  thumb?: string;
   favorite?: boolean;
   description: string;
   tags?: string[];

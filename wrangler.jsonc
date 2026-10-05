@@ -14,10 +14,33 @@
     },
   ],
   "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "rove-closet" }],
+  // Nightly cleanup of imports that were never confirmed (worker/index.ts, scheduled).
+  "triggers": { "crons": ["17 4 * * *"] },
   "vars": {
     // Cloudflare Access protects the app. Fill these in from Zero Trust > Access > Applications:
     // the team domain (e.g. "yourteam.cloudflareaccess.com") and the application's AUD tag.
     "ACCESS_TEAM_DOMAIN": "blue-mouse-2b9e.cloudflareaccess.com",
     "ACCESS_AUD": "658e4e82f9c19bc7c427cd93edcc527c9366a3c88bcbf63422544c635ee703ce",
+  },
+  "env": {
+    // A separate Worker (rove-preview) with its own database and bucket, so trying a branch never
+    // touches the real closet. Deploy with `npm run deploy:preview`; see README.
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "rove-preview",
+          "database_id": "d650197a-30f4-4bb2-ac84-9821240087b8",
+          "migrations_dir": "drizzle",
+        },
+      ],
+      "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "rove-closet-preview" }],
+      "triggers": { "crons": [] },
+      "vars": {
+        // Protect rove-preview's workers.dev route with the same Access application, so this AUD matches.
+        "ACCESS_TEAM_DOMAIN": "blue-mouse-2b9e.cloudflareaccess.com",
+        "ACCESS_AUD": "658e4e82f9c19bc7c427cd93edcc527c9366a3c88bcbf63422544c635ee703ce",
+      },
+    },
   },
 }
