@@ -44,6 +44,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EditLookDialog, EditPieceDialog, type PieceChanges } from "@/components/closet-dialogs";
 import { ClosetInsights } from "@/components/closet-insights";
+import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
 import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
 import { photoHash, shrinkPhoto } from "@/lib/photo-resize";
@@ -120,7 +121,7 @@ export default function Home() {
   const [outfit, setOutfit] = useState<Array<number | string>>([]);
   const [activeSlot, setActiveSlot] = useState("Tops");
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
-  const pieceRailRef = useRef<HTMLElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const dayPanelRef = useRef<HTMLElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const [outfitMode, setOutfitMode] = useState<"canvas" | "saved">("canvas");
@@ -889,6 +890,27 @@ export default function Home() {
         </nav>
         <TabsContent value="closet" className="closet-view">
           <section className="closet-main">
+            {items.length > 0 && (
+              <OutfitOfTheDay
+                items={items}
+                looks={savedLooks}
+                plans={plans}
+                todayIso={todayIso}
+                onOpenLook={loadLook}
+                onWear={logWear}
+                onPlanDay={(date) => {
+                  setCalendarMonth(new Date(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, 1));
+                  setSelectedDate(date);
+                  setActiveTab("calendar");
+                }}
+                onSurprise={() => {
+                  shuffleLook();
+                  setCanvasLookId(null);
+                  setOutfitMode("canvas");
+                  setActiveTab("outfits");
+                }}
+              />
+            )}
             <div className="section-heading">
               <div>
                 <h1>Your closet</h1>
@@ -1141,7 +1163,7 @@ export default function Home() {
           </section>
           {outfitMode === "canvas" ? (
             <div className="styling-workspace">
-              <aside className="piece-rail" ref={pieceRailRef}>
+              <aside className="piece-rail">
                 <div className="rail-heading">
                   <h2>{activeSlot}</h2>
                   <span>{railItems.length}</span>
@@ -1205,8 +1227,8 @@ export default function Home() {
                           aria-pressed={activeSlot === slot.category}
                           onClick={() => {
                             setActiveSlot(slot.category);
-                            // On phones the piece list sits below the canvas.
-                            if (isNarrow(760)) scrollIntoViewSoon(pieceRailRef.current);
+                            // On phones pieces are picked from a bottom sheet instead of the side rail.
+                            if (isNarrow(760)) setPickerOpen(true);
                           }}
                         >
                           <span className="slot-label">{slot.label}</span>
@@ -1277,7 +1299,7 @@ export default function Home() {
                     </button>
                   </>
                 ) : (
-                  <button disabled={!outfitItems.length} onClick={saveCurrentLook}>
+                  <button className="primary" disabled={!outfitItems.length} onClick={saveCurrentLook}>
                     <Heart /> Save this look
                   </button>
                 )}
@@ -1325,6 +1347,46 @@ export default function Home() {
             </section>
           )}
         </TabsContent>
+        <Sheet open={pickerOpen} onOpenChange={setPickerOpen}>
+          <SheetContent side="bottom" className="picker-sheet">
+            <SheetTitle>Choose {slotDefs.find((slot) => slot.category === activeSlot)?.label.toLowerCase()}</SheetTitle>
+            <SheetDescription className="sr-only">Pick a piece for this slot.</SheetDescription>
+            {railItems.length ? (
+              <ul>
+                {railItems.map((item) => {
+                  const inLook = outfit.some((id) => sameId(id, item.id));
+                  return (
+                    <li key={item.id}>
+                      <button
+                        className={inLook ? "active" : ""}
+                        aria-pressed={inLook}
+                        onClick={() => {
+                          addToOutfit(item.id);
+                          setPickerOpen(false);
+                        }}
+                      >
+                        <img src={item.image} alt="" />
+                        <span>
+                          <strong>{item.name}</strong>
+                          <small>
+                            {item.color}
+                            {item.inLaundry ? " · in the wash" : ""}
+                          </small>
+                        </span>
+                        {inLook && <Check />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="rail-empty">Nothing in this slot yet. Add a photo to grow it.</p>
+            )}
+            <button className="picker-done" onClick={() => setPickerOpen(false)}>
+              Done
+            </button>
+          </SheetContent>
+        </Sheet>
         <TabsContent value="calendar" className="calendar-view">
           <section className="calendar-intro">
             <div>
@@ -1457,6 +1519,11 @@ export default function Home() {
           />
         </TabsContent>
       </Tabs>
+      {activeTab === "closet" && !selecting && items.length > 0 && (
+        <button className="fab-add" onClick={() => setDialogOpen(true)}>
+          Add clothes <Plus />
+        </button>
+      )}
       <EditPieceDialog
         item={editingItem}
         onOpenChange={(open) => !open && setEditingItem(null)}
@@ -1628,6 +1695,22 @@ function UploadDialog({
               )}
             </div>
             <div className="processing-copy" aria-live="polite">
+              {isProcessing && (
+                <div className="styling-icons" aria-hidden>
+                  <span>
+                    <Shirt />
+                  </span>
+                  <span>
+                    <Layers3 />
+                  </span>
+                  <span>
+                    <Sparkles />
+                  </span>
+                  <span>
+                    <WandSparkles />
+                  </span>
+                </div>
+              )}
               <p className="process-status">
                 {isProcessing ? <WandSparkles /> : importError ? <X /> : <Check />}
                 {isProcessing

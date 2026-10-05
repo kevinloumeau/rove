@@ -18,6 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossOrigin="" />
+      </head>
       <body className="antialiased">
         {children}
         <Toaster position="bottom-center" />

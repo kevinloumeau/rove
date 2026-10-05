@@ -14,7 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   {
-    files: ["app/page.tsx", "components/closet-*.tsx"],
+    files: ["app/page.tsx", "components/*.tsx"],
     rules: {
       // Closet images are private, signed-in API responses or local blob: previews,
       // which the Next.js image optimizer cannot fetch, so plain <img> is intended.
