@@ -1,5 +1,7 @@
 "use client";
 
+import { CLOTHING_MODEL, MODEL_PROXY_PREFIX } from "./model-proxy";
+
 type SegmentMask = { data: Uint8Array | Uint8ClampedArray; width: number; height: number; channels?: number };
 type Segment = { label: string; mask: SegmentMask };
 type LocalGarment = {
@@ -62,7 +64,9 @@ async function getSegmenter(onProgress: (message: string) => void) {
     segmenterPromise = import("@huggingface/transformers").then(async ({ env, pipeline }) => {
       env.allowLocalModels = false;
       env.useBrowserCache = true;
-      const model = await pipeline("image-segmentation", "Xenova/segformer_b0_clothes", {
+      // Load the model through this app's Worker rather than straight from huggingface.co.
+      env.remoteHost = `${window.location.origin}${MODEL_PROXY_PREFIX}`;
+      const model = await pipeline("image-segmentation", CLOTHING_MODEL, {
         dtype: "q8",
         progress_callback: (event: { status?: string; progress?: number }) => {
           if (event.status === "progress" && typeof event.progress === "number")
@@ -70,6 +74,12 @@ async function getSegmenter(onProgress: (message: string) => void) {
         },
       });
       return model as unknown as (image: string) => Promise<Segment[]>;
+    });
+    // A failed download shouldn't stick: let the next photo try again.
+    segmenterPromise = segmenterPromise.catch((error: unknown) => {
+      segmenterPromise = null;
+      console.error("Clothing model download failed", error);
+      throw new Error("Rove couldn't download its clothing model. Check your connection and try again.");
     });
   } else {
     onProgress("Opening the cached clothing model…");
