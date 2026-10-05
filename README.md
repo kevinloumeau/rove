@@ -25,6 +25,7 @@ In `npm run dev`, Access isn't configured, so every request is treated as a sing
 The other scripts:
 
 - `npm run typecheck`, `npm run lint` and `npm test`: run the checks.
+- `npm run test:e2e`: click through the main flows (closet search, building and saving a look, planning it) in Chromium on a desktop and a phone screen. It starts `npm run dev` for you and seeds its own pieces. Run `npx playwright install chromium` once first.
 - `npm run preview`: serve the production build locally through Wrangler.
 - `npm run db:generate`: create a new migration after you change `db/schema.ts`.
 
