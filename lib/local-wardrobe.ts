@@ -1,5 +1,6 @@
 "use client";
 
+import { keepRealGarments } from "./garment-filter";
 import { CLOTHING_MODEL, MODEL_PROXY_PREFIX } from "./model-proxy";
 
 type SegmentMask = { data: Uint8Array | Uint8ClampedArray; width: number; height: number; channels?: number };
@@ -90,6 +91,18 @@ async function getSegmenter(onProgress: (message: string) => void) {
 function maskValue(mask: SegmentMask, x: number, y: number) {
   const channels = mask.channels ?? Math.max(1, Math.round(mask.data.length / (mask.width * mask.height)));
   return mask.data[(y * mask.width + x) * channels] ?? 0;
+}
+
+/** Pixels a mask counts as covered, matching the threshold cutoutFromMasks uses. */
+function maskArea(masks: SegmentMask[]) {
+  const { width, height } = masks[0];
+  let area = 0;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (masks.some((mask) => maskValue(mask, x, y) > 40)) area += 1;
+    }
+  }
+  return area;
 }
 
 function nearestColor(red: number, green: number, blue: number) {
@@ -191,10 +204,14 @@ export async function processWardrobeImage(file: File, onProgress: (message: str
   try {
     onProgress("Finding garments on this device…");
     const [segments, bitmap] = await Promise.all([segmenter(sourceUrl), createImageBitmap(file)]);
-    const garments: LocalGarment[] = [];
-    for (const group of garmentGroups) {
+    const found = garmentGroups.flatMap((group) => {
       const masks = segments.filter((segment) => group.labels.includes(segment.label)).map((segment) => segment.mask);
-      if (!masks.length) continue;
+      const small = group.category === "Shoes" || group.category === "Accessories";
+      return masks.length ? [{ group, masks, small, area: maskArea(masks) }] : [];
+    });
+    const totalPixels = found.length ? found[0].masks[0].width * found[0].masks[0].height : 0;
+    const garments: LocalGarment[] = [];
+    for (const { group, masks } of keepRealGarments(found, totalPixels)) {
       onProgress(`Cleaning ${group.noun} edges…`);
       const cutout = await cutoutFromMasks(bitmap, masks);
       if (!cutout) continue;
