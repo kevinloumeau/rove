@@ -1,7 +1,19 @@
 "use client";
 
+import { colorName, colorSwatches } from "./color-name";
 import { keepRealGarments } from "./garment-filter";
-import { CLOTHING_MODEL, MODEL_PROXY_PREFIX } from "./model-proxy";
+import {
+  type GarmentKind,
+  type Guess,
+  MATERIAL_TEMPLATE,
+  PATTERN_TEMPLATE,
+  TYPE_TEMPLATE,
+  describeGarment,
+  materialOptions,
+  patternOptions,
+  typeOptions,
+} from "./garment-labels";
+import { CLOTHING_MODEL, MODEL_PROXY_PREFIX, STYLE_MODEL } from "./model-proxy";
 
 type SegmentMask = { data: Uint8Array | Uint8ClampedArray; width: number; height: number; channels?: number };
 type Segment = { label: string; mask: SegmentMask };
@@ -15,46 +27,23 @@ type LocalGarment = {
   image: Blob;
 };
 
-const garmentGroups: Array<{ labels: string[]; category: string; noun: string }> = [
-  { labels: ["Upper-clothes"], category: "Tops", noun: "top" },
-  { labels: ["Pants"], category: "Bottoms", noun: "trousers" },
-  { labels: ["Skirt"], category: "Bottoms", noun: "skirt" },
-  { labels: ["Dress"], category: "Dresses", noun: "dress" },
-  { labels: ["Left-shoe", "Right-shoe"], category: "Shoes", noun: "shoes" },
-  { labels: ["Bag"], category: "Accessories", noun: "bag" },
-  { labels: ["Hat"], category: "Accessories", noun: "hat" },
-  { labels: ["Belt"], category: "Accessories", noun: "belt" },
-  { labels: ["Scarf"], category: "Accessories", noun: "scarf" },
-  { labels: ["Sunglasses"], category: "Accessories", noun: "sunglasses" },
+const garmentGroups: Array<{ labels: string[]; kind: GarmentKind; category: string; noun: string }> = [
+  { labels: ["Upper-clothes"], kind: "top", category: "Tops", noun: "top" },
+  { labels: ["Pants"], kind: "pants", category: "Bottoms", noun: "pants" },
+  { labels: ["Skirt"], kind: "skirt", category: "Bottoms", noun: "skirt" },
+  { labels: ["Dress"], kind: "dress", category: "Dresses", noun: "dress" },
+  { labels: ["Left-shoe", "Right-shoe"], kind: "shoes", category: "Shoes", noun: "shoes" },
+  { labels: ["Bag"], kind: "accessory", category: "Accessories", noun: "bag" },
+  { labels: ["Hat"], kind: "accessory", category: "Accessories", noun: "hat" },
+  { labels: ["Belt"], kind: "accessory", category: "Accessories", noun: "belt" },
+  { labels: ["Scarf"], kind: "accessory", category: "Accessories", noun: "scarf" },
+  { labels: ["Sunglasses"], kind: "accessory", category: "Accessories", noun: "sunglasses" },
 ];
-
-const colorPalette = [
-  ["Black", 26, 27, 29],
-  ["White", 235, 235, 230],
-  ["Gray", 128, 130, 132],
-  ["Navy", 31, 48, 79],
-  ["Blue", 55, 102, 171],
-  ["Red", 180, 45, 42],
-  ["Pink", 219, 128, 153],
-  ["Purple", 113, 76, 145],
-  ["Green", 67, 119, 76],
-  ["Yellow", 220, 187, 55],
-  ["Orange", 210, 112, 43],
-  ["Brown", 108, 72, 50],
-  ["Beige", 201, 183, 145],
-  ["Cream", 229, 218, 188],
-] as const;
-
-const extraSwatches: Record<string, string> = {
-  Charcoal: "#36383a",
-  Multicolor: "conic-gradient(#d0463b, #e0b23a, #4b8f5a, #3e6fc4, #d0463b)",
-};
 
 /** CSS background for a color name, falling back to a neutral when the name is unknown. */
 export function colorSwatch(name: string) {
-  const match = colorPalette.find((color) => color[0].toLowerCase() === name.trim().toLowerCase());
-  if (match) return `rgb(${match[1]}, ${match[2]}, ${match[3]})`;
-  return extraSwatches[name.trim()] ?? "#c9ccc4";
+  const key = Object.keys(colorSwatches).find((color) => color.toLowerCase() === name.trim().toLowerCase());
+  return key ? colorSwatches[key] : "#c9ccc4";
 }
 
 let segmenterPromise: Promise<(image: string) => Promise<Segment[]>> | null = null;
@@ -88,6 +77,70 @@ async function getSegmenter(onProgress: (message: string) => void) {
   return segmenterPromise;
 }
 
+type StyleClassifier = (image: string, labels: string[], options: { hypothesis_template: string }) => Promise<Guess[]>;
+let styleModelPromise: Promise<StyleClassifier> | null = null;
+
+/** Loads the style model that names each cutout. Its failure only costs the precise names. */
+async function getStyleModel(onProgress: (message: string) => void) {
+  if (!styleModelPromise) {
+    onProgress("Downloading the private style model…");
+    styleModelPromise = import("@huggingface/transformers").then(async ({ env, pipeline }) => {
+      env.allowLocalModels = false;
+      env.useBrowserCache = true;
+      env.remoteHost = `${window.location.origin}${MODEL_PROXY_PREFIX}`;
+      const model = await pipeline("zero-shot-image-classification", STYLE_MODEL, {
+        dtype: "q8",
+        progress_callback: (event: { status?: string; progress?: number }) => {
+          if (event.status === "progress" && typeof event.progress === "number")
+            onProgress(`Downloading the private style model… ${Math.round(event.progress)}%`);
+        },
+      });
+      return model as unknown as StyleClassifier;
+    });
+    styleModelPromise = styleModelPromise.catch((error: unknown) => {
+      styleModelPromise = null;
+      throw error;
+    });
+  }
+  return styleModelPromise;
+}
+
+/** Asks the style model for the garment's type, fabric and pattern. Returns no guesses on failure. */
+async function styleGuesses(kind: GarmentKind, preview: Blob | null, onProgress: (message: string) => void) {
+  const types = typeOptions[kind];
+  if (!preview || !types.length) return {};
+  const url = URL.createObjectURL(preview);
+  try {
+    const classify = await getStyleModel(onProgress);
+    const material =
+      kind === "shoes"
+        ? undefined
+        : await classify(
+            url,
+            materialOptions.map((o) => o.label),
+            { hypothesis_template: MATERIAL_TEMPLATE },
+          );
+    return {
+      type: await classify(
+        url,
+        types.map((o) => o.label),
+        { hypothesis_template: TYPE_TEMPLATE },
+      ),
+      material,
+      pattern: await classify(
+        url,
+        patternOptions.map((o) => o.label),
+        { hypothesis_template: PATTERN_TEMPLATE },
+      ),
+    };
+  } catch (error) {
+    console.warn("Style model unavailable; using plain names", error);
+    return {};
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function maskValue(mask: SegmentMask, x: number, y: number) {
   const channels = mask.channels ?? Math.max(1, Math.round(mask.data.length / (mask.width * mask.height)));
   return mask.data[(y * mask.width + x) * channels] ?? 0;
@@ -103,19 +156,6 @@ function maskArea(masks: SegmentMask[]) {
     }
   }
   return area;
-}
-
-function nearestColor(red: number, green: number, blue: number) {
-  let best: (typeof colorPalette)[number] = colorPalette[0];
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const color of colorPalette) {
-    const distance = (red - color[1]) ** 2 + (green - color[2]) ** 2 + (blue - color[3]) ** 2;
-    if (distance < bestDistance) {
-      best = color;
-      bestDistance = distance;
-    }
-  }
-  return best[0];
 }
 
 async function cutoutFromMasks(bitmap: ImageBitmap, masks: SegmentMask[]) {
@@ -194,8 +234,19 @@ async function cutoutFromMasks(bitmap: ImageBitmap, masks: SegmentMask[]) {
   outputContext.drawImage(cropCanvas, Math.round((side - width) / 2), Math.round((side - height) / 2), width, height);
   const blob = await new Promise<Blob | null>((resolve) => output.toBlob(resolve, "image/png"));
   if (!blob) return null;
-  const color = samples ? nearestColor(red / samples, green / samples, blue / samples) : "Multicolor";
-  return { blob, color };
+  const color = samples ? colorName(red / samples, green / samples, blue / samples) : "Multicolor";
+
+  // The style model reads a small copy on white, since transparent pixels would turn black.
+  const preview = document.createElement("canvas");
+  preview.width = 336;
+  preview.height = 336;
+  const previewContext = preview.getContext("2d");
+  if (!previewContext) return { blob, color, preview: null };
+  previewContext.fillStyle = "#ffffff";
+  previewContext.fillRect(0, 0, preview.width, preview.height);
+  previewContext.drawImage(output, 0, 0, preview.width, preview.height);
+  const previewBlob = await new Promise<Blob | null>((resolve) => preview.toBlob(resolve, "image/jpeg", 0.9));
+  return { blob, color, preview: previewBlob };
 }
 
 export async function processWardrobeImage(file: File, onProgress: (message: string) => void): Promise<LocalGarment[]> {
@@ -215,15 +266,16 @@ export async function processWardrobeImage(file: File, onProgress: (message: str
       onProgress(`Cleaning ${group.noun} edges…`);
       const cutout = await cutoutFromMasks(bitmap, masks);
       if (!cutout) continue;
-      garments.push({
-        name: `${cutout.color} ${group.noun}`,
-        category: group.category,
+      onProgress(`Naming the ${group.noun}…`);
+      const guesses = await styleGuesses(group.kind, cutout.preview, onProgress);
+      const details = describeGarment({
+        kind: group.kind,
+        fallbackNoun: group.noun,
+        fallbackCategory: group.category,
         color: cutout.color,
-        season: "All season",
-        description: `${cutout.color} ${group.noun} isolated privately on this device from the uploaded photo.`,
-        tags: [group.category.toLowerCase(), group.noun, cutout.color.toLowerCase(), "local processing"],
-        image: cutout.blob,
+        ...guesses,
       });
+      garments.push({ ...details, color: cutout.color, image: cutout.blob });
       if (garments.length >= 8) break;
     }
     bitmap.close();

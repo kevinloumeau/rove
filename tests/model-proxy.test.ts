@@ -19,3 +19,10 @@ test("refuses other models and path tricks", () => {
   assert.equal(modelUpstreamUrl("/hf/Xenova/segformer_b0_clothes/resolve/main/"), null);
   assert.equal(modelUpstreamUrl("/hf/Xenova/segformer_b0_clothes/resolve/dev/config.json"), null);
 });
+
+test("maps style model files to Hugging Face", () => {
+  assert.equal(
+    modelUpstreamUrl("/hf/Xenova/clip-vit-base-patch32/resolve/main/onnx/model_quantized.onnx"),
+    "https://huggingface.co/Xenova/clip-vit-base-patch32/resolve/main/onnx/model_quantized.onnx",
+  );
+});

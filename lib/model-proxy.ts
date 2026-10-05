@@ -1,24 +1,31 @@
-/** Same-origin path the browser loads the clothing model from (see lib/local-wardrobe.ts). */
+/** Same-origin path the browser loads its models from (see lib/local-wardrobe.ts). */
 export const MODEL_PROXY_PREFIX = "/hf/";
+/** Finds and cuts out each garment. */
 export const CLOTHING_MODEL = "Xenova/segformer_b0_clothes";
+/** Names each cutout's type, fabric and pattern (CLIP zero-shot classification). */
+export const STYLE_MODEL = "Xenova/clip-vit-base-patch32";
+const MODELS = [CLOTHING_MODEL, STYLE_MODEL];
 
 const UPSTREAM = "https://huggingface.co/";
 const FILE_PATTERN = /^[\w.-]+(\/[\w.-]+)*$/;
 
 /**
- * Maps a proxied model path to its Hugging Face URL, or null when the path is not one of the
- * clothing model's files. Only that one model is served, so the Worker is not an open proxy.
+ * Maps a proxied model path to its Hugging Face URL, or null when the path is not a file of one
+ * of Rove's models. Only those models are served, so the Worker is not an open proxy.
  */
 export function modelUpstreamUrl(pathname: string) {
-  const prefix = `${MODEL_PROXY_PREFIX}${CLOTHING_MODEL}/resolve/main/`;
-  if (!pathname.startsWith(prefix)) return null;
-  const file = pathname.slice(prefix.length);
-  if (!FILE_PATTERN.test(file) || file.split("/").includes("..")) return null;
-  return `${UPSTREAM}${CLOTHING_MODEL}/resolve/main/${file}`;
+  for (const model of MODELS) {
+    const prefix = `${MODEL_PROXY_PREFIX}${model}/resolve/main/`;
+    if (!pathname.startsWith(prefix)) continue;
+    const file = pathname.slice(prefix.length);
+    if (!FILE_PATTERN.test(file) || file.split("/").includes("..")) return null;
+    return `${UPSTREAM}${model}/resolve/main/${file}`;
+  }
+  return null;
 }
 
 /**
- * Serves the clothing model from this origin so photo import works even when the browser can't
+ * Serves Rove's models from this origin so photo import works even when the browser can't
  * reach huggingface.co directly (content blockers, strict networks). Files are cached at the edge.
  */
 export async function handleModelRequest(request: Request, ctx: ExecutionContext) {
