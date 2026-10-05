@@ -24,7 +24,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { lookOccasions, pieceCategories, seasons, type SavedLook, type WardrobeItem } from "@/lib/wardrobe-types";
 
-type PieceChanges = Pick<WardrobeItem, "name" | "category" | "color" | "season" | "description">;
+export type PieceChanges = Pick<WardrobeItem, "name" | "category" | "color" | "season" | "description"> & {
+  brand: string;
+  size: string;
+  notes: string;
+  price: number | null;
+};
 type LookChanges = Pick<SavedLook, "name" | "occasion">;
 
 function withCurrent(options: string[], current: string) {
@@ -64,9 +69,18 @@ function PieceForm({
     color: item.color,
     season: item.season,
     description: item.description,
+    brand: item.brand ?? "",
+    size: item.size ?? "",
+    notes: item.notes ?? "",
+    price: item.price ?? null,
   });
+  const [priceText, setPriceText] = useState(item.price == null ? "" : String(item.price));
   const [saving, setSaving] = useState(false);
-  const set = (key: keyof PieceChanges) => (value: string) => setDraft((current) => ({ ...current, [key]: value }));
+  const set = (key: Exclude<keyof PieceChanges, "price">) => (value: string) =>
+    setDraft((current) => ({ ...current, [key]: value }));
+  const parsedPrice = priceText.trim() === "" ? null : Number(priceText.replace(",", "."));
+  const priceValid =
+    parsedPrice === null || (Number.isFinite(parsedPrice) && parsedPrice >= 0 && parsedPrice < 1_000_000);
 
   return (
     <form
@@ -74,7 +88,15 @@ function PieceForm({
         event.preventDefault();
         setSaving(true);
         try {
-          await onSave({ ...draft, name: draft.name.trim(), color: draft.color.trim() });
+          await onSave({
+            ...draft,
+            name: draft.name.trim(),
+            color: draft.color.trim(),
+            brand: draft.brand.trim(),
+            size: draft.size.trim(),
+            notes: draft.notes.trim(),
+            price: parsedPrice === null ? null : Math.round(parsedPrice * 100) / 100,
+          });
         } finally {
           setSaving(false);
         }
@@ -111,6 +133,26 @@ function PieceForm({
           Color
           <Input required maxLength={80} value={draft.color} onChange={(event) => set("color")(event.target.value)} />
         </label>
+        <div className="edit-row">
+          <label>
+            Brand
+            <Input maxLength={80} value={draft.brand} onChange={(event) => set("brand")(event.target.value)} />
+          </label>
+          <label>
+            Size
+            <Input maxLength={40} value={draft.size} onChange={(event) => set("size")(event.target.value)} />
+          </label>
+        </div>
+        <label>
+          Price paid
+          <Input
+            inputMode="decimal"
+            placeholder="Optional, used for cost per wear"
+            value={priceText}
+            aria-invalid={!priceValid}
+            onChange={(event) => setPriceText(event.target.value)}
+          />
+        </label>
         <label>
           Description
           <Textarea
@@ -119,12 +161,21 @@ function PieceForm({
             onChange={(event) => set("description")(event.target.value)}
           />
         </label>
+        <label>
+          Notes
+          <Textarea
+            maxLength={1000}
+            placeholder="Care instructions, where you bought it, how it fits…"
+            value={draft.notes}
+            onChange={(event) => set("notes")(event.target.value)}
+          />
+        </label>
       </div>
       <DialogFooter>
         <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button type="submit" disabled={saving || !draft.name.trim() || !draft.color.trim()}>
+        <Button type="submit" disabled={saving || !draft.name.trim() || !draft.color.trim() || !priceValid}>
           {saving ? "Saving…" : "Save changes"}
         </Button>
       </DialogFooter>

@@ -9,6 +9,15 @@ export type WardrobeItem = {
   favorite?: boolean;
   description: string;
   tags?: string[];
+  brand?: string;
+  size?: string;
+  notes?: string;
+  /** Purchase price in whole currency units (e.g. dollars), or null when unknown. */
+  price?: number | null;
+  inLaundry?: boolean;
+  wearCount?: number;
+  /** ISO date (YYYY-MM-DD) of the most recent wear. */
+  lastWorn?: string | null;
 };
 
 export type SavedLook = {

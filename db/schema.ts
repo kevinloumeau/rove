@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const wardrobeImports = sqliteTable(
   "wardrobe_imports",
@@ -29,6 +29,12 @@ export const wardrobeItems = sqliteTable(
     imageKey: text("image_key").notNull(),
     tags: text("tags").notNull().default("[]"),
     favorite: integer("favorite", { mode: "boolean" }).notNull().default(false),
+    brand: text("brand").notNull().default(""),
+    size: text("size").notNull().default(""),
+    notes: text("notes").notNull().default(""),
+    /** Purchase price in cents, or null when unknown. */
+    priceCents: integer("price_cents"),
+    inLaundry: integer("in_laundry", { mode: "boolean" }).notNull().default(false),
     status: text("status").notNull().default("draft"),
     createdAt: integer("created_at").notNull(),
   },
@@ -62,4 +68,17 @@ export const wardrobePlans = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (table) => [index("wardrobe_plans_user_date_idx").on(table.userId, table.plannedDate)],
+);
+
+/** One row per piece per day it was worn. */
+export const wardrobeWears = sqliteTable(
+  "wardrobe_wears",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    itemId: text("item_id").notNull(),
+    wornOn: text("worn_on").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [uniqueIndex("wardrobe_wears_user_item_day_idx").on(table.userId, table.itemId, table.wornOn)],
 );

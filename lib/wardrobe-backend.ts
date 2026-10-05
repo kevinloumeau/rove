@@ -53,5 +53,17 @@ export function toWardrobeItem(row: Record<string, unknown>) {
     image: assetUrl(imageKey),
     favorite: Boolean(row.favorite),
     tags: safeJsonArray(row.tags),
+    brand: String(row.brand ?? ""),
+    size: String(row.size ?? ""),
+    notes: String(row.notes ?? ""),
+    price: typeof row.price_cents === "number" ? row.price_cents / 100 : null,
+    inLaundry: Boolean(row.in_laundry),
+    wearCount: Number(row.wear_count ?? 0),
+    lastWorn: typeof row.last_worn === "string" ? row.last_worn : null,
   };
+}
+
+/** YYYY-MM-DD, as sent by the browser for "today" in the wearer's own time zone. */
+export function isIsoDate(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
 }

@@ -9,10 +9,14 @@ export async function GET() {
     const result = await db
       .prepare(
         `
-      SELECT id, import_id, name, category, color, season, description, image_key, tags, favorite
-      FROM wardrobe_items
-      WHERE user_id = ? AND status = 'ready'
-      ORDER BY created_at DESC
+      SELECT i.id, i.import_id, i.name, i.category, i.color, i.season, i.description, i.image_key, i.tags,
+        i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry,
+        COUNT(w.id) AS wear_count, MAX(w.worn_on) AS last_worn
+      FROM wardrobe_items i
+      LEFT JOIN wardrobe_wears w ON w.item_id = i.id AND w.user_id = i.user_id
+      WHERE i.user_id = ? AND i.status = 'ready'
+      GROUP BY i.id
+      ORDER BY i.created_at DESC
       LIMIT 500
     `,
       )
@@ -26,6 +30,7 @@ export async function GET() {
 
 const CATEGORIES = new Set(["Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other"]);
 const TEXT_LIMITS = { name: 120, color: 80, season: 80, description: 600 } as const;
+const OPTIONAL_TEXT_LIMITS = { brand: 80, size: 40, notes: 1000 } as const;
 
 export async function PATCH(request: Request) {
   try {
@@ -35,7 +40,7 @@ export async function PATCH(request: Request) {
       return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
 
     const columns: string[] = [];
-    const values: Array<string | number> = [];
+    const values: Array<string | number | null> = [];
     if (payload.favorite !== undefined) {
       if (typeof payload.favorite !== "boolean")
         return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
@@ -49,6 +54,26 @@ export async function PATCH(request: Request) {
         return Response.json({ error: `Enter a ${field} for this piece.` }, { status: 400 });
       columns.push(`${field} = ?`);
       values.push(value.trim().slice(0, limit));
+    }
+    for (const [field, limit] of Object.entries(OPTIONAL_TEXT_LIMITS)) {
+      const value = payload[field];
+      if (value === undefined) continue;
+      if (typeof value !== "string") return Response.json({ error: `Enter a valid ${field}.` }, { status: 400 });
+      columns.push(`${field} = ?`);
+      values.push(value.trim().slice(0, limit));
+    }
+    if (payload.price !== undefined) {
+      const price = payload.price;
+      if (price !== null && (typeof price !== "number" || !Number.isFinite(price) || price < 0 || price > 1_000_000))
+        return Response.json({ error: "Enter a valid price." }, { status: 400 });
+      columns.push("price_cents = ?");
+      values.push(price === null ? null : Math.round(price * 100));
+    }
+    if (payload.inLaundry !== undefined) {
+      if (typeof payload.inLaundry !== "boolean")
+        return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
+      columns.push("in_laundry = ?");
+      values.push(payload.inLaundry ? 1 : 0);
     }
     if (payload.category !== undefined) {
       if (typeof payload.category !== "string" || !CATEGORIES.has(payload.category))
@@ -88,6 +113,7 @@ export async function DELETE(request: Request) {
       .all<{ id: string; item_ids: string }>();
     await db.batch([
       db.prepare(`DELETE FROM wardrobe_items WHERE id = ? AND user_id = ?`).bind(id, user.userId),
+      db.prepare(`DELETE FROM wardrobe_wears WHERE item_id = ? AND user_id = ?`).bind(id, user.userId),
       ...looks.results.map((look) =>
         db
           .prepare(`UPDATE wardrobe_outfits SET item_ids = ? WHERE id = ? AND user_id = ?`)
