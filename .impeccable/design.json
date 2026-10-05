@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-05T12:00:00-04:00",
+  "title": "Design System: Rove",
+  "extensions": {
+    "colorMeta": {
+      "electric-blue": { "role": "primary", "displayName": "Electric Blue", "canonical": "#3e55f0", "tonalRamp": ["#101847", "#1b286c", "#293998", "#3e55f0", "#7182f5", "#a6b0fa", "#d0d5fd", "#f0f2ff"] },
+      "blue-work-surface": { "role": "primary", "displayName": "Blue Work Surface", "canonical": "#e9ecff", "tonalRamp": ["#20264b", "#343b6e", "#525b98", "#7a83be", "#a5acd9", "#cdd1ed", "#e9ecff", "#f6f7ff"] },
+      "wardrobe-paper": { "role": "neutral", "displayName": "Wardrobe Paper", "canonical": "#f6f7f3", "tonalRamp": ["#22241f", "#3d4039", "#5e6258", "#858a7e", "#adb1a7", "#d2d5ce", "#ebede8", "#f6f7f3"] },
+      "carbon-ink": { "role": "neutral", "displayName": "Carbon Ink", "canonical": "#161815", "tonalRamp": ["#161815", "#2b2e29", "#464a42", "#676c61", "#93988d", "#bec2b9", "#e2e4df", "#f5f6f3"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Route-level headings only." },
+      "body": { "displayName": "Body", "purpose": "Instructions, descriptions, and controls." },
+      "label": { "displayName": "Label", "purpose": "Categories, metadata, and compact UI labels." }
+    },
+    "shadows": [
+      { "name": "active-plate", "value": "0 18px 36px rgba(34,41,28,.1)", "purpose": "Selected closet item." },
+      { "name": "workspace-lift", "value": "0 24px 60px rgba(37,43,32,.08)", "purpose": "Outfit builder shell." },
+      { "name": "garment-grounding", "value": "drop-shadow(0 14px 16px rgba(20,20,20,.12))", "purpose": "Transparent product imagery." }
+    ],
+    "motion": [
+      { "name": "lift", "value": "280ms cubic-bezier(.2,.8,.2,1)", "purpose": "Garment-card hover response." },
+      { "name": "scan", "value": "1.35s ease-in-out", "purpose": "Image-cleanup progress scan." }
+    ],
+    "breakpoints": [
+      { "name": "compact-desktop", "value": "1100px" },
+      { "name": "mobile", "value": "760px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Confident primary action used in the top bar and dialogs.",
+      "html": "<button class=\"ds-btn-primary\">Add a piece</button>",
+      "css": ".ds-btn-primary{height:42px;padding:0 18px;border:0;border-radius:12px;background:#161815;color:#fff;font:600 14px Avenir Next,Arial,sans-serif;transition:background .2s}.ds-btn-primary:hover{background:#2c2f2a}.ds-btn-primary:focus-visible{outline:3px solid rgba(62,85,240,.65);outline-offset:3px}"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "description": "Quiet white search control for the closet.",
+      "html": "<input class=\"ds-search\" placeholder=\"Search your closet\" />",
+      "css": ".ds-search{height:44px;width:280px;padding:0 14px;border:1px solid #d7dbd3;border-radius:13px;background:#fff;color:#161815;font:400 14px Avenir Next,Arial,sans-serif}.ds-search:focus-visible{outline:3px solid rgba(62,85,240,.5);outline-offset:2px}"
+    },
+    {
+      "name": "Active Filter",
+      "kind": "chip",
+      "refersTo": "filter-active",
+      "description": "Selected category filter.",
+      "html": "<button class=\"ds-filter\">All</button>",
+      "css": ".ds-filter{height:36px;padding:0 14px;border:0;border-radius:999px;background:#3e55f0;color:#fff;font:600 13px Avenir Next,Arial,sans-serif}.ds-filter:hover{background:#3147dc}.ds-filter:focus-visible{outline:3px solid rgba(62,85,240,.45);outline-offset:3px}"
+    },
+    {
+      "name": "Garment Plate",
+      "kind": "card",
+      "description": "White product-image plate with generous internal margin.",
+      "html": "<div class=\"ds-plate\"><div class=\"ds-garment\">GARMENT</div></div>",
+      "css": ".ds-plate{width:190px;aspect-ratio:4/5;display:grid;place-items:center;padding:16%;border-radius:16px;background:#fff;transition:transform 280ms cubic-bezier(.2,.8,.2,1)}.ds-plate:hover{transform:translateY(-4px)}.ds-garment{color:#676b63;font:700 11px Avenir Next,Arial,sans-serif;letter-spacing:.08em}"
+    },
+    {
+      "name": "Navigation Destination",
+      "kind": "nav",
+      "description": "Compact active destination in the desktop rail or mobile dock.",
+      "html": "<button class=\"ds-nav\">Closet</button>",
+      "css": ".ds-nav{width:72px;height:64px;border:0;border-radius:13px;background:#161815;color:#fff;font:500 12px Avenir Next,Arial,sans-serif;box-shadow:0 9px 20px rgba(22,24,21,.13)}.ds-nav:hover{background:#292c27}.ds-nav:focus-visible{outline:3px solid rgba(62,85,240,.65);outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Stylist’s Garment Archive",
+    "overview": "Rove treats a personal closet as a working archive rather than a retail catalog. Crisp white product plates sit on a quiet cool-paper ground, while the sidebar and metadata behave like a compact studio filing system. The outfit builder becomes a softly lit blue styling table where garments can be moved into relation.",
+    "keyCharacteristics": ["High-resolution garment cutouts on clean white plates.", "A narrow persistent navigation rail on desktop and a bottom dock on mobile.", "Dense controls paired with generous space around the wardrobe grid.", "One electric-blue accent with a pale blue composition surface."],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Electric blue marks active choice or assisted work; it does not decorate passive content.", "section": "colors" },
+      { "name": "The Image Leads Rule", "body": "Type identifies and organizes garments; it never becomes more visually elaborate than the wardrobe itself.", "section": "typography" },
+      { "name": "The Flat Archive Rule", "body": "Resting surfaces are separated by tone and rules; shadows indicate active handling or floating layers.", "section": "elevation" }
+    ],
+    "dos": ["Do let garment imagery carry the color and personality of closet views.", "Do reserve electric blue for active choices, assisted work, and focus.", "Do preserve the two-column mobile closet and persistent bottom navigation.", "Do keep product cutouts centered with generous clear margin."],
+    "donts": ["Don't add decorative gradients, glass effects, or nested card shells.", "Don't turn metadata into oversized dashboard metrics.", "Don't use more than one saturated interface accent per screen.", "Don't hide generated names, descriptions, or tags from user review."]
+  }
+}

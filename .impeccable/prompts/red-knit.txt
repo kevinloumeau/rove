@@ -1,0 +1,8 @@
+Use case: product-mockup
+Asset type: sample wardrobe item for a personal closet app
+Primary request: a single rich tomato-red fine knit crewneck sweater, front-facing, sleeves relaxed naturally, photographed as a high-end ecommerce product cutout
+Scene/backdrop: genuinely transparent background
+Style/medium: photorealistic studio product photography
+Composition/framing: centered full garment, generous clear margin, square canvas
+Lighting/mood: soft even studio light, subtle natural dimensionality
+Constraints: one garment only; no model; no hanger; no logo; no text; no watermark; accurate clean edges
