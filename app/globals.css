@@ -478,6 +478,230 @@ button {
   border-radius: 20px 20px 0 0;
   background: #eff1ec;
 }
+.detail-notes {
+  margin: -8px 0 20px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+.wear-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.wear-actions button {
+  min-height: 40px;
+  font-size: 0.78rem;
+}
+.wear-actions button[aria-pressed="true"] {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: transparent;
+}
+.wear-actions + .detail-tags,
+.detail-last-worn + .detail-tags {
+  margin-top: 6px;
+}
+.detail-last-worn {
+  margin: 0 0 14px;
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+}
+.item-card.in-laundry .item-image img {
+  opacity: 0.45;
+}
+.laundry-badge {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+.laundry-badge svg {
+  width: 13px;
+  height: 13px;
+}
+.item-image {
+  position: relative;
+}
+.look-warning {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+.look-warning svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+.insights-view {
+  padding: 44px clamp(24px, 4vw, 64px) 70px;
+}
+.insights-intro {
+  margin-bottom: 32px;
+}
+.insights-intro h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-weight: 650;
+}
+.insights-intro p {
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+}
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.insight-card {
+  padding: 20px;
+  border-radius: 16px;
+  background: #fff;
+}
+.insight-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+.insight-card h2 svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ink-soft);
+}
+.insight-totals {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.insight-totals div {
+  display: grid;
+  gap: 4px;
+}
+.insight-totals strong {
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  letter-spacing: -0.03em;
+}
+.insight-totals span,
+.insight-empty,
+.insight-more {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+.insight-empty,
+.insight-more {
+  margin: 0;
+}
+.insight-more {
+  margin-top: 10px;
+}
+.insight-pieces,
+.insight-bars,
+.insight-colors {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.insight-pieces button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+}
+.insight-pieces button:hover {
+  background: var(--secondary);
+}
+.insight-pieces img {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f6f7f3;
+}
+.insight-pieces span {
+  display: grid;
+  min-width: 0;
+}
+.insight-pieces strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.insight-pieces small {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+}
+.insight-bars li {
+  display: grid;
+  grid-template-columns: 92px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+.insight-bars i {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--blue);
+}
+.insight-bars b,
+.insight-colors b {
+  text-align: right;
+}
+.insight-colors li {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+.insight-colors i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+@media (max-width: 760px) {
+  .insights-view {
+    padding: 30px 16px 90px;
+  }
+  .insights-intro h1 {
+    font-size: 2.7rem;
+  }
+  .insight-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .piece-sheet .detail-sticky {
   position: static;
   padding: 26px 20px max(24px, env(safe-area-inset-bottom));
@@ -1535,7 +1759,7 @@ button {
   }
   .rail-tabs {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
   .rail-tabs button {
     height: 53px !important;
