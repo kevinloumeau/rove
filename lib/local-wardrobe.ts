@@ -1,7 +1,7 @@
 "use client";
 
 import { colorName, colorSwatches } from "./color-name";
-import { refineAlpha } from "./cutout-refine";
+import { refineAlpha, removeSpecks } from "./cutout-refine";
 import { keepRealGarments } from "./garment-filter";
 import {
   type GarmentKind,
@@ -210,6 +210,7 @@ async function cutoutFromMasks(bitmap: ImageBitmap, masks: SegmentMask[]) {
     }
   }
   const { alpha } = refineAlpha(pixels.data, cropMask, cropWidth, cropHeight);
+  removeSpecks(alpha, cropWidth, cropHeight);
   let red = 0;
   let green = 0;
   let blue = 0;

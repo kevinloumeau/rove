@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { boxBlur, plainBackdrop, refineAlpha } from "../lib/cutout-refine.ts";
+import { boxBlur, plainBackdrop, refineAlpha, removeSpecks } from "../lib/cutout-refine.ts";
 
 const width = 120;
 const height = 120;
@@ -56,4 +56,21 @@ test("smooths the mask outline on busy photos", () => {
   assert.equal(at(alpha, 10, 10), 0);
   const edge = at(alpha, 24, 60);
   assert.ok(edge > 0 && edge < 255, `soft edge, got ${edge}`);
+});
+
+test("removeSpecks clears islands but keeps the garment and large split-off parts", () => {
+  const width = 40;
+  const height = 20;
+  const alpha = new Uint8ClampedArray(width * height);
+  const fill = (x0: number, y0: number, x1: number, y1: number) => {
+    for (let y = y0; y < y1; y += 1) for (let x = x0; x < x1; x += 1) alpha[y * width + x] = 255;
+  };
+  fill(2, 2, 22, 18); // garment, 320 px
+  fill(26, 4, 34, 10); // split-off strap, 48 px (15%)
+  fill(37, 16, 39, 18); // speck, 4 px
+  const cleared = removeSpecks(alpha, width, height);
+  assert.equal(cleared, 4);
+  assert.equal(alpha[17 * width + 38], 0);
+  assert.equal(alpha[5 * width + 30], 255);
+  assert.equal(alpha[10 * width + 10], 255);
 });
