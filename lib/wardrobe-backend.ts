@@ -1,11 +1,11 @@
 import { env } from "cloudflare:workers";
-import { getChatGPTUser } from "@/app/chatgpt-auth";
+import { getUser } from "@/lib/auth";
 
 export const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
 export const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function requireApiUser() {
-  const user = await getChatGPTUser();
+  const user = await getUser();
   if (!user)
     throw new Response(JSON.stringify({ error: "Sign in to use your closet." }), {
       status: 401,
