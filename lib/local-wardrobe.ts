@@ -26,10 +26,20 @@ const garmentGroups: Array<{ labels: string[]; category: string; noun: string }>
 ];
 
 const colorPalette = [
-  ["Black", 26, 27, 29], ["White", 235, 235, 230], ["Gray", 128, 130, 132], ["Navy", 31, 48, 79],
-  ["Blue", 55, 102, 171], ["Red", 180, 45, 42], ["Pink", 219, 128, 153], ["Purple", 113, 76, 145],
-  ["Green", 67, 119, 76], ["Yellow", 220, 187, 55], ["Orange", 210, 112, 43], ["Brown", 108, 72, 50],
-  ["Beige", 201, 183, 145], ["Cream", 229, 218, 188],
+  ["Black", 26, 27, 29],
+  ["White", 235, 235, 230],
+  ["Gray", 128, 130, 132],
+  ["Navy", 31, 48, 79],
+  ["Blue", 55, 102, 171],
+  ["Red", 180, 45, 42],
+  ["Pink", 219, 128, 153],
+  ["Purple", 113, 76, 145],
+  ["Green", 67, 119, 76],
+  ["Yellow", 220, 187, 55],
+  ["Orange", 210, 112, 43],
+  ["Brown", 108, 72, 50],
+  ["Beige", 201, 183, 145],
+  ["Cream", 229, 218, 188],
 ] as const;
 
 let segmenterPromise: Promise<(image: string) => Promise<Segment[]>> | null = null;
@@ -43,7 +53,8 @@ async function getSegmenter(onProgress: (message: string) => void) {
       const model = await pipeline("image-segmentation", "Xenova/segformer_b0_clothes", {
         dtype: "q8",
         progress_callback: (event: { status?: string; progress?: number }) => {
-          if (event.status === "progress" && typeof event.progress === "number") onProgress(`Downloading the private clothing model… ${Math.round(event.progress)}%`);
+          if (event.status === "progress" && typeof event.progress === "number")
+            onProgress(`Downloading the private clothing model… ${Math.round(event.progress)}%`);
         },
       });
       return model as unknown as (image: string) => Promise<Segment[]>;
@@ -64,7 +75,10 @@ function nearestColor(red: number, green: number, blue: number) {
   let bestDistance = Number.POSITIVE_INFINITY;
   for (const color of colorPalette) {
     const distance = (red - color[1]) ** 2 + (green - color[2]) ** 2 + (blue - color[3]) ** 2;
-    if (distance < bestDistance) { best = color; bestDistance = distance; }
+    if (distance < bestDistance) {
+      best = color;
+      bestDistance = distance;
+    }
   }
   return best[0];
 }
@@ -74,13 +88,22 @@ async function cutoutFromMasks(bitmap: ImageBitmap, masks: SegmentMask[]) {
   const maskHeight = masks[0].height;
   const merged = new Uint8Array(maskWidth * maskHeight);
   let occupiedPixels = 0;
-  let minX = maskWidth; let minY = maskHeight; let maxX = -1; let maxY = -1;
+  let minX = maskWidth;
+  let minY = maskHeight;
+  let maxX = -1;
+  let maxY = -1;
   for (let y = 0; y < maskHeight; y += 1) {
     for (let x = 0; x < maskWidth; x += 1) {
       let value = 0;
       for (const mask of masks) value = Math.max(value, maskValue(mask, x, y));
       merged[y * maskWidth + x] = value;
-      if (value > 40) { occupiedPixels += 1; minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }
+      if (value > 40) {
+        occupiedPixels += 1;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
     }
   }
   if (maxX < minX || maxY < minY || occupiedPixels < Math.max(64, maskWidth * maskHeight * 0.0015)) return null;
@@ -96,12 +119,16 @@ async function cutoutFromMasks(bitmap: ImageBitmap, masks: SegmentMask[]) {
   const cropWidth = Math.max(1, cropRight - cropX);
   const cropHeight = Math.max(1, cropBottom - cropY);
   const cropCanvas = document.createElement("canvas");
-  cropCanvas.width = cropWidth; cropCanvas.height = cropHeight;
+  cropCanvas.width = cropWidth;
+  cropCanvas.height = cropHeight;
   const cropContext = cropCanvas.getContext("2d", { willReadFrequently: true });
   if (!cropContext) return null;
   cropContext.drawImage(bitmap, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
   const pixels = cropContext.getImageData(0, 0, cropWidth, cropHeight);
-  let red = 0; let green = 0; let blue = 0; let samples = 0;
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+  let samples = 0;
   for (let y = 0; y < cropHeight; y += 1) {
     const maskY = Math.min(maskHeight - 1, Math.max(0, Math.floor((y + cropY) / scaleY)));
     for (let x = 0; x < cropWidth; x += 1) {
@@ -109,19 +136,26 @@ async function cutoutFromMasks(bitmap: ImageBitmap, masks: SegmentMask[]) {
       const alpha = merged[maskY * maskWidth + maskX];
       const offset = (y * cropWidth + x) * 4;
       pixels.data[offset + 3] = alpha;
-      if (alpha > 180 && x % 4 === 0 && y % 4 === 0) { red += pixels.data[offset]; green += pixels.data[offset + 1]; blue += pixels.data[offset + 2]; samples += 1; }
+      if (alpha > 180 && x % 4 === 0 && y % 4 === 0) {
+        red += pixels.data[offset];
+        green += pixels.data[offset + 1];
+        blue += pixels.data[offset + 2];
+        samples += 1;
+      }
     }
   }
   cropContext.putImageData(pixels, 0, 0);
 
   const side = Math.min(2048, Math.max(900, Math.max(cropWidth, cropHeight)));
   const output = document.createElement("canvas");
-  output.width = side; output.height = side;
+  output.width = side;
+  output.height = side;
   const outputContext = output.getContext("2d");
   if (!outputContext) return null;
   const inset = Math.round(side * 0.08);
   const ratio = Math.min((side - inset * 2) / cropWidth, (side - inset * 2) / cropHeight, 1);
-  const width = Math.round(cropWidth * ratio); const height = Math.round(cropHeight * ratio);
+  const width = Math.round(cropWidth * ratio);
+  const height = Math.round(cropHeight * ratio);
   outputContext.drawImage(cropCanvas, Math.round((side - width) / 2), Math.round((side - height) / 2), width, height);
   const blob = await new Promise<Blob | null>((resolve) => output.toBlob(resolve, "image/png"));
   if (!blob) return null;
@@ -154,7 +188,8 @@ export async function processWardrobeImage(file: File, onProgress: (message: str
       if (garments.length >= 8) break;
     }
     bitmap.close();
-    if (!garments.length) throw new Error("No separate garments were found. Try a brighter photo with the clothing fully visible.");
+    if (!garments.length)
+      throw new Error("No separate garments were found. Try a brighter photo with the clothing fully visible.");
     onProgress(`${garments.length} ${garments.length === 1 ? "piece" : "pieces"} ready—no paid API used.`);
     return garments;
   } finally {

@@ -6,7 +6,11 @@ export const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/we
 
 export async function requireApiUser() {
   const user = await getChatGPTUser();
-  if (!user) throw new Response(JSON.stringify({ error: "Sign in to use your closet." }), { status: 401, headers: { "content-type": "application/json" } });
+  if (!user)
+    throw new Response(JSON.stringify({ error: "Sign in to use your closet." }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
   return user;
 }
 
