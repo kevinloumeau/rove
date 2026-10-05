@@ -56,6 +56,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CutoutEditor } from "@/components/cutout-editor";
+import { OutfitJournal } from "@/components/outfit-journal";
 import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
 import { PackingDialog } from "@/components/packing-dialog";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
@@ -222,6 +223,7 @@ export default function Home() {
   const [planLookId, setPlanLookId] = useState("");
   const [repeatWeeks, setRepeatWeeks] = useState(0);
   const [calendarView, setCalendarView] = useState<"auto" | "month" | "week">("auto");
+  const [calendarMode, setCalendarMode] = useState<"plan" | "journal">("plan");
   const [packingOpen, setPackingOpen] = useState(false);
   const [dropDate, setDropDate] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -1731,92 +1733,184 @@ export default function Home() {
         <TabsContent value="calendar" className="calendar-view">
           <section className="calendar-intro">
             <div>
-              <h1>Plan your month</h1>
-              <p>Drag saved looks onto days, repeat them weekly, and pack for trips.</p>
+              <h1>{calendarMode === "plan" ? "Plan your month" : "Outfit journal"}</h1>
+              <p>
+                {calendarMode === "plan"
+                  ? "Drag saved looks onto days, repeat them weekly, and pack for trips."
+                  : "What you wore each day, with a photo and a note to remember it by."}
+              </p>
             </div>
-            <div className="occasion-list">
-              {occasions.map((occasion) => (
-                <button
-                  key={occasion}
-                  className={occasionFilter === occasion ? "active" : ""}
-                  onClick={() => setOccasionFilter(occasion)}
-                >
-                  {occasion}
-                </button>
-              ))}
+            <div className="view-switch" aria-label="Calendar mode">
+              <button className={calendarMode === "plan" ? "active" : ""} onClick={() => setCalendarMode("plan")}>
+                Plan
+              </button>
+              <button className={calendarMode === "journal" ? "active" : ""} onClick={() => setCalendarMode("journal")}>
+                Journal
+              </button>
             </div>
           </section>
-          {savedLooks.length > 0 && (
-            <div className="plan-looks" aria-label="Saved looks to drag onto the calendar">
-              {filteredLooks.map((look) => (
-                <button
-                  key={look.id}
-                  draggable
-                  className={lookToPlan === look.id ? "active" : ""}
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData(LOOK_DRAG_TYPE, look.id);
-                    event.dataTransfer.effectAllowed = "copy";
-                  }}
-                  onClick={() => setPlanLookId(look.id)}
-                  aria-pressed={lookToPlan === look.id}
-                >
-                  <span className="plan-look-thumbs">
-                    {lookThumbs(look, 3).map((item) => (
-                      <img key={item.id} src={item.thumb ?? item.image} alt="" />
-                    ))}
-                  </span>
-                  <span>{look.name}</span>
-                </button>
-              ))}
-              <p className="plan-looks-hint pointer-fine">Drag a look onto a day</p>
-            </div>
-          )}
-          <div className="calendar-workspace" data-view={calendarView}>
-            <section className="month-panel">
-              <div className="calendar-view-switch view-switch" aria-label="Calendar view">
-                <button
-                  className={calendarView !== "month" ? "week-active" : ""}
-                  aria-pressed={calendarView === "week"}
-                  onClick={() => setCalendarView("week")}
-                >
-                  Week
-                </button>
-                <button
-                  className={calendarView !== "week" ? "month-active" : ""}
-                  aria-pressed={calendarView === "month"}
-                  onClick={() => setCalendarView("month")}
-                >
-                  Month
-                </button>
-              </div>
-              <div className="week-panel">
-                <div className="month-nav">
-                  <button aria-label="Previous week" onClick={() => shiftWeek(-1)}>
-                    <ChevronLeft />
-                  </button>
-                  <h2>
-                    {new Date(`${selectedWeek[0]}T00:00:00`).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                    {" – "}
-                    {new Date(`${selectedWeek[6]}T00:00:00`).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </h2>
-                  <button aria-label="Next week" onClick={() => shiftWeek(1)}>
-                    <ChevronRight />
-                  </button>
+          {calendarMode === "journal" ? (
+            <OutfitJournal
+              items={items}
+              today={todayIso}
+              onOpenPiece={(item) => {
+                setSelectedId(item.id);
+                setActiveTab("closet");
+                if (isNarrow(1100)) setDetailSheetOpen(true);
+              }}
+              onWearChange={(itemId, change) => updateItem(itemId, change)}
+            />
+          ) : (
+            <>
+              <section className="calendar-intro calendar-occasions">
+                <div className="occasion-list">
+                  {occasions.map((occasion) => (
+                    <button
+                      key={occasion}
+                      className={occasionFilter === occasion ? "active" : ""}
+                      onClick={() => setOccasionFilter(occasion)}
+                    >
+                      {occasion}
+                    </button>
+                  ))}
                 </div>
-                <ol className="week-list">
-                  {selectedWeek.map((date) => {
-                    const look = savedLooks.find((candidate) => candidate.id === plans[date]);
-                    const day = new Date(`${date}T00:00:00`);
-                    return (
-                      <li key={date}>
+              </section>
+              {savedLooks.length > 0 && (
+                <div className="plan-looks" aria-label="Saved looks to drag onto the calendar">
+                  {filteredLooks.map((look) => (
+                    <button
+                      key={look.id}
+                      draggable
+                      className={lookToPlan === look.id ? "active" : ""}
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData(LOOK_DRAG_TYPE, look.id);
+                        event.dataTransfer.effectAllowed = "copy";
+                      }}
+                      onClick={() => setPlanLookId(look.id)}
+                      aria-pressed={lookToPlan === look.id}
+                    >
+                      <span className="plan-look-thumbs">
+                        {lookThumbs(look, 3).map((item) => (
+                          <img key={item.id} src={item.thumb ?? item.image} alt="" />
+                        ))}
+                      </span>
+                      <span>{look.name}</span>
+                    </button>
+                  ))}
+                  <p className="plan-looks-hint pointer-fine">Drag a look onto a day</p>
+                </div>
+              )}
+              <div className="calendar-workspace" data-view={calendarView}>
+                <section className="month-panel">
+                  <div className="calendar-view-switch view-switch" aria-label="Calendar view">
+                    <button
+                      className={calendarView !== "month" ? "week-active" : ""}
+                      aria-pressed={calendarView === "week"}
+                      onClick={() => setCalendarView("week")}
+                    >
+                      Week
+                    </button>
+                    <button
+                      className={calendarView !== "week" ? "month-active" : ""}
+                      aria-pressed={calendarView === "month"}
+                      onClick={() => setCalendarView("month")}
+                    >
+                      Month
+                    </button>
+                  </div>
+                  <div className="week-panel">
+                    <div className="month-nav">
+                      <button aria-label="Previous week" onClick={() => shiftWeek(-1)}>
+                        <ChevronLeft />
+                      </button>
+                      <h2>
+                        {new Date(`${selectedWeek[0]}T00:00:00`).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                        {" – "}
+                        {new Date(`${selectedWeek[6]}T00:00:00`).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </h2>
+                      <button aria-label="Next week" onClick={() => shiftWeek(1)}>
+                        <ChevronRight />
+                      </button>
+                    </div>
+                    <ol className="week-list">
+                      {selectedWeek.map((date) => {
+                        const look = savedLooks.find((candidate) => candidate.id === plans[date]);
+                        const day = new Date(`${date}T00:00:00`);
+                        return (
+                          <li key={date}>
+                            <button
+                              className={`${selectedDate === date ? "selected" : ""} ${date === todayIso ? "today" : ""} ${dropDate === date ? "drop-target" : ""}`}
+                              aria-pressed={selectedDate === date}
+                              onClick={() => {
+                                setSelectedDate(date);
+                                if (isNarrow(760)) scrollIntoViewSoon(dayPanelRef.current);
+                              }}
+                              {...lookDropProps(date)}
+                            >
+                              <span className="week-day">
+                                <small>{day.toLocaleDateString(undefined, { weekday: "short" })}</small>
+                                <strong>{day.getDate()}</strong>
+                              </span>
+                              <span className="week-look">
+                                {look ? (
+                                  <>
+                                    <span className="plan-look-thumbs">
+                                      {lookThumbs(look, 3).map((item) => (
+                                        <img key={item.id} src={item.thumb ?? item.image} alt="" />
+                                      ))}
+                                    </span>
+                                    <span>
+                                      <strong>{look.name}</strong>
+                                      <small>{look.occasion}</small>
+                                    </span>
+                                  </>
+                                ) : (
+                                  <small>Nothing planned</small>
+                                )}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </div>
+                  <div className="month-heading">
+                    <div className="month-nav">
+                      <button aria-label="Previous month" onClick={() => shiftMonth(-1)}>
+                        <ChevronLeft />
+                      </button>
+                      <h2>{calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h2>
+                      <button aria-label="Next month" onClick={() => shiftMonth(1)}>
+                        <ChevronRight />
+                      </button>
+                    </div>
+                    <span>
+                      {plannedThisMonth} {plannedThisMonth === 1 ? "look" : "looks"} planned
+                    </span>
+                  </div>
+                  <div className="calendar-grid">
+                    {weekdayLabels.map((day) => (
+                      <span className="weekday" key={day}>
+                        {day}
+                      </span>
+                    ))}
+                    {Array.from({ length: leadingBlanks }, (_, index) => (
+                      <span key={`blank-${index}`} />
+                    ))}
+                    {monthDates.map((date) => {
+                      const look = savedLooks.find((candidate) => candidate.id === plans[date]);
+                      const thumb = look && items.find((item) => look.itemIds.some((id) => sameId(id, item.id)));
+                      return (
                         <button
-                          className={`${selectedDate === date ? "selected" : ""} ${date === todayIso ? "today" : ""} ${dropDate === date ? "drop-target" : ""}`}
+                          key={date}
+                          className={`${selectedDate === date ? "selected" : ""} ${look ? "planned" : ""} ${date === todayIso ? "today" : ""} ${dropDate === date ? "drop-target" : ""}`}
+                          aria-label={new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "full" })}
                           aria-pressed={selectedDate === date}
                           onClick={() => {
                             setSelectedDate(date);
@@ -1824,153 +1918,96 @@ export default function Home() {
                           }}
                           {...lookDropProps(date)}
                         >
-                          <span className="week-day">
-                            <small>{day.toLocaleDateString(undefined, { weekday: "short" })}</small>
-                            <strong>{day.getDate()}</strong>
-                          </span>
-                          <span className="week-look">
-                            {look ? (
-                              <>
-                                <span className="plan-look-thumbs">
-                                  {lookThumbs(look, 3).map((item) => (
-                                    <img key={item.id} src={item.thumb ?? item.image} alt="" />
-                                  ))}
-                                </span>
-                                <span>
-                                  <strong>{look.name}</strong>
-                                  <small>{look.occasion}</small>
-                                </span>
-                              </>
-                            ) : (
-                              <small>Nothing planned</small>
-                            )}
-                          </span>
+                          <span>{Number(date.slice(-2))}</span>
+                          {thumb && <img src={thumb.thumb ?? thumb.image} alt="" />}
                         </button>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </div>
-              <div className="month-heading">
-                <div className="month-nav">
-                  <button aria-label="Previous month" onClick={() => shiftMonth(-1)}>
-                    <ChevronLeft />
-                  </button>
-                  <h2>{calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h2>
-                  <button aria-label="Next month" onClick={() => shiftMonth(1)}>
-                    <ChevronRight />
-                  </button>
-                </div>
-                <span>
-                  {plannedThisMonth} {plannedThisMonth === 1 ? "look" : "looks"} planned
-                </span>
-              </div>
-              <div className="calendar-grid">
-                {weekdayLabels.map((day) => (
-                  <span className="weekday" key={day}>
-                    {day}
-                  </span>
-                ))}
-                {Array.from({ length: leadingBlanks }, (_, index) => (
-                  <span key={`blank-${index}`} />
-                ))}
-                {monthDates.map((date) => {
-                  const look = savedLooks.find((candidate) => candidate.id === plans[date]);
-                  const thumb = look && items.find((item) => look.itemIds.some((id) => sameId(id, item.id)));
-                  return (
-                    <button
-                      key={date}
-                      className={`${selectedDate === date ? "selected" : ""} ${look ? "planned" : ""} ${date === todayIso ? "today" : ""} ${dropDate === date ? "drop-target" : ""}`}
-                      aria-label={new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "full" })}
-                      aria-pressed={selectedDate === date}
-                      onClick={() => {
-                        setSelectedDate(date);
-                        if (isNarrow(760)) scrollIntoViewSoon(dayPanelRef.current);
-                      }}
-                      {...lookDropProps(date)}
-                    >
-                      <span>{Number(date.slice(-2))}</span>
-                      {thumb && <img src={thumb.thumb ?? thumb.image} alt="" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-            <aside className="day-panel" ref={dayPanelRef}>
-              <p>{selectedDateLabel}</p>
-              <h2>{plannedLook ? plannedLook.name : "Nothing planned"}</h2>
-              {plannedLook ? (
-                <>
-                  <div className="day-look">
-                    {plannedLook.itemIds.map((id) => {
-                      const item = items.find((piece) => sameId(piece.id, id));
-                      return item ? <img key={id} src={item.image} alt={item.name} /> : null;
+                      );
                     })}
                   </div>
-                  <span>
-                    {plannedLook.occasion} · {plannedLook.itemIds.length} pieces
-                  </span>
-                  <Button variant="outline" onClick={() => loadLook(plannedLook)}>
-                    Open look
-                  </Button>
-                </>
-              ) : (
-                <div className="day-empty">
-                  <CalendarDays />
-                  <span>Pick a saved look for this day.</span>
-                </div>
-              )}
-              <div className="plan-control">
-                <label htmlFor="plan-look">Saved look</label>
-                <select
-                  id="plan-look"
-                  value={lookToPlan}
-                  disabled={!filteredLooks.length}
-                  onChange={(event) => setPlanLookId(event.target.value)}
-                >
-                  {!filteredLooks.length && (
-                    <option value="">{savedLooks.length ? "No looks for this occasion" : "Save a look first"}</option>
+                </section>
+                <aside className="day-panel" ref={dayPanelRef}>
+                  <p>{selectedDateLabel}</p>
+                  <h2>{plannedLook ? plannedLook.name : "Nothing planned"}</h2>
+                  {plannedLook ? (
+                    <>
+                      <div className="day-look">
+                        {plannedLook.itemIds.map((id) => {
+                          const item = items.find((piece) => sameId(piece.id, id));
+                          return item ? <img key={id} src={item.image} alt={item.name} /> : null;
+                        })}
+                      </div>
+                      <span>
+                        {plannedLook.occasion} · {plannedLook.itemIds.length} pieces
+                      </span>
+                      <Button variant="outline" onClick={() => loadLook(plannedLook)}>
+                        Open look
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="day-empty">
+                      <CalendarDays />
+                      <span>Pick a saved look for this day.</span>
+                    </div>
                   )}
-                  {filteredLooks.map((look) => (
-                    <option key={look.id} value={look.id}>
-                      {look.name} · {look.occasion}
-                    </option>
-                  ))}
-                </select>
-                <label htmlFor="plan-repeat">Repeat</label>
-                <select
-                  id="plan-repeat"
-                  value={repeatWeeks}
-                  onChange={(event) => setRepeatWeeks(Number(event.target.value))}
-                >
-                  <option value={0}>Just this day</option>
-                  <option value={4}>
-                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
-                    4 weeks
-                  </option>
-                  <option value={8}>
-                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
-                    8 weeks
-                  </option>
-                  <option value={12}>
-                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
-                    12 weeks
-                  </option>
-                </select>
-                <Button disabled={!lookToPlan} onClick={planSelectedLook}>
-                  {repeatWeeks ? `Plan ${repeatWeeks} weeks` : plannedLook ? "Replace planned look" : "Plan this look"}
-                </Button>
-                {plannedLook && (
-                  <button className="remove-plan" onClick={removePlan}>
-                    Remove from day
-                  </button>
-                )}
+                  <div className="plan-control">
+                    <label htmlFor="plan-look">Saved look</label>
+                    <select
+                      id="plan-look"
+                      value={lookToPlan}
+                      disabled={!filteredLooks.length}
+                      onChange={(event) => setPlanLookId(event.target.value)}
+                    >
+                      {!filteredLooks.length && (
+                        <option value="">
+                          {savedLooks.length ? "No looks for this occasion" : "Save a look first"}
+                        </option>
+                      )}
+                      {filteredLooks.map((look) => (
+                        <option key={look.id} value={look.id}>
+                          {look.name} · {look.occasion}
+                        </option>
+                      ))}
+                    </select>
+                    <label htmlFor="plan-repeat">Repeat</label>
+                    <select
+                      id="plan-repeat"
+                      value={repeatWeeks}
+                      onChange={(event) => setRepeatWeeks(Number(event.target.value))}
+                    >
+                      <option value={0}>Just this day</option>
+                      <option value={4}>
+                        Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })}{" "}
+                        for 4 weeks
+                      </option>
+                      <option value={8}>
+                        Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })}{" "}
+                        for 8 weeks
+                      </option>
+                      <option value={12}>
+                        Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })}{" "}
+                        for 12 weeks
+                      </option>
+                    </select>
+                    <Button disabled={!lookToPlan} onClick={planSelectedLook}>
+                      {repeatWeeks
+                        ? `Plan ${repeatWeeks} weeks`
+                        : plannedLook
+                          ? "Replace planned look"
+                          : "Plan this look"}
+                    </Button>
+                    {plannedLook && (
+                      <button className="remove-plan" onClick={removePlan}>
+                        Remove from day
+                      </button>
+                    )}
+                  </div>
+                  <Button variant="outline" className="pack-button" onClick={() => setPackingOpen(true)}>
+                    <Luggage /> Pack for a trip
+                  </Button>
+                </aside>
               </div>
-              <Button variant="outline" className="pack-button" onClick={() => setPackingOpen(true)}>
-                <Luggage /> Pack for a trip
-              </Button>
-            </aside>
-          </div>
+            </>
+          )}
         </TabsContent>
         <TabsContent value="insights" className="insights-view">
           <section className="insights-intro">
