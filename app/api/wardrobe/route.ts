@@ -1,28 +1,38 @@
+import { deleteIfUnused, pruneConfirmedImport } from "@/lib/storage-cleanup";
 import { apiError, getWardrobeBindings, requireApiUser, safeJsonArray, toWardrobeItem } from "@/lib/wardrobe-backend";
+
+const PAGE_SIZE = 200;
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+/** Newest first, a page at a time: GET /api/wardrobe?cursor=<nextCursor from the previous page>. */
+export async function GET(request: Request) {
   try {
     const user = await requireApiUser();
     const { db } = getWardrobeBindings();
+    const cursor = new URL(request.url).searchParams.get("cursor");
+    const [cursorTime, cursorId] = cursor?.match(/^(\d+):(.+)$/)?.slice(1) ?? [];
     const result = await db
       .prepare(
         `
-      SELECT i.id, i.import_id, i.name, i.category, i.color, i.season, i.description, i.image_key, i.tags,
-        i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry,
+      SELECT i.id, i.import_id, i.name, i.category, i.color, i.season, i.description, i.image_key, i.thumb_key,
+        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.created_at,
         COUNT(w.id) AS wear_count, MAX(w.worn_on) AS last_worn
       FROM wardrobe_items i
       LEFT JOIN wardrobe_wears w ON w.item_id = i.id AND w.user_id = i.user_id
-      WHERE i.user_id = ? AND i.status = 'ready'
+      WHERE i.user_id = ?1 AND i.status = 'ready'
+        AND (?2 IS NULL OR i.created_at < ?2 OR (i.created_at = ?2 AND i.id < ?3))
       GROUP BY i.id
-      ORDER BY i.created_at DESC
-      LIMIT 500
+      ORDER BY i.created_at DESC, i.id DESC
+      LIMIT ${PAGE_SIZE + 1}
     `,
       )
-      .bind(user.userId)
-      .all();
-    return Response.json({ items: result.results.map((row) => toWardrobeItem(row as Record<string, unknown>)) });
+      .bind(user.userId, cursorTime ? Number(cursorTime) : null, cursorId ?? null)
+      .all<Record<string, unknown>>();
+    const rows = result.results.slice(0, PAGE_SIZE);
+    const last = rows.at(-1);
+    const nextCursor = result.results.length > PAGE_SIZE && last ? `${last.created_at}:${last.id}` : null;
+    return Response.json({ items: rows.map((row) => toWardrobeItem(row)), nextCursor });
   } catch (error) {
     return apiError(error, "Your closet could not be loaded. Try again.");
   }
@@ -112,9 +122,9 @@ export async function DELETE(request: Request) {
     if (!id) return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
     const { db, bucket } = getWardrobeBindings();
     const item = await db
-      .prepare(`SELECT image_key FROM wardrobe_items WHERE id = ? AND user_id = ? AND status = 'ready'`)
+      .prepare(`SELECT image_key, thumb_key FROM wardrobe_items WHERE id = ? AND user_id = ? AND status = 'ready'`)
       .bind(id, user.userId)
-      .first<{ image_key: string }>();
+      .first<{ image_key: string; thumb_key: string }>();
     if (!item) return Response.json({ error: "That closet item was not found." }, { status: 404 });
 
     const looks = await db
@@ -131,14 +141,8 @@ export async function DELETE(request: Request) {
       ),
     ]);
 
-    // Keep the stored image while another piece or the original import still points at it.
-    const stillUsed = await db
-      .prepare(
-        `SELECT 1 FROM wardrobe_items WHERE image_key = ? UNION SELECT 1 FROM wardrobe_imports WHERE original_key = ? LIMIT 1`,
-      )
-      .bind(item.image_key, item.image_key)
-      .first();
-    if (!stillUsed) await bucket.delete(item.image_key);
+    // Keep a stored file while another piece or the original import still points at it.
+    await deleteIfUnused(db, bucket, [item.image_key, item.thumb_key]);
     return Response.json({ id, deleted: true });
   } catch (error) {
     return apiError(error, "That piece could not be deleted. Try again.");
@@ -154,7 +158,7 @@ export async function POST(request: Request) {
     ];
     if (!payload.importId || !itemIds.length || itemIds.length > 12)
       return Response.json({ error: "Choose at least one detected piece." }, { status: 400 });
-    const { db } = getWardrobeBindings();
+    const { db, bucket } = getWardrobeBindings();
     const owned = await db
       .prepare(`SELECT id FROM wardrobe_items WHERE import_id = ? AND user_id = ? AND status = 'draft'`)
       .bind(payload.importId, user.userId)
@@ -182,6 +186,12 @@ export async function POST(request: Request) {
         .bind(payload.importId, user.userId),
     );
     await db.batch(statements);
+    try {
+      await pruneConfirmedImport(db, bucket, user.userId, payload.importId);
+    } catch (error) {
+      // The pieces are saved; anything left over is caught by the nightly cleanup.
+      console.error("Could not prune import", error);
+    }
     return Response.json({ saved: itemIds.length });
   } catch (error) {
     return apiError(error, "Those pieces could not be added. Try again.");

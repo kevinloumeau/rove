@@ -51,6 +51,7 @@ export function toWardrobeItem(row: Record<string, unknown>) {
     season: String(row.season),
     description: String(row.description),
     image: assetUrl(imageKey),
+    thumb: row.thumb_key ? assetUrl(String(row.thumb_key)) : undefined,
     favorite: Boolean(row.favorite),
     tags: safeJsonArray(row.tags),
     brand: String(row.brand ?? ""),

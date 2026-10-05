@@ -10,12 +10,12 @@ export async function GET(_request: Request, context: { params: Promise<{ key: s
     const owned = await db
       .prepare(
         `
-      SELECT 1 FROM wardrobe_items WHERE image_key = ? AND user_id = ?
-      UNION SELECT 1 FROM wardrobe_imports WHERE original_key = ? AND user_id = ?
+      SELECT 1 FROM wardrobe_items WHERE (image_key = ?1 OR thumb_key = ?1) AND user_id = ?2
+      UNION SELECT 1 FROM wardrobe_imports WHERE original_key = ?1 AND user_id = ?2
       LIMIT 1
     `,
       )
-      .bind(key, user.userId, key, user.userId)
+      .bind(key, user.userId)
       .first();
     if (!owned) return Response.json({ error: "Image not found." }, { status: 404 });
     const object = await bucket.get(key);

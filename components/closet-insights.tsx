@@ -32,7 +32,7 @@ export function ClosetInsights({
   const pieceRow = (item: WardrobeItem, detail: string) => (
     <li key={item.id}>
       <button onClick={() => onOpenPiece(item)}>
-        <img src={item.image} alt="" />
+        <img src={item.thumb ?? item.image} alt="" />
         <span>
           <strong>{item.name}</strong>
           <small>{detail}</small>

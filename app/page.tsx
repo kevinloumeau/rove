@@ -53,7 +53,7 @@ import { PackingDialog } from "@/components/packing-dialog";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
 import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
 import { suggestLook } from "@/lib/outfit-shuffle";
-import { photoHash, shrinkPhoto } from "@/lib/photo-resize";
+import { makeThumbnail, photoHash, shrinkPhoto } from "@/lib/photo-resize";
 import { renderLookImage, shareLookImage } from "@/lib/share-look";
 import { pieceCategories, seasons, type SavedLook, type WardrobeItem } from "@/lib/wardrobe-types";
 
@@ -133,9 +133,12 @@ async function analyzeAndUpload(
       })),
     ),
   );
-  garments.forEach((garment, index) =>
-    form.set(`cutout-${index}`, new File([garment.image], `cutout-${index}.png`, { type: "image/png" })),
-  );
+  const thumbs = await Promise.all(garments.map((garment) => makeThumbnail(garment.image)));
+  garments.forEach((garment, index) => {
+    form.set(`cutout-${index}`, new File([garment.image], `cutout-${index}.png`, { type: "image/png" }));
+    const thumb = thumbs[index];
+    if (thumb) form.set(`thumb-${index}`, new File([thumb], `thumb-${index}.webp`, { type: "image/webp" }));
+  });
   onNotice("Saving the privately processed pieces…");
   const response = await fetch("/api/wardrobe/import", { method: "POST", body: form });
   const payload = (await response.json().catch(() => ({}))) as {
@@ -234,22 +237,70 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetch("/api/wardrobe", { signal: controller.signal })
-      .then(async (response) => {
-        const payload = (await response.json().catch(() => ({}))) as { items?: WardrobeItem[]; error?: string };
+    // Pages of 200: the first page shows right away, later pages are appended as they arrive.
+    async function loadCloset() {
+      let cursor: string | null = null;
+      let first = true;
+      do {
+        const response = await fetch(`/api/wardrobe${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json().catch(() => ({}))) as {
+          items?: WardrobeItem[];
+          nextCursor?: string | null;
+          error?: string;
+        };
         if (!response.ok) throw new Error(payload.error || "Your closet could not be loaded. Try again.");
-        const loaded = payload.items ?? [];
-        setItems(loaded);
-        setSelectedId(loaded[0]?.id ?? null);
-        setClosetStatus("ready");
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        setClosetError(error instanceof Error ? error.message : "Your closet could not be loaded. Try again.");
-        setClosetStatus("error");
-      });
+        const page = payload.items ?? [];
+        if (first) {
+          setItems(page);
+          setSelectedId(page[0]?.id ?? null);
+          setClosetStatus("ready");
+          first = false;
+        } else {
+          setItems((current) => [...current, ...page.filter((item) => !current.some((c) => sameId(c.id, item.id)))]);
+        }
+        cursor = payload.nextCursor ?? null;
+      } while (cursor);
+    }
+    void loadCloset().catch((error: unknown) => {
+      if (controller.signal.aborted) return;
+      setClosetError(error instanceof Error ? error.message : "Your closet could not be loaded. Try again.");
+      setClosetStatus((current) => (current === "ready" ? current : "error"));
+    });
     return () => controller.abort();
   }, []);
+
+  // Pieces added before thumbnails existed (or with a freshly edited cutout) get one in the background.
+  const needsThumb = closetStatus === "ready" ? items.filter((item) => !item.thumb).slice(0, 1)[0] : undefined;
+  const needsThumbId = needsThumb ? String(needsThumb.id) : null;
+  const needsThumbImage = needsThumb?.image;
+  const thumbFailures = useRef(new Set<string>());
+  useEffect(() => {
+    if (!needsThumbId || !needsThumbImage || thumbFailures.current.has(needsThumbId)) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      const thumb = await makeThumbnail(needsThumbImage);
+      const form = new FormData();
+      form.set("id", needsThumbId);
+      if (thumb) form.set("thumb", new File([thumb], "thumb.webp", { type: "image/webp" }));
+      const response = thumb
+        ? await fetch("/api/wardrobe/image", { method: "POST", body: form }).catch(() => null)
+        : null;
+      const payload = response?.ok ? ((await response.json()) as { thumb?: string }) : null;
+      if (cancelled) return;
+      if (!payload?.thumb) thumbFailures.current.add(needsThumbId);
+      // On failure the full image stands in, so this piece is not retried until the next visit.
+      const thumbUrl = payload?.thumb ?? needsThumbImage;
+      setItems((current) =>
+        current.map((piece) => (String(piece.id) === needsThumbId ? { ...piece, thumb: thumbUrl } : piece)),
+      );
+    }, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [needsThumbId, needsThumbImage]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -431,6 +482,7 @@ export default function Home() {
   function updateItem(id: number | string, changes: Partial<WardrobeItem>) {
     setItems((current) => current.map((piece) => (sameId(piece.id, id) ? { ...piece, ...changes } : piece)));
   }
+
   function toggleFavorite(id: number | string) {
     const item = items.find((piece) => sameId(piece.id, id));
     if (!item) return;
@@ -1217,7 +1269,7 @@ export default function Home() {
                       </button>
                     )}
                     <div className="item-image">
-                      <img src={item.image} alt={item.name} />
+                      <img src={item.thumb ?? item.image} alt={item.name} />
                       {item.inLaundry && (
                         <span className="laundry-badge">
                           <WashingMachine /> In the wash
@@ -1362,7 +1414,7 @@ export default function Home() {
                         onDragStart={(event) => event.dataTransfer.setData("text/plain", String(item.id))}
                         onClick={() => addToOutfit(item.id)}
                       >
-                        <img src={item.image} alt="" />
+                        <img src={item.thumb ?? item.image} alt="" />
                         <span>{item.name}</span>
                         <Plus />
                       </button>
@@ -1418,7 +1470,7 @@ export default function Home() {
                         >
                           <span className="slot-label">{slot.label}</span>
                           {item ? (
-                            <img src={item.image} alt="" />
+                            <img src={item.thumb ?? item.image} alt="" />
                           ) : (
                             <span className="empty-slot">
                               <Plus /> Add {slot.label.toLowerCase()}
@@ -1523,7 +1575,7 @@ export default function Home() {
                   <button className="look-collage" onClick={() => loadLook(look)}>
                     {look.itemIds.slice(0, 4).map((id) => {
                       const item = items.find((piece) => sameId(piece.id, id));
-                      return item ? <img key={id} src={item.image} alt={item.name} /> : null;
+                      return item ? <img key={id} src={item.thumb ?? item.image} alt={item.name} /> : null;
                     })}
                   </button>
                   <div>
@@ -1576,7 +1628,7 @@ export default function Home() {
                           setPickerOpen(false);
                         }}
                       >
-                        <img src={item.image} alt="" />
+                        <img src={item.thumb ?? item.image} alt="" />
                         <span>
                           <strong>{item.name}</strong>
                           <small>
@@ -1632,7 +1684,7 @@ export default function Home() {
                 >
                   <span className="plan-look-thumbs">
                     {lookThumbs(look, 3).map((item) => (
-                      <img key={item.id} src={item.image} alt="" />
+                      <img key={item.id} src={item.thumb ?? item.image} alt="" />
                     ))}
                   </span>
                   <span>{look.name}</span>
@@ -1703,7 +1755,7 @@ export default function Home() {
                               <>
                                 <span className="plan-look-thumbs">
                                   {lookThumbs(look, 3).map((item) => (
-                                    <img key={item.id} src={item.image} alt="" />
+                                    <img key={item.id} src={item.thumb ?? item.image} alt="" />
                                   ))}
                                 </span>
                                 <span>
@@ -1760,7 +1812,7 @@ export default function Home() {
                       {...lookDropProps(date)}
                     >
                       <span>{Number(date.slice(-2))}</span>
-                      {thumb && <img src={thumb.image} alt="" />}
+                      {thumb && <img src={thumb.thumb ?? thumb.image} alt="" />}
                     </button>
                   );
                 })}
@@ -1878,8 +1930,8 @@ export default function Home() {
       <CutoutEditor
         item={fixingItem}
         onOpenChange={(open) => !open && setFixingItem(null)}
-        onSaved={(id, image) => {
-          updateItem(id, { image });
+        onSaved={(id, image, thumb) => {
+          updateItem(id, { image, thumb });
           setFixingItem(null);
           toast.success("Cutout saved");
         }}

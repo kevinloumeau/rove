@@ -29,6 +29,8 @@ export const wardrobeItems = sqliteTable(
     season: text("season").notNull(),
     description: text("description").notNull(),
     imageKey: text("image_key").notNull(),
+    /** Small WebP for grids; empty for pieces added before thumbnails existed. */
+    thumbKey: text("thumb_key").notNull().default(""),
     tags: text("tags").notNull().default("[]"),
     favorite: integer("favorite", { mode: "boolean" }).notNull().default(false),
     brand: text("brand").notNull().default(""),
