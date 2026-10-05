@@ -3785,6 +3785,57 @@ textarea:focus-visible {
   }
 }
 
+/* Builder sizing: chosen pieces get the room, empty slots shrink to a compact + button. */
+.slot-stack {
+  position: relative;
+  inset: auto;
+  min-height: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 64px 8% 32px;
+}
+.outfit-slot {
+  flex: 0 0 72px;
+}
+.outfit-slot.filled {
+  flex: 1 0 clamp(170px, 24vh, 260px);
+}
+@media (min-width: 761px) {
+  .outfit-canvas {
+    min-height: 780px;
+  }
+}
+.outfit-slot.filled .slot-select {
+  padding: 6px 0;
+}
+.outfit-slot img {
+  width: auto;
+  max-width: 82%;
+  height: 100%;
+}
+/* The × sits beside the piece, not on top of it. */
+.outfit-slot.filled .remove-slot {
+  left: auto;
+  right: calc(50% - min(150px, 41%) - 18px);
+  top: 12px;
+  transform: none;
+}
+@media (max-width: 760px) {
+  .slot-stack {
+    padding: 60px 12px 28px;
+  }
+  .outfit-slot {
+    flex-basis: 64px;
+  }
+  .outfit-slot.filled {
+    flex-basis: clamp(170px, 26vh, 240px);
+  }
+  .outfit-slot.filled .remove-slot {
+    right: 14%;
+  }
+}
+
 /* Outfit journal (Calendar > Journal). */
 .calendar-occasions {
   margin-top: -16px;
