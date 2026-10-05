@@ -10,6 +10,8 @@ export const wardrobeImports = sqliteTable(
     mimeType: text("mime_type").notNull(),
     status: text("status").notNull().default("processing"),
     detectedCount: integer("detected_count").notNull().default(0),
+    /** 64-bit difference hash of the photo, as 16 hex characters, used to warn about re-imports. */
+    photoHash: text("photo_hash"),
     createdAt: integer("created_at").notNull(),
   },
   (table) => [index("wardrobe_imports_user_created_idx").on(table.userId, table.createdAt)],

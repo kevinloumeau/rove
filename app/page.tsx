@@ -42,12 +42,12 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ConfirmDeleteDialog, EditLookDialog, EditPieceDialog, type PieceChanges } from "@/components/closet-dialogs";
+import { EditLookDialog, EditPieceDialog, type PieceChanges } from "@/components/closet-dialogs";
 import { ClosetInsights } from "@/components/closet-insights";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
 import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
-import { shrinkPhoto } from "@/lib/photo-resize";
-import type { SavedLook, WardrobeItem } from "@/lib/wardrobe-types";
+import { photoHash, shrinkPhoto } from "@/lib/photo-resize";
+import { pieceCategories, seasons, type SavedLook, type WardrobeItem } from "@/lib/wardrobe-types";
 
 const categories = ["All", "Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other", "Favorites"];
 const occasions = ["All", "Casual", "Work", "Dinner", "Event"];
@@ -90,6 +90,10 @@ function sameId(a: number | string, b: number | string) {
   return String(a) === String(b);
 }
 
+type DuplicateMatch = { id: string; name: string; image: string };
+/** How long a delete can be undone before it is sent to the server. */
+const UNDO_MS = 6000;
+
 function isNarrow(maxWidth: number) {
   return typeof window !== "undefined" && window.matchMedia(`(max-width: ${maxWidth}px)`).matches;
 }
@@ -107,6 +111,11 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("Recently added");
+  const [colorFilter, setColorFilter] = useState("All colors");
+  const [seasonFilter, setSeasonFilter] = useState("All seasons");
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const pendingDeletes = useRef(new Map<string, { timer: number; urls: string[] }>());
   const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const [outfit, setOutfit] = useState<Array<number | string>>([]);
   const [activeSlot, setActiveSlot] = useState("Tops");
@@ -135,11 +144,10 @@ export default function Home() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importNotice, setImportNotice] = useState<string | null>(null);
   const [isSavingImport, setIsSavingImport] = useState(false);
+  const [duplicateMatches, setDuplicateMatches] = useState<DuplicateMatch[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
-  const [deletingItem, setDeletingItem] = useState<WardrobeItem | null>(null);
   const [editingLook, setEditingLook] = useState<SavedLook | null>(null);
-  const [deletingLook, setDeletingLook] = useState<SavedLook | null>(null);
   const [canvasLookId, setCanvasLookId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -172,6 +180,23 @@ export default function Home() {
       })
       .catch(() => undefined);
     return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    // A delete still in its undo window is sent anyway if the page is closed.
+    const pending = pendingDeletes.current;
+    const flush = () => {
+      for (const { timer, urls } of pending.values()) {
+        window.clearTimeout(timer);
+        for (const url of urls) void fetch(url, { method: "DELETE", keepalive: true });
+      }
+      pending.clear();
+    };
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
   }, []);
 
   const visibleMonth = monthKey(calendarMonth);
@@ -260,20 +285,29 @@ export default function Home() {
     return () => lifecycle.abort();
   }, [items, addToOutfit]);
 
+  const closetColors = useMemo(() => [...new Set(items.map((item) => item.color))].sort(), [items]);
   const visibleItems = useMemo(() => {
-    let next = items.filter(
-      (item) =>
-        (activeCategory === "All" ||
-          item.category === activeCategory ||
-          (activeCategory === "Favorites" && item.favorite)) &&
-        `${item.name} ${item.category} ${item.color} ${item.brand ?? ""}`.toLowerCase().includes(query.toLowerCase()),
-    );
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    let next = items.filter((item) => {
+      if (
+        activeCategory !== "All" &&
+        item.category !== activeCategory &&
+        !(activeCategory === "Favorites" && item.favorite)
+      )
+        return false;
+      if (colorFilter !== "All colors" && item.color !== colorFilter) return false;
+      if (seasonFilter !== "All seasons" && item.season !== seasonFilter && item.season !== "All season") return false;
+      const haystack =
+        `${item.name} ${item.category} ${item.color} ${item.season} ${item.brand ?? ""} ${(item.tags ?? []).join(" ")}`.toLowerCase();
+      return words.every((word) => haystack.includes(word));
+    });
     if (sort === "A–Z") next = [...next].sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "Color") next = [...next].sort((a, b) => a.color.localeCompare(b.color));
     if (sort === "Most worn") next = [...next].sort((a, b) => (b.wearCount ?? 0) - (a.wearCount ?? 0));
     if (sort === "Least worn") next = [...next].sort((a, b) => (a.wearCount ?? 0) - (b.wearCount ?? 0));
     return next;
-  }, [activeCategory, items, query, sort]);
+  }, [activeCategory, colorFilter, items, query, seasonFilter, sort]);
+  const filtersActive = colorFilter !== "All colors" || seasonFilter !== "All seasons";
   const selected = items.find((item) => selectedId !== null && sameId(item.id, selectedId)) ?? items[0];
   const railItems = items.filter((item) => slotFor(item.category) === activeSlot);
   const outfitItems = outfit
@@ -358,27 +392,82 @@ export default function Home() {
       toast.error(errorMessage(error, "Those changes could not be saved."));
     }
   }
-  function deletePiece(item: WardrobeItem) {
-    const index = items.findIndex((piece) => sameId(piece.id, item.id));
-    setItems((current) => current.filter((piece) => !sameId(piece.id, item.id)));
-    setOutfit((current) => current.filter((id) => !sameId(id, item.id)));
+  /** Waits out the undo window, then sends the deletes. Undo cancels them and restores the UI. */
+  function deferDelete(label: string, urls: string[], restore: () => void, failure: string) {
+    const key = crypto.randomUUID();
+    const timer = window.setTimeout(() => {
+      pendingDeletes.current.delete(key);
+      Promise.all(urls.map((url) => sendJson(url, "DELETE"))).catch((error: unknown) => {
+        restore();
+        toast.error(errorMessage(error, failure));
+      });
+    }, UNDO_MS);
+    pendingDeletes.current.set(key, { timer, urls });
+    toast(label, {
+      duration: UNDO_MS,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          window.clearTimeout(timer);
+          pendingDeletes.current.delete(key);
+          restore();
+        },
+      },
+    });
+  }
+  function deletePieces(doomed: WardrobeItem[]) {
+    if (!doomed.length) return;
+    const doomedIds = new Set(doomed.map((item) => String(item.id)));
+    const positions = doomed
+      .map((item) => ({ item, index: items.findIndex((piece) => sameId(piece.id, item.id)) }))
+      .filter(({ index }) => index >= 0)
+      .sort((a, b) => a.index - b.index);
+    const outfitSnapshot = outfit;
     const lookItemIds = new Map(savedLooks.map((look) => [look.id, look.itemIds]));
+    setItems((current) => current.filter((piece) => !doomedIds.has(String(piece.id))));
+    setOutfit((current) => current.filter((id) => !doomedIds.has(String(id))));
     setSavedLooks((current) =>
-      current.map((look) => ({ ...look, itemIds: look.itemIds.filter((id) => !sameId(id, item.id)) })),
+      current.map((look) => ({ ...look, itemIds: look.itemIds.filter((id) => !doomedIds.has(String(id))) })),
     );
-    if (selectedId !== null && sameId(selectedId, item.id)) setSelectedId(null);
-    sendJson(`/api/wardrobe?id=${encodeURIComponent(String(item.id))}`, "DELETE")
-      .then(() => toast.success(`Deleted ${item.name}`))
-      .catch((error: unknown) => {
+    if (selectedId !== null && doomedIds.has(String(selectedId))) setSelectedId(null);
+    deferDelete(
+      doomed.length === 1 ? `Deleted ${doomed[0].name}` : `Deleted ${doomed.length} pieces`,
+      doomed.map((item) => `/api/wardrobe?id=${encodeURIComponent(String(item.id))}`),
+      () => {
+        // Put each piece back at its old position, lowest first so later positions stay right.
         setItems((current) => {
-          const next = [...current];
-          next.splice(Math.max(0, index), 0, item);
+          const next = current.filter((piece) => !doomedIds.has(String(piece.id)));
+          for (const { item, index } of positions) next.splice(Math.min(index, next.length), 0, item);
           return next;
         });
+        setOutfit((current) => (current.length ? current : outfitSnapshot));
         setSavedLooks((current) =>
           current.map((look) => ({ ...look, itemIds: lookItemIds.get(look.id) ?? look.itemIds })),
         );
-        toast.error(errorMessage(error, "That piece could not be deleted."));
+      },
+      doomed.length === 1 ? "That piece could not be deleted." : "Those pieces could not be deleted.",
+    );
+  }
+  function togglePicked(id: number | string) {
+    const key = String(id);
+    setPicked((current) => (current.includes(key) ? current.filter((value) => value !== key) : [...current, key]));
+  }
+  function endSelecting() {
+    setSelecting(false);
+    setPicked([]);
+  }
+  function bulkUpdate(changes: Partial<Pick<WardrobeItem, "category" | "season" | "favorite" | "inLaundry">>) {
+    const ids = picked;
+    if (!ids.length) return;
+    const before = new Map(
+      items.filter((item) => ids.includes(String(item.id))).map((item) => [String(item.id), item]),
+    );
+    setItems((current) => current.map((item) => (ids.includes(String(item.id)) ? { ...item, ...changes } : item)));
+    sendJson("/api/wardrobe", "PATCH", { ids, ...changes })
+      .then(() => toast.success(`Updated ${ids.length} ${ids.length === 1 ? "piece" : "pieces"}`))
+      .catch((error: unknown) => {
+        setItems((current) => current.map((item) => before.get(String(item.id)) ?? item));
+        toast.error(errorMessage(error, "Those changes could not be saved."));
       });
   }
   async function saveLookEdits(changes: Pick<SavedLook, "name" | "occasion">) {
@@ -394,20 +483,24 @@ export default function Home() {
   function deleteLook(look: SavedLook) {
     const index = savedLooks.findIndex((candidate) => candidate.id === look.id);
     const removedPlans = Object.entries(plans).filter(([, outfitId]) => outfitId === look.id);
+    const wasOnCanvas = canvasLookId === look.id;
     setSavedLooks((current) => current.filter((candidate) => candidate.id !== look.id));
     setPlans((current) => Object.fromEntries(Object.entries(current).filter(([, outfitId]) => outfitId !== look.id)));
-    if (canvasLookId === look.id) setCanvasLookId(null);
-    sendJson(`/api/outfits?id=${encodeURIComponent(look.id)}`, "DELETE")
-      .then(() => toast.success(`Deleted ${look.name}`))
-      .catch((error: unknown) => {
+    if (wasOnCanvas) setCanvasLookId(null);
+    deferDelete(
+      `Deleted ${look.name}`,
+      [`/api/outfits?id=${encodeURIComponent(look.id)}`],
+      () => {
         setSavedLooks((current) => {
           const next = [...current];
           next.splice(Math.max(0, index), 0, look);
           return next;
         });
         setPlans((current) => ({ ...current, ...Object.fromEntries(removedPlans) }));
-        toast.error(errorMessage(error, "That look could not be deleted."));
-      });
+        if (wasOnCanvas) setCanvasLookId(look.id);
+      },
+      "That look could not be deleted.",
+    );
   }
   function updateCanvasLook() {
     const look = savedLooks.find((candidate) => candidate.id === canvasLookId);
@@ -529,10 +622,18 @@ export default function Home() {
     setActiveImportId(null);
     setImportError(null);
     setImportNotice(null);
+    setDuplicateMatches([]);
+    const hash = await photoHash(file);
+    if (hash)
+      void fetch(`/api/wardrobe/duplicates?hash=${hash}`)
+        .then((response) => (response.ok ? (response.json() as Promise<{ matches?: DuplicateMatch[] }>) : null))
+        .then((payload) => setDuplicateMatches(payload?.matches ?? []))
+        .catch(() => undefined);
     try {
       const garments = await processWardrobeImage(file, setImportNotice);
       const form = new FormData();
       form.set("image", file);
+      if (hash) form.set("photoHash", hash);
       form.set(
         "manifest",
         JSON.stringify(
@@ -704,7 +805,7 @@ export default function Home() {
           className="danger"
           onClick={() => {
             setDetailSheetOpen(false);
-            setDeletingItem(selected);
+            deletePieces([selected]);
           }}
         >
           <Trash2 /> Delete
@@ -748,6 +849,8 @@ export default function Home() {
             importNotice,
             setImportNotice,
             isSavingImport,
+            duplicateMatches,
+            setDuplicateMatches,
             fileRef,
             cameraRef,
             handleFile,
@@ -816,43 +919,99 @@ export default function Home() {
                   </button>
                 ))}
               </div>
-              <label className="sort-control">
-                <span className="sr-only">Sort closet</span>
-                <select value={sort} onChange={(event) => setSort(event.target.value)}>
-                  <option>Recently added</option>
-                  <option>A–Z</option>
-                  <option>Color</option>
-                  <option>Most worn</option>
-                  <option>Least worn</option>
-                </select>
-                <ChevronDown className="sort-chevron" />
-                <ArrowUpDown className="sort-icon" />
-              </label>
+              <div className="filter-tools">
+                <label className={`pill-select ${colorFilter !== "All colors" ? "active" : ""}`}>
+                  <span className="sr-only">Filter by color</span>
+                  <select value={colorFilter} onChange={(event) => setColorFilter(event.target.value)}>
+                    <option>All colors</option>
+                    {closetColors.map((color) => (
+                      <option key={color}>{color}</option>
+                    ))}
+                  </select>
+                  <ChevronDown />
+                </label>
+                <label className={`pill-select ${seasonFilter !== "All seasons" ? "active" : ""}`}>
+                  <span className="sr-only">Filter by season</span>
+                  <select value={seasonFilter} onChange={(event) => setSeasonFilter(event.target.value)}>
+                    <option>All seasons</option>
+                    {seasons
+                      .filter((season) => season !== "All season")
+                      .map((season) => (
+                        <option key={season}>{season}</option>
+                      ))}
+                  </select>
+                  <ChevronDown />
+                </label>
+                {filtersActive && (
+                  <button
+                    className="clear-filters"
+                    onClick={() => {
+                      setColorFilter("All colors");
+                      setSeasonFilter("All seasons");
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+                <label className="sort-control">
+                  <span className="sr-only">Sort closet</span>
+                  <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                    <option>Recently added</option>
+                    <option>A–Z</option>
+                    <option>Color</option>
+                    <option>Most worn</option>
+                    <option>Least worn</option>
+                  </select>
+                  <ChevronDown className="sort-chevron" />
+                  <ArrowUpDown className="sort-icon" />
+                </label>
+                <button
+                  className={`select-toggle ${selecting ? "active" : ""}`}
+                  aria-pressed={selecting}
+                  disabled={!items.length}
+                  onClick={() => (selecting ? endSelecting() : setSelecting(true))}
+                >
+                  {selecting ? "Done" : "Select"}
+                </button>
+              </div>
             </div>
             {visibleItems.length ? (
               <div className="wardrobe-grid">
                 {visibleItems.map((item) => (
                   <article
                     key={item.id}
-                    className={`item-card ${selected && sameId(selected.id, item.id) ? "selected" : ""} ${item.inLaundry ? "in-laundry" : ""}`}
-                    draggable
+                    className={`item-card ${!selecting && selected && sameId(selected.id, item.id) ? "selected" : ""} ${item.inLaundry ? "in-laundry" : ""} ${selecting && picked.includes(String(item.id)) ? "picked" : ""}`}
+                    draggable={!selecting}
                     onDragStart={(event) => event.dataTransfer.setData("text/plain", String(item.id))}
                     onClick={() => {
+                      if (selecting) {
+                        togglePicked(item.id);
+                        return;
+                      }
                       setSelectedId(item.id);
                       // Below this width the details panel is hidden, so details open in a sheet.
                       if (isNarrow(1100)) setDetailSheetOpen(true);
                     }}
                   >
-                    <button
-                      className={`heart-button ${item.favorite ? "active" : ""}`}
-                      aria-label={item.favorite ? `Remove ${item.name} from favorites` : `Favorite ${item.name}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        toggleFavorite(item.id);
-                      }}
-                    >
-                      <Heart fill={item.favorite ? "currentColor" : "none"} />
-                    </button>
+                    {selecting ? (
+                      <span className="pick-mark">
+                        {picked.includes(String(item.id)) && <Check aria-hidden />}
+                        <span className="sr-only">
+                          {picked.includes(String(item.id)) ? "Selected" : "Not selected"}
+                        </span>
+                      </span>
+                    ) : (
+                      <button
+                        className={`heart-button ${item.favorite ? "active" : ""}`}
+                        aria-label={item.favorite ? `Remove ${item.name} from favorites` : `Favorite ${item.name}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleFavorite(item.id);
+                        }}
+                      >
+                        <Heart fill={item.favorite ? "currentColor" : "none"} />
+                      </button>
+                    )}
                     <div className="item-image">
                       <img src={item.image} alt={item.name} />
                       {item.inLaundry && (
@@ -884,7 +1043,7 @@ export default function Home() {
               <div className="empty-state">
                 <Grid2X2 />
                 <h2>No pieces found</h2>
-                <p>Try another search or category.</p>
+                <p>Try another search, category or filter.</p>
               </div>
             ) : (
               <div className="empty-state">
@@ -894,6 +1053,60 @@ export default function Home() {
                 <Button className="empty-action" onClick={() => setDialogOpen(true)}>
                   <Plus /> Add your first photo
                 </Button>
+              </div>
+            )}
+            {selecting && (
+              <div className="bulk-bar" role="toolbar" aria-label="Selected pieces">
+                <span>
+                  <strong>{picked.length}</strong> selected
+                </span>
+                <button
+                  onClick={() =>
+                    setPicked(picked.length === visibleItems.length ? [] : visibleItems.map((item) => String(item.id)))
+                  }
+                >
+                  {picked.length === visibleItems.length && picked.length ? "None" : "All"}
+                </button>
+                <button aria-label="Favorite" disabled={!picked.length} onClick={() => bulkUpdate({ favorite: true })}>
+                  <Heart /> <span className="bulk-label">Favorite</span>
+                </button>
+                <button
+                  aria-label="Toggle in the wash"
+                  disabled={!picked.length}
+                  onClick={() =>
+                    bulkUpdate({
+                      inLaundry: !items
+                        .filter((item) => picked.includes(String(item.id)))
+                        .every((item) => item.inLaundry),
+                    })
+                  }
+                >
+                  <WashingMachine /> <span className="bulk-label">Wash</span>
+                </button>
+                <label className="bulk-select">
+                  <span className="sr-only">Move to category</span>
+                  <select
+                    value=""
+                    disabled={!picked.length}
+                    onChange={(event) => event.target.value && bulkUpdate({ category: event.target.value })}
+                  >
+                    <option value="">Move to…</option>
+                    {pieceCategories.map((category) => (
+                      <option key={category}>{category}</option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="danger"
+                  aria-label="Delete"
+                  disabled={!picked.length}
+                  onClick={() => {
+                    deletePieces(items.filter((item) => picked.includes(String(item.id))));
+                    endSelecting();
+                  }}
+                >
+                  <Trash2 /> <span className="bulk-label">Delete</span>
+                </button>
               </div>
             )}
           </section>
@@ -1105,11 +1318,7 @@ export default function Home() {
                       <button aria-label={`Rename ${look.name}`} onClick={() => setEditingLook(look)}>
                         <Pencil />
                       </button>
-                      <button
-                        className="danger"
-                        aria-label={`Delete ${look.name}`}
-                        onClick={() => setDeletingLook(look)}
-                      >
+                      <button className="danger" aria-label={`Delete ${look.name}`} onClick={() => deleteLook(look)}>
                         <Trash2 />
                       </button>
                     </div>
@@ -1261,26 +1470,6 @@ export default function Home() {
         onOpenChange={(open) => !open && setEditingLook(null)}
         onSave={saveLookEdits}
       />
-      <ConfirmDeleteDialog
-        open={Boolean(deletingItem)}
-        title={`Delete ${deletingItem?.name ?? "this piece"}?`}
-        description="It will be removed from your closet and from any saved looks. This can't be undone."
-        onOpenChange={(open) => !open && setDeletingItem(null)}
-        onConfirm={() => {
-          if (deletingItem) deletePiece(deletingItem);
-          setDeletingItem(null);
-        }}
-      />
-      <ConfirmDeleteDialog
-        open={Boolean(deletingLook)}
-        title={`Delete ${deletingLook?.name ?? "this look"}?`}
-        description="The look and any days it's planned on will be removed. Your pieces stay in your closet."
-        onOpenChange={(open) => !open && setDeletingLook(null)}
-        onConfirm={() => {
-          if (deletingLook) deleteLook(deletingLook);
-          setDeletingLook(null);
-        }}
-      />
     </main>
   );
 }
@@ -1308,6 +1497,8 @@ type UploadDialogProps = {
   importNotice: string | null;
   setImportNotice: (value: string | null) => void;
   isSavingImport: boolean;
+  duplicateMatches: DuplicateMatch[];
+  setDuplicateMatches: (value: DuplicateMatch[]) => void;
   fileRef: React.RefObject<HTMLInputElement | null>;
   cameraRef: React.RefObject<HTMLInputElement | null>;
   handleFile: (file?: File) => Promise<void>;
@@ -1335,6 +1526,8 @@ function UploadDialog({
   importNotice,
   setImportNotice,
   isSavingImport,
+  duplicateMatches,
+  setDuplicateMatches,
   fileRef,
   cameraRef,
   handleFile,
@@ -1355,6 +1548,7 @@ function UploadDialog({
           setActiveImportId(null);
           setImportError(null);
           setImportNotice(null);
+          setDuplicateMatches([]);
         }
       }}
     >
@@ -1472,6 +1666,24 @@ function UploadDialog({
                   >
                     Choose another photo
                   </Button>
+                </div>
+              )}
+              {duplicateMatches.length > 0 && (
+                <div className="import-message warning" role="status">
+                  <div className="duplicate-thumbs">
+                    {duplicateMatches.slice(0, 3).map((match) => (
+                      <img key={match.id} src={match.image} alt="" />
+                    ))}
+                  </div>
+                  <p>
+                    You may have added this photo before:{" "}
+                    {duplicateMatches
+                      .slice(0, 3)
+                      .map((match) => match.name)
+                      .join(", ")}
+                    {duplicateMatches.length > 3 ? ` and ${duplicateMatches.length - 3} more` : ""}. You can still add
+                    it, or cancel.
+                  </p>
                 </div>
               )}
               {importNotice && (

@@ -262,9 +262,10 @@ button {
 }
 .filter-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px 16px;
   margin-bottom: 24px;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--border);
@@ -277,11 +278,11 @@ button {
 }
 .category-list button {
   min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid transparent;
+  padding: 0 15px;
+  border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--ink-soft);
-  background: transparent;
+  background: #fff;
   white-space: nowrap;
   font-size: 0.84rem;
 }
@@ -290,8 +291,155 @@ button {
   background: #eceee9;
 }
 .category-list button.active {
+  border-color: var(--foreground);
   color: #fff;
-  background: var(--blue);
+  background: var(--foreground);
+}
+.category-list {
+  width: 100%;
+}
+.filter-tools {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 7px;
+}
+.filter-tools .sort-control {
+  margin-left: auto;
+}
+.pill-select,
+.bulk-select {
+  position: relative;
+  flex: 0 0 auto;
+}
+.pill-select select {
+  height: 38px;
+  max-width: 150px;
+  appearance: none;
+  padding: 0 32px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--foreground);
+  background: #fff;
+  font-size: 0.8rem;
+}
+.pill-select.active select {
+  border-color: var(--foreground);
+  color: #fff;
+  background: var(--foreground);
+}
+.pill-select svg {
+  pointer-events: none;
+  position: absolute;
+  right: 11px;
+  top: 11px;
+  width: 15px;
+}
+.pill-select.active svg {
+  color: #fff;
+}
+.clear-filters {
+  border: 0;
+  color: var(--ink-soft);
+  background: transparent;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.select-toggle {
+  height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--foreground);
+  background: #e9ebe6;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+.select-toggle.active {
+  color: #fff;
+  background: var(--foreground);
+}
+.select-toggle:disabled {
+  opacity: 0.5;
+}
+.pick-mark {
+  position: absolute;
+  z-index: 2;
+  right: 10px;
+  top: 10px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(22, 24, 21, 0.25);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.9);
+}
+.pick-mark svg {
+  width: 16px;
+}
+.item-card.picked .pick-mark {
+  border-color: var(--foreground);
+  background: var(--foreground);
+}
+.item-card.picked .item-image {
+  box-shadow: inset 0 0 0 2px var(--foreground);
+}
+.bulk-bar {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 24px);
+  padding: 6px 6px 6px 18px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(22, 24, 21, 0.94);
+  box-shadow: 0 18px 40px rgba(20, 20, 20, 0.25);
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bulk-bar > span {
+  margin-right: 8px;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+.bulk-bar button,
+.bulk-bar select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+.bulk-bar select {
+  appearance: none;
+}
+.bulk-bar select option {
+  color: var(--foreground);
+}
+.bulk-bar button svg {
+  width: 15px;
+}
+.bulk-bar button.danger {
+  background: #c23a32;
+}
+.bulk-bar button:disabled,
+.bulk-bar select:disabled {
+  opacity: 0.45;
 }
 .sort-control {
   position: relative;
@@ -1203,6 +1351,27 @@ button {
 .import-message button {
   justify-self: start;
 }
+.import-message.warning {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  border-color: #ecd9a8;
+  background: #fff9ea;
+  color: #7a5a12;
+}
+.duplicate-thumbs {
+  display: flex;
+}
+.duplicate-thumbs img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border: 2px solid #fff9ea;
+  border-radius: 50%;
+  background: #fff;
+}
+.duplicate-thumbs img + img {
+  margin-left: -12px;
+}
 .extraction-review {
   display: grid;
   gap: 7px;
@@ -1793,7 +1962,34 @@ button {
     width: 100%;
   }
   .filter-row {
+    flex-wrap: wrap;
     align-items: flex-start;
+    gap: 10px;
+  }
+  .category-list {
+    width: 100%;
+  }
+  .filter-tools {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .select-toggle {
+    margin-left: auto;
+  }
+  .bulk-bar {
+    left: 12px;
+    right: 12px;
+    bottom: 84px;
+    max-width: none;
+    justify-content: space-between;
+    transform: none;
+  }
+  .bulk-label {
+    display: none;
+  }
+  .filter-tools .sort-control {
+    margin-left: 0;
   }
   .sort-control select {
     width: 40px;
