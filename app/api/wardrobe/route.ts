@@ -1,4 +1,4 @@
-import { apiError, getWardrobeBindings, requireApiUser, toWardrobeItem } from "@/lib/wardrobe-backend";
+import { apiError, getWardrobeBindings, requireApiUser, safeJsonArray, toWardrobeItem } from "@/lib/wardrobe-backend";
 
 export const dynamic = "force-dynamic";
 
@@ -24,26 +24,88 @@ export async function GET() {
   }
 }
 
+const CATEGORIES = new Set(["Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other"]);
+const TEXT_LIMITS = { name: 120, color: 80, season: 80, description: 600 } as const;
+
 export async function PATCH(request: Request) {
   try {
     const user = await requireApiUser();
-    const payload = (await request.json()) as { id?: string; favorite?: boolean };
-    if (!payload.id || typeof payload.favorite !== "boolean")
+    const payload = (await request.json()) as Record<string, unknown>;
+    if (typeof payload.id !== "string" || !payload.id)
       return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
+
+    const columns: string[] = [];
+    const values: Array<string | number> = [];
+    if (payload.favorite !== undefined) {
+      if (typeof payload.favorite !== "boolean")
+        return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
+      columns.push("favorite = ?");
+      values.push(payload.favorite ? 1 : 0);
+    }
+    for (const [field, limit] of Object.entries(TEXT_LIMITS)) {
+      const value = payload[field];
+      if (value === undefined) continue;
+      if (typeof value !== "string" || (field !== "description" && !value.trim()))
+        return Response.json({ error: `Enter a ${field} for this piece.` }, { status: 400 });
+      columns.push(`${field} = ?`);
+      values.push(value.trim().slice(0, limit));
+    }
+    if (payload.category !== undefined) {
+      if (typeof payload.category !== "string" || !CATEGORIES.has(payload.category))
+        return Response.json({ error: "Choose a valid category." }, { status: 400 });
+      columns.push("category = ?");
+      values.push(payload.category);
+    }
+    if (!columns.length) return Response.json({ error: "Nothing to update." }, { status: 400 });
+
     const { db } = getWardrobeBindings();
     const result = await db
-      .prepare(
-        `
-      UPDATE wardrobe_items SET favorite = ?
-      WHERE id = ? AND user_id = ? AND status = 'ready'
-    `,
-      )
-      .bind(payload.favorite ? 1 : 0, payload.id, user.userId)
+      .prepare(`UPDATE wardrobe_items SET ${columns.join(", ")} WHERE id = ? AND user_id = ? AND status = 'ready'`)
+      .bind(...values, payload.id, user.userId)
       .run();
     if (!result.meta.changes) return Response.json({ error: "That closet item was not found." }, { status: 404 });
-    return Response.json({ id: payload.id, favorite: payload.favorite });
+    return Response.json({ id: payload.id, saved: true });
   } catch (error) {
     return apiError(error, "That change could not be saved. Try again.");
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const user = await requireApiUser();
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id) return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
+    const { db, bucket } = getWardrobeBindings();
+    const item = await db
+      .prepare(`SELECT image_key FROM wardrobe_items WHERE id = ? AND user_id = ? AND status = 'ready'`)
+      .bind(id, user.userId)
+      .first<{ image_key: string }>();
+    if (!item) return Response.json({ error: "That closet item was not found." }, { status: 404 });
+
+    const looks = await db
+      .prepare(`SELECT id, item_ids FROM wardrobe_outfits WHERE user_id = ? AND item_ids LIKE ?`)
+      .bind(user.userId, `%${JSON.stringify(id)}%`)
+      .all<{ id: string; item_ids: string }>();
+    await db.batch([
+      db.prepare(`DELETE FROM wardrobe_items WHERE id = ? AND user_id = ?`).bind(id, user.userId),
+      ...looks.results.map((look) =>
+        db
+          .prepare(`UPDATE wardrobe_outfits SET item_ids = ? WHERE id = ? AND user_id = ?`)
+          .bind(JSON.stringify(safeJsonArray(look.item_ids).filter((itemId) => itemId !== id)), look.id, user.userId),
+      ),
+    ]);
+
+    // Keep the stored image while another piece or the original import still points at it.
+    const stillUsed = await db
+      .prepare(
+        `SELECT 1 FROM wardrobe_items WHERE image_key = ? UNION SELECT 1 FROM wardrobe_imports WHERE original_key = ? LIMIT 1`,
+      )
+      .bind(item.image_key, item.image_key)
+      .first();
+    if (!stillUsed) await bucket.delete(item.image_key);
+    return Response.json({ id, deleted: true });
+  } catch (error) {
+    return apiError(error, "That piece could not be deleted. Try again.");
   }
 }
 
