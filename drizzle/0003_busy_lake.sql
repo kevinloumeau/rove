@@ -1,0 +1,1 @@
+ALTER TABLE `wardrobe_imports` ADD `photo_hash` text;

@@ -41,6 +41,9 @@ export async function POST(request: Request) {
     if (!Array.isArray(manifest) || !manifest.length || manifest.length > 8)
       return Response.json({ error: "Choose a photo containing one to eight visible pieces." }, { status: 400 });
 
+    const rawHash = form.get("photoHash");
+    const photoHash = typeof rawHash === "string" && /^[0-9a-f]{16}$/.test(rawHash) ? rawHash : null;
+
     const { db, bucket } = getWardrobeBindings();
     importId = crypto.randomUUID();
     const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
@@ -53,11 +56,11 @@ export async function POST(request: Request) {
     await db
       .prepare(
         `
-      INSERT INTO wardrobe_imports (id, user_id, original_key, file_name, mime_type, status, detected_count, created_at)
-      VALUES (?, ?, ?, ?, ?, 'processing', 0, ?)
+      INSERT INTO wardrobe_imports (id, user_id, original_key, file_name, mime_type, status, detected_count, photo_hash, created_at)
+      VALUES (?, ?, ?, ?, ?, 'processing', 0, ?, ?)
     `,
       )
-      .bind(importId, user.userId, originalKey, file.name || "wardrobe-upload", file.type, now)
+      .bind(importId, user.userId, originalKey, file.name || "wardrobe-upload", file.type, photoHash, now)
       .run();
 
     const allowedCategories = new Set(["Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other"]);
