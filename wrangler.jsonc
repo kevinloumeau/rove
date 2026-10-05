@@ -17,7 +17,7 @@
   "vars": {
     // Cloudflare Access protects the app. Fill these in from Zero Trust > Access > Applications:
     // the team domain (e.g. "yourteam.cloudflareaccess.com") and the application's AUD tag.
-    "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": "",
+    "ACCESS_TEAM_DOMAIN": "blue-mouse-2b9e.cloudflareaccess.com",
+    "ACCESS_AUD": "658e4e82f9c19bc7c427cd93edcc527c9366a3c88bcbf63422544c635ee703ce",
   },
 }
