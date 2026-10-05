@@ -9,8 +9,7 @@
     {
       "binding": "DB",
       "database_name": "rove",
-      // Replace with the ID from `wrangler d1 create rove` (or the Cloudflare dashboard).
-      "database_id": "00000000-0000-4000-8000-000000000000",
+      "database_id": "e570b77a-a430-42fe-8a56-c1836680c21b",
       "migrations_dir": "drizzle",
     },
   ],
