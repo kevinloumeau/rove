@@ -105,3 +105,21 @@ export const wardrobeJournal = sqliteTable(
   },
   (table) => [uniqueIndex("wardrobe_journal_user_day_idx").on(table.userId, table.day)],
 );
+
+export const wardrobeWishlist = sqliteTable(
+  "wardrobe_wishlist",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    category: text("category").notNull().default("Other"),
+    link: text("link").notNull().default(""),
+    /** Price in whole currency units, like wardrobe_items.price. */
+    price: integer("price"),
+    note: text("note").notNull().default(""),
+    createdAt: integer("created_at").notNull(),
+    /** When it was marked as bought; null while still wanted. */
+    boughtAt: integer("bought_at"),
+  },
+  (table) => [index("wardrobe_wishlist_user_idx").on(table.userId, table.createdAt)],
+);

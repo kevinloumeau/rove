@@ -50,6 +50,13 @@
       "when": 1791240636905,
       "tag": "0006_outfit_journal",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1791242891837,
+      "tag": "0007_wishlist",
+      "breakpoints": true
     }
   ]
 }
