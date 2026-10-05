@@ -1724,3 +1724,90 @@ button {
   color: var(--ink-soft);
   font-size: 0.86rem;
 }
+
+/* Editing and deleting pieces and looks */
+.detail-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.detail-actions button {
+  height: 40px;
+  border-radius: 11px;
+  background: #fff;
+}
+.detail-actions .danger,
+.look-actions .danger {
+  color: var(--destructive);
+}
+.look-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.look-actions button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink-soft);
+  background: transparent;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+.look-actions button:first-child {
+  margin-right: auto;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.look-actions button:not(:first-child):hover {
+  background: var(--secondary);
+}
+.look-actions svg {
+  width: 14px;
+  height: 14px;
+}
+.look-notes button + button {
+  margin-top: 8px;
+}
+.look-notes button.primary {
+  border-color: var(--foreground);
+  color: #fff;
+  background: var(--foreground);
+}
+.edit-dialog form {
+  display: grid;
+  gap: 18px;
+}
+.edit-fields {
+  display: grid;
+  gap: 12px;
+}
+.edit-fields label {
+  display: grid;
+  gap: 5px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+.edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.edit-fields select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--input);
+  border-radius: 9px;
+  color: var(--foreground);
+  background: #fff;
+  font-size: 0.85rem;
+}
+.edit-fields textarea {
+  min-height: 80px;
+  color: var(--foreground);
+}

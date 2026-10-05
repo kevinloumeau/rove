@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Grid2X2,
   Heart,
+  Pencil,
   Layers3,
   Plus,
   ScanSearch,
@@ -17,6 +18,7 @@ import {
   Shirt,
   Shuffle,
   Sparkles,
+  Trash2,
   WandSparkles,
   X,
 } from "lucide-react";
@@ -35,21 +37,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog, EditLookDialog, EditPieceDialog } from "@/components/closet-dialogs";
 import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
-
-type WardrobeItem = {
-  id: number | string;
-  importId?: string | null;
-  name: string;
-  category: string;
-  color: string;
-  season: string;
-  image: string;
-  favorite?: boolean;
-  description: string;
-  tags?: string[];
-};
-type SavedLook = { id: string; name: string; itemIds: Array<number | string>; occasion: string; favorite?: boolean };
+import type { SavedLook, WardrobeItem } from "@/lib/wardrobe-types";
 
 const categories = ["All", "Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other", "Favorites"];
 const occasions = ["All", "Casual", "Work", "Dinner", "Event"];
@@ -125,6 +115,11 @@ export default function Home() {
   const [importNotice, setImportNotice] = useState<string | null>(null);
   const [isSavingImport, setIsSavingImport] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
+  const [deletingItem, setDeletingItem] = useState<WardrobeItem | null>(null);
+  const [editingLook, setEditingLook] = useState<SavedLook | null>(null);
+  const [deletingLook, setDeletingLook] = useState<SavedLook | null>(null);
+  const [canvasLookId, setCanvasLookId] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -292,6 +287,85 @@ export default function Home() {
       toast.error(errorMessage(error, "That favorite could not be saved."));
     });
   }
+  async function savePieceEdits(changes: Pick<WardrobeItem, "name" | "category" | "color" | "season" | "description">) {
+    if (!editingItem) return;
+    try {
+      await sendJson("/api/wardrobe", "PATCH", { id: editingItem.id, ...changes });
+      updateItem(editingItem.id, changes);
+      setEditingItem(null);
+      toast.success("Piece updated");
+    } catch (error) {
+      toast.error(errorMessage(error, "Those changes could not be saved."));
+    }
+  }
+  function deletePiece(item: WardrobeItem) {
+    const index = items.findIndex((piece) => sameId(piece.id, item.id));
+    setItems((current) => current.filter((piece) => !sameId(piece.id, item.id)));
+    setOutfit((current) => current.filter((id) => !sameId(id, item.id)));
+    const lookItemIds = new Map(savedLooks.map((look) => [look.id, look.itemIds]));
+    setSavedLooks((current) =>
+      current.map((look) => ({ ...look, itemIds: look.itemIds.filter((id) => !sameId(id, item.id)) })),
+    );
+    if (selectedId !== null && sameId(selectedId, item.id)) setSelectedId(null);
+    sendJson(`/api/wardrobe?id=${encodeURIComponent(String(item.id))}`, "DELETE")
+      .then(() => toast.success(`Deleted ${item.name}`))
+      .catch((error: unknown) => {
+        setItems((current) => {
+          const next = [...current];
+          next.splice(Math.max(0, index), 0, item);
+          return next;
+        });
+        setSavedLooks((current) =>
+          current.map((look) => ({ ...look, itemIds: lookItemIds.get(look.id) ?? look.itemIds })),
+        );
+        toast.error(errorMessage(error, "That piece could not be deleted."));
+      });
+  }
+  async function saveLookEdits(changes: Pick<SavedLook, "name" | "occasion">) {
+    if (!editingLook) return;
+    try {
+      await sendJson("/api/outfits", "PATCH", { id: editingLook.id, ...changes });
+      setSavedLooks((current) => current.map((look) => (look.id === editingLook.id ? { ...look, ...changes } : look)));
+      setEditingLook(null);
+    } catch (error) {
+      toast.error(errorMessage(error, "Those changes could not be saved."));
+    }
+  }
+  function deleteLook(look: SavedLook) {
+    const index = savedLooks.findIndex((candidate) => candidate.id === look.id);
+    const removedPlans = Object.entries(plans).filter(([, outfitId]) => outfitId === look.id);
+    setSavedLooks((current) => current.filter((candidate) => candidate.id !== look.id));
+    setPlans((current) => Object.fromEntries(Object.entries(current).filter(([, outfitId]) => outfitId !== look.id)));
+    if (canvasLookId === look.id) setCanvasLookId(null);
+    sendJson(`/api/outfits?id=${encodeURIComponent(look.id)}`, "DELETE")
+      .then(() => toast.success(`Deleted ${look.name}`))
+      .catch((error: unknown) => {
+        setSavedLooks((current) => {
+          const next = [...current];
+          next.splice(Math.max(0, index), 0, look);
+          return next;
+        });
+        setPlans((current) => ({ ...current, ...Object.fromEntries(removedPlans) }));
+        toast.error(errorMessage(error, "That look could not be deleted."));
+      });
+  }
+  function updateCanvasLook() {
+    const look = savedLooks.find((candidate) => candidate.id === canvasLookId);
+    if (!look || !outfitItems.length) return;
+    const itemIds = outfitItems.map((item) => item.id);
+    const previous = look.itemIds;
+    const setIds = (ids: Array<number | string>) =>
+      setSavedLooks((current) =>
+        current.map((candidate) => (candidate.id === look.id ? { ...candidate, itemIds: ids } : candidate)),
+      );
+    setIds(itemIds);
+    sendJson("/api/outfits", "PATCH", { id: look.id, itemIds })
+      .then(() => toast.success(`Updated ${look.name}`))
+      .catch((error: unknown) => {
+        setIds(previous);
+        toast.error(errorMessage(error, "That look could not be updated."));
+      });
+  }
   function shuffleLook() {
     const choices = slotDefs
       .map((slot) => {
@@ -312,6 +386,7 @@ export default function Home() {
     };
     setSavedLooks((current) => [next, ...current]);
     setPlanLookId(id);
+    setCanvasLookId(id);
     setOutfitMode("saved");
     sendJson("/api/outfits", "POST", next).catch((error: unknown) => {
       setSavedLooks((current) => current.filter((look) => look.id !== id));
@@ -321,6 +396,7 @@ export default function Home() {
   }
   function loadLook(look: SavedLook) {
     setOutfit(look.itemIds);
+    setCanvasLookId(look.id);
     setOutfitMode("canvas");
     setActiveTab("outfits");
   }
@@ -658,6 +734,14 @@ export default function Home() {
                 >
                   <Plus /> Style this piece
                 </Button>
+                <div className="detail-actions">
+                  <Button variant="outline" onClick={() => setEditingItem(selected)}>
+                    <Pencil /> Edit
+                  </Button>
+                  <Button variant="outline" className="danger" onClick={() => setDeletingItem(selected)}>
+                    <Trash2 /> Delete
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="detail-sticky detail-empty">
@@ -723,7 +807,14 @@ export default function Home() {
                     <button onClick={shuffleLook}>
                       <Shuffle /> Shuffle
                     </button>
-                    <button onClick={() => setOutfit([])}>Reset</button>
+                    <button
+                      onClick={() => {
+                        setOutfit([]);
+                        setCanvasLookId(null);
+                      }}
+                    >
+                      Reset
+                    </button>
                   </div>
                 </div>
                 <div className="slot-stack">
@@ -779,9 +870,20 @@ export default function Home() {
                     ))}
                   </div>
                 )}
-                <button disabled={!outfitItems.length} onClick={saveCurrentLook}>
-                  <Heart /> Save this look
-                </button>
+                {canvasLookId && savedLooks.some((look) => look.id === canvasLookId) ? (
+                  <>
+                    <button className="primary" disabled={!outfitItems.length} onClick={updateCanvasLook}>
+                      <Check /> Update “{savedLooks.find((look) => look.id === canvasLookId)?.name}”
+                    </button>
+                    <button disabled={!outfitItems.length} onClick={saveCurrentLook}>
+                      <Plus /> Save as new look
+                    </button>
+                  </>
+                ) : (
+                  <button disabled={!outfitItems.length} onClick={saveCurrentLook}>
+                    <Heart /> Save this look
+                  </button>
+                )}
               </aside>
             </div>
           ) : (
@@ -811,7 +913,19 @@ export default function Home() {
                   <div>
                     <span>{look.occasion}</span>
                     <h2>{look.name}</h2>
-                    <button onClick={() => loadLook(look)}>Edit look</button>
+                    <div className="look-actions">
+                      <button onClick={() => loadLook(look)}>Edit look</button>
+                      <button aria-label={`Rename ${look.name}`} onClick={() => setEditingLook(look)}>
+                        <Pencil />
+                      </button>
+                      <button
+                        className="danger"
+                        aria-label={`Delete ${look.name}`}
+                        onClick={() => setDeletingLook(look)}
+                      >
+                        <Trash2 />
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -933,6 +1047,36 @@ export default function Home() {
           </div>
         </TabsContent>
       </Tabs>
+      <EditPieceDialog
+        item={editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
+        onSave={savePieceEdits}
+      />
+      <EditLookDialog
+        look={editingLook}
+        onOpenChange={(open) => !open && setEditingLook(null)}
+        onSave={saveLookEdits}
+      />
+      <ConfirmDeleteDialog
+        open={Boolean(deletingItem)}
+        title={`Delete ${deletingItem?.name ?? "this piece"}?`}
+        description="It will be removed from your closet and from any saved looks. This can't be undone."
+        onOpenChange={(open) => !open && setDeletingItem(null)}
+        onConfirm={() => {
+          if (deletingItem) deletePiece(deletingItem);
+          setDeletingItem(null);
+        }}
+      />
+      <ConfirmDeleteDialog
+        open={Boolean(deletingLook)}
+        title={`Delete ${deletingLook?.name ?? "this look"}?`}
+        description="The look and any days it's planned on will be removed. Your pieces stay in your closet."
+        onOpenChange={(open) => !open && setDeletingLook(null)}
+        onConfirm={() => {
+          if (deletingLook) deleteLook(deletingLook);
+          setDeletingLook(null);
+        }}
+      />
     </main>
   );
 }
