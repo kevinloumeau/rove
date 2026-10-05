@@ -52,3 +52,16 @@ To turn it on once:
 1. In Workers & Pages, open the `rove` Worker, go to Settings > Builds, and turn off non-production branch builds. Otherwise those builds upload versions that use the real database.
 2. Create a second Worker from this repo (Create > Import a repository), named `rove-preview`. Set its build command to `npm run build`, its deploy command to `npm run deploy:preview`, and its production branch to the branch you want to try. Turn on non-production branch builds with the deploy command `npm run deploy:preview` too.
 3. Add `rove-preview.<your-subdomain>.workers.dev` to the same Cloudflare Access application as the main app, so sign-in works there.
+
+## Restoring the database
+
+D1 keeps 30 days of history (Time Travel). If a bad change or a deploy damages the closet, restore the `rove` database to an earlier moment:
+
+```sh
+# See where you'd restore to
+npx wrangler d1 time-travel info rove --timestamp "2026-10-05T12:00:00Z"
+# Restore (the command prints a bookmark you can use to undo the restore)
+npx wrangler d1 time-travel restore rove --timestamp "2026-10-05T12:00:00Z"
+```
+
+Photos live in the `rove-closet` R2 bucket, which has no history, so a restore brings back rows whose files were since deleted only if those files still exist. For a full copy of your closet, use **Export backup** in the side menu. It downloads a ZIP of every piece, look, plan and photo.

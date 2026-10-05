@@ -51,7 +51,8 @@ import { CutoutEditor } from "@/components/cutout-editor";
 import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
 import { PackingDialog } from "@/components/packing-dialog";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
-import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
+import { fetchWithRetry } from "@/lib/retry-fetch";
+import { colorSwatch, modelDownloadIsMetered, processWardrobeImage } from "@/lib/local-wardrobe";
 import { suggestLook } from "@/lib/outfit-shuffle";
 import { makeThumbnail, photoHash, shrinkPhoto } from "@/lib/photo-resize";
 import { renderLookImage, shareLookImage } from "@/lib/share-look";
@@ -74,7 +75,7 @@ function slotFor(category: string) {
 }
 
 async function sendJson(url: string, method: string, body?: unknown) {
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method,
     headers: body === undefined ? undefined : { "content-type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -854,6 +855,14 @@ export default function Home() {
   /** Several photos at once: each is processed in turn and every piece found is added. */
   async function handleFiles(picked: File[]) {
     if (fileRef.current) fileRef.current.value = "";
+    if (
+      picked.length &&
+      (await modelDownloadIsMetered()) &&
+      !window.confirm(
+        "You seem to be on cellular data. The first photo downloads Rove's clothing models once, which is a large download. Continue?",
+      )
+    )
+      return;
     if (picked.length <= 1) return handleFile(picked[0]);
     const files = picked.slice(0, 30);
     setPreview(null);
