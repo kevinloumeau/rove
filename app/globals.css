@@ -3508,3 +3508,142 @@ textarea:focus-visible {
     background: var(--garment-tile);
   }
 }
+
+/* Fix cutout editor and batch import */
+.detail-actions .danger {
+  grid-column: 1 / -1;
+}
+.cutout-dialog {
+  max-width: 640px !important;
+}
+.cutout-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #eceee9 25%, transparent 25%), linear-gradient(-45deg, #eceee9 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eceee9 75%), linear-gradient(-45deg, transparent 75%, #eceee9 75%);
+  background-position:
+    0 0,
+    0 12px,
+    12px -12px,
+    -12px 0;
+  background-size: 24px 24px;
+  overflow: hidden;
+}
+.cutout-canvas {
+  width: 100%;
+  max-height: 56vh;
+  object-fit: contain;
+  touch-action: none;
+}
+.cutout-canvas.tool-erase {
+  cursor: crosshair;
+}
+.cutout-canvas.tool-restore {
+  cursor: cell;
+}
+.cutout-status {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.cutout-stage .cutout-status {
+  position: absolute;
+}
+.cutout-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.cutout-tools .view-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cutout-tools svg {
+  width: 15px;
+}
+.brush-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+.brush-size input {
+  width: 110px;
+  accent-color: var(--foreground);
+}
+.skip-duplicates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+.batch-import ul {
+  display: grid;
+  gap: 6px;
+  max-height: 46vh;
+  margin: 14px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.batch-import li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--secondary);
+}
+.batch-import li > span:last-child {
+  display: grid;
+  min-width: 0;
+}
+.batch-import strong {
+  overflow: hidden;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.batch-import small {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.batch-dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--border);
+}
+.batch-import li.working .batch-dot {
+  background: var(--blue);
+  animation: styling-bob 1s ease-in-out infinite;
+}
+.batch-import li.added .batch-dot {
+  background: #2f9e62;
+}
+.batch-import li.skipped .batch-dot {
+  background: #d4a72c;
+}
+.batch-import li.failed .batch-dot {
+  background: var(--destructive);
+}
+@media (prefers-color-scheme: dark) {
+  .cutout-stage {
+    background-color: #2a2d27;
+    background-image:
+      linear-gradient(45deg, #343831 25%, transparent 25%), linear-gradient(-45deg, #343831 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #343831 75%), linear-gradient(-45deg, transparent 75%, #343831 75%);
+  }
+}

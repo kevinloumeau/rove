@@ -127,3 +127,52 @@ export function refineAlpha(rgba: Uint8ClampedArray, mask: Float32Array, width: 
   for (let index = 0; index < mask.length; index += 1) result[index] = Math.round(smoothed[index] * 255);
   return { alpha: result, plainBackdrop: Boolean(backdrop) };
 }
+
+/**
+ * Clears stray specks: pieces of the cutout that are not connected to the garment. Keeps the
+ * largest connected region plus any region at least `minFraction` of its size (a second sleeve
+ * or a strap that the mask split off), and zeroes everything else. Works in place and returns
+ * how many pixels were cleared.
+ */
+export function removeSpecks(alpha: Uint8ClampedArray | Uint8Array, width: number, height: number, minFraction = 0.04) {
+  const labels = new Int32Array(width * height).fill(-1);
+  const sizes: number[] = [];
+  const stack: number[] = [];
+  for (let start = 0; start < alpha.length; start += 1) {
+    if (alpha[start] < 24 || labels[start] !== -1) continue;
+    const label = sizes.length;
+    let size = 0;
+    labels[start] = label;
+    stack.push(start);
+    while (stack.length) {
+      const index = stack.pop()!;
+      size += 1;
+      const x = index % width;
+      const y = (index - x) / width;
+      const neighbors = [
+        x > 0 ? index - 1 : -1,
+        x < width - 1 ? index + 1 : -1,
+        y > 0 ? index - width : -1,
+        y < height - 1 ? index + width : -1,
+      ];
+      for (const next of neighbors) {
+        if (next < 0 || labels[next] !== -1 || alpha[next] < 24) continue;
+        labels[next] = label;
+        stack.push(next);
+      }
+    }
+    sizes.push(size);
+  }
+  if (sizes.length <= 1) return 0;
+  const largest = Math.max(...sizes);
+  const keep = sizes.map((size) => size >= largest * minFraction);
+  let cleared = 0;
+  for (let index = 0; index < alpha.length; index += 1) {
+    const label = labels[index];
+    if (alpha[index] > 0 && (label === -1 ? false : !keep[label])) {
+      alpha[index] = 0;
+      cleared += 1;
+    }
+  }
+  return cleared;
+}

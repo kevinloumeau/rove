@@ -18,6 +18,7 @@ import {
   Luggage,
   Plus,
   ScanSearch,
+  Scissors,
   Search,
   Share2,
   Shirt,
@@ -46,6 +47,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EditLookDialog, EditPieceDialog, type PieceChanges } from "@/components/closet-dialogs";
 import { ClosetInsights } from "@/components/closet-insights";
+import { CutoutEditor } from "@/components/cutout-editor";
 import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
 import { PackingDialog } from "@/components/packing-dialog";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
@@ -97,6 +99,59 @@ function sameId(a: number | string, b: number | string) {
 }
 
 type DuplicateMatch = { id: string; name: string; image: string };
+type BatchEntry = { name: string; status: "waiting" | "working" | "added" | "skipped" | "failed"; detail?: string };
+type ImportResult = { importId: string; items: WardrobeItem[]; cleanedCount: number };
+
+async function findDuplicates(hash: string | null): Promise<DuplicateMatch[]> {
+  if (!hash) return [];
+  const response = await fetch(`/api/wardrobe/duplicates?hash=${hash}`).catch(() => null);
+  if (!response?.ok) return [];
+  const payload = (await response.json().catch(() => ({}))) as { matches?: DuplicateMatch[] };
+  return payload.matches ?? [];
+}
+
+/** Finds the garments in a photo on this device, then uploads the photo, cutouts and details as a draft import. */
+async function analyzeAndUpload(
+  file: File,
+  hash: string | null,
+  onNotice: (notice: string) => void,
+): Promise<ImportResult> {
+  const garments = await processWardrobeImage(file, onNotice);
+  const form = new FormData();
+  form.set("image", file);
+  if (hash) form.set("photoHash", hash);
+  form.set(
+    "manifest",
+    JSON.stringify(
+      garments.map((garment) => ({
+        name: garment.name,
+        category: garment.category,
+        color: garment.color,
+        season: garment.season,
+        description: garment.description,
+        tags: garment.tags,
+      })),
+    ),
+  );
+  garments.forEach((garment, index) =>
+    form.set(`cutout-${index}`, new File([garment.image], `cutout-${index}.png`, { type: "image/png" })),
+  );
+  onNotice("Saving the privately processed pieces…");
+  const response = await fetch("/api/wardrobe/import", { method: "POST", body: form });
+  const payload = (await response.json().catch(() => ({}))) as {
+    importId?: string;
+    items?: WardrobeItem[];
+    cleanedCount?: number;
+    error?: string;
+  };
+  if (!response.ok || !payload.importId || !payload.items?.length)
+    throw new Error(payload.error || "Rove could not save that photo.");
+  return { importId: payload.importId, items: payload.items, cleanedCount: payload.cleanedCount ?? 0 };
+}
+
+async function confirmImport(importId: string, itemIds: string[]) {
+  await sendJson("/api/wardrobe", "POST", { importId, itemIds });
+}
 /** How long a delete can be undone before it is sent to the server. */
 const UNDO_MS = 6000;
 
@@ -168,6 +223,10 @@ export default function Home() {
   const [importNotice, setImportNotice] = useState<string | null>(null);
   const [isSavingImport, setIsSavingImport] = useState(false);
   const [duplicateMatches, setDuplicateMatches] = useState<DuplicateMatch[]>([]);
+  const [batch, setBatch] = useState<BatchEntry[] | null>(null);
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
+  const batchCancelled = useRef(false);
+  const [fixingItem, setFixingItem] = useState<WardrobeItem | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
   const [editingLook, setEditingLook] = useState<SavedLook | null>(null);
@@ -721,49 +780,15 @@ export default function Home() {
     setImportNotice(null);
     setDuplicateMatches([]);
     const hash = await photoHash(file);
-    if (hash)
-      void fetch(`/api/wardrobe/duplicates?hash=${hash}`)
-        .then((response) => (response.ok ? (response.json() as Promise<{ matches?: DuplicateMatch[] }>) : null))
-        .then((payload) => setDuplicateMatches(payload?.matches ?? []))
-        .catch(() => undefined);
+    void findDuplicates(hash).then(setDuplicateMatches);
     try {
-      const garments = await processWardrobeImage(file, setImportNotice);
-      const form = new FormData();
-      form.set("image", file);
-      if (hash) form.set("photoHash", hash);
-      form.set(
-        "manifest",
-        JSON.stringify(
-          garments.map((garment) => ({
-            name: garment.name,
-            category: garment.category,
-            color: garment.color,
-            season: garment.season,
-            description: garment.description,
-            tags: garment.tags,
-          })),
-        ),
-      );
-      garments.forEach((garment, index) =>
-        form.set(`cutout-${index}`, new File([garment.image], `cutout-${index}.png`, { type: "image/png" })),
-      );
-      setImportNotice("Saving the privately processed pieces…");
-      const response = await fetch("/api/wardrobe/import", { method: "POST", body: form });
-      const payload = (await response.json()) as {
-        importId?: string;
-        items?: WardrobeItem[];
-        localProcessing?: boolean;
-        cleanedCount?: number;
-        error?: string;
-      };
-      if (!response.ok || !payload.importId || !payload.items?.length)
-        throw new Error(payload.error || "Rove could not save that photo.");
+      const payload = await analyzeAndUpload(file, hash, setImportNotice);
       setActiveImportId(payload.importId);
       setDetectedItems(payload.items);
       setSelectedExtractions(payload.items.map((item) => String(item.id)));
       setUploadMode(payload.items.length > 1 ? "look" : "single");
       setImportNotice(
-        (payload.cleanedCount ?? 0) === payload.items.length
+        payload.cleanedCount === payload.items.length
           ? "Processed privately on this device—no paid API used."
           : "Processed on this device. Rove kept the original photo for any piece that could not be cleanly separated.",
       );
@@ -773,6 +798,50 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
+  }
+  /** Several photos at once: each is processed in turn and every piece found is added. */
+  async function handleFiles(picked: File[]) {
+    if (fileRef.current) fileRef.current.value = "";
+    if (picked.length <= 1) return handleFile(picked[0]);
+    const files = picked.slice(0, 30);
+    setPreview(null);
+    setImportError(null);
+    setImportNotice(null);
+    setBatch(files.map((file) => ({ name: file.name, status: "waiting" })));
+    const update = (index: number, entry: Partial<BatchEntry>) =>
+      setBatch((current) => current?.map((value, at) => (at === index ? { ...value, ...entry } : value)) ?? null);
+    let added = 0;
+    for (const [index, original] of files.entries()) {
+      if (batchCancelled.current) break;
+      update(index, { status: "working", detail: "Getting ready…" });
+      try {
+        if (!["image/jpeg", "image/png", "image/webp"].includes(original.type))
+          throw new Error("Not a JPEG, PNG, or WebP image");
+        const file = await shrinkPhoto(original);
+        if (file.size > 12 * 1024 * 1024) throw new Error("Larger than 12 MB");
+        const hash = await photoHash(file);
+        const duplicates = skipDuplicates ? await findDuplicates(hash) : [];
+        if (duplicates.length) {
+          update(index, { status: "skipped", detail: `Already added: ${duplicates[0].name}` });
+          continue;
+        }
+        const result = await analyzeAndUpload(file, hash, (notice) => update(index, { detail: notice }));
+        await confirmImport(
+          result.importId,
+          result.items.map((item) => String(item.id)),
+        );
+        setItems((current) => [...result.items, ...current]);
+        added += result.items.length;
+        update(index, {
+          status: "added",
+          detail: result.items.map((item) => item.name).join(", "),
+        });
+      } catch (error) {
+        update(index, { status: "failed", detail: errorMessage(error, "Could not be processed") });
+      }
+    }
+    batchCancelled.current = false;
+    if (added) toast.success(`Added ${added} ${added === 1 ? "piece" : "pieces"}`);
   }
   async function saveUploadedItem() {
     if (!activeImportId || !detectedItems.length) return;
@@ -899,6 +968,15 @@ export default function Home() {
         </Button>
         <Button
           variant="outline"
+          onClick={() => {
+            setDetailSheetOpen(false);
+            setFixingItem(selected);
+          }}
+        >
+          <Scissors /> Fix cutout
+        </Button>
+        <Button
+          variant="outline"
           className="danger"
           onClick={() => {
             setDetailSheetOpen(false);
@@ -951,7 +1029,15 @@ export default function Home() {
             fileRef,
             cameraRef,
             handleFile,
+            handleFiles,
             saveUploadedItem,
+            batch,
+            setBatch,
+            skipDuplicates,
+            setSkipDuplicates,
+            cancelBatch: () => {
+              batchCancelled.current = true;
+            },
           }}
         />
       </header>
@@ -1789,6 +1875,15 @@ export default function Home() {
           setCalendarMonth(new Date(month.getFullYear(), month.getMonth(), 1));
         }}
       />
+      <CutoutEditor
+        item={fixingItem}
+        onOpenChange={(open) => !open && setFixingItem(null)}
+        onSaved={(id, image) => {
+          updateItem(id, { image });
+          setFixingItem(null);
+          toast.success("Cutout saved");
+        }}
+      />
       <EditPieceDialog
         item={editingItem}
         onOpenChange={(open) => !open && setEditingItem(null)}
@@ -1831,7 +1926,13 @@ type UploadDialogProps = {
   fileRef: React.RefObject<HTMLInputElement | null>;
   cameraRef: React.RefObject<HTMLInputElement | null>;
   handleFile: (file?: File) => Promise<void>;
+  handleFiles: (files: File[]) => Promise<void>;
   saveUploadedItem: () => Promise<void>;
+  batch: BatchEntry[] | null;
+  setBatch: (value: BatchEntry[] | null) => void;
+  skipDuplicates: boolean;
+  setSkipDuplicates: (value: boolean) => void;
+  cancelBatch: () => void;
 };
 
 function UploadDialog({
@@ -1860,8 +1961,15 @@ function UploadDialog({
   fileRef,
   cameraRef,
   handleFile,
+  handleFiles,
   saveUploadedItem,
+  batch,
+  setBatch,
+  skipDuplicates,
+  setSkipDuplicates,
+  cancelBatch,
 }: UploadDialogProps) {
+  const batchRunning = Boolean(batch?.some((entry) => entry.status === "waiting" || entry.status === "working"));
   return (
     <Dialog
       open={dialogOpen}
@@ -1878,6 +1986,9 @@ function UploadDialog({
           setImportError(null);
           setImportNotice(null);
           setDuplicateMatches([]);
+          // Closing stops a batch after the photo in progress; pieces already added stay.
+          if (batchRunning) cancelBatch();
+          setBatch(null);
         }
       }}
     >
@@ -1908,7 +2019,8 @@ function UploadDialog({
           className="sr-only"
           type="file"
           accept="image/*"
-          onChange={(event) => handleFile(event.target.files?.[0])}
+          multiple
+          onChange={(event) => handleFiles(Array.from(event.target.files ?? []))}
         />
         <input
           ref={cameraRef}
@@ -1918,7 +2030,35 @@ function UploadDialog({
           capture="environment"
           onChange={(event) => handleFile(event.target.files?.[0])}
         />
-        {!preview ? (
+        {batch ? (
+          <div className="batch-import" aria-live="polite">
+            <p className="process-status">
+              {batchRunning ? <WandSparkles /> : <Check />}
+              {batchRunning
+                ? `Processing ${batch.filter((entry) => entry.status !== "waiting").length} of ${batch.length} photos…`
+                : `Done: ${batch.filter((entry) => entry.status === "added").length} of ${batch.length} photos added`}
+            </p>
+            <ul>
+              {batch.map((entry, index) => (
+                <li key={`${entry.name}-${index}`} className={entry.status}>
+                  <span className="batch-dot" />
+                  <span>
+                    <strong>{entry.name}</strong>
+                    <small>
+                      {entry.status === "waiting"
+                        ? "Waiting"
+                        : entry.status === "skipped"
+                          ? `Skipped · ${entry.detail}`
+                          : entry.status === "failed"
+                            ? `Failed · ${entry.detail}`
+                            : entry.detail}
+                    </small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : !preview ? (
           <button
             className="drop-zone"
             type="button"
@@ -1926,7 +2066,7 @@ function UploadDialog({
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault();
-              handleFile(event.dataTransfer.files?.[0]);
+              handleFiles(Array.from(event.dataTransfer.files ?? []));
             }}
           >
             <span className="upload-icon">
@@ -1934,13 +2074,23 @@ function UploadDialog({
             </span>
             <strong className="pointer-fine">Drop a clothing photo here, or click to browse</strong>
             <strong className="pointer-coarse">Tap to choose a clothing photo</strong>
-            <span>One piece or a full look—we’ll sort it out</span>
+            <span>One piece or a full look—we’ll sort it out. Pick several photos to add them all at once.</span>
           </button>
         ) : null}
-        {!preview ? (
-          <Button variant="outline" className="camera-button pointer-coarse" onClick={() => cameraRef.current?.click()}>
-            <Camera /> Take a photo
-          </Button>
+        {batch ? null : !preview ? (
+          <>
+            <Button
+              variant="outline"
+              className="camera-button pointer-coarse"
+              onClick={() => cameraRef.current?.click()}
+            >
+              <Camera /> Take a photo
+            </Button>
+            <label className="skip-duplicates">
+              <Checkbox checked={skipDuplicates} onCheckedChange={(value) => setSkipDuplicates(value === true)} />
+              When adding several photos, skip ones already in my closet
+            </label>
+          </>
         ) : (
           <div className="processing-grid">
             <div className={`processing-photo ${uploadMode === "look" && processed ? "look-detected" : ""}`}>
@@ -2084,23 +2234,33 @@ function UploadDialog({
             </div>
           </div>
         )}
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost" disabled={isSavingImport}>
-              Cancel
+        {batch ? (
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant={batchRunning ? "ghost" : "default"}>
+                {batchRunning ? "Stop after this photo" : "Done"}
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="ghost" disabled={isSavingImport}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              disabled={!processed || isSavingImport || (uploadMode === "look" && selectedExtractions.length === 0)}
+              onClick={saveUploadedItem}
+            >
+              {isSavingImport
+                ? "Saving…"
+                : uploadMode === "look"
+                  ? `Add ${selectedExtractions.length} ${selectedExtractions.length === 1 ? "piece" : "pieces"}`
+                  : "Add to closet"}
             </Button>
-          </DialogClose>
-          <Button
-            disabled={!processed || isSavingImport || (uploadMode === "look" && selectedExtractions.length === 0)}
-            onClick={saveUploadedItem}
-          >
-            {isSavingImport
-              ? "Saving…"
-              : uploadMode === "look"
-                ? `Add ${selectedExtractions.length} ${selectedExtractions.length === 1 ? "piece" : "pieces"}`
-                : "Add to closet"}
-          </Button>
-        </DialogFooter>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
