@@ -1,6 +1,7 @@
 "use client";
 
 import { colorName, colorSwatches } from "./color-name";
+import { refineAlpha } from "./cutout-refine";
 import { keepRealGarments } from "./garment-filter";
 import {
   type GarmentKind,
@@ -200,23 +201,27 @@ async function cutoutFromMasks(bitmap: ImageBitmap, masks: SegmentMask[]) {
   if (!cropContext) return null;
   cropContext.drawImage(bitmap, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
   const pixels = cropContext.getImageData(0, 0, cropWidth, cropHeight);
-  let red = 0;
-  let green = 0;
-  let blue = 0;
-  let samples = 0;
+  const cropMask = new Float32Array(cropWidth * cropHeight);
   for (let y = 0; y < cropHeight; y += 1) {
     const maskY = Math.min(maskHeight - 1, Math.max(0, Math.floor((y + cropY) / scaleY)));
     for (let x = 0; x < cropWidth; x += 1) {
       const maskX = Math.min(maskWidth - 1, Math.max(0, Math.floor((x + cropX) / scaleX)));
-      const alpha = merged[maskY * maskWidth + maskX];
-      const offset = (y * cropWidth + x) * 4;
-      pixels.data[offset + 3] = alpha;
-      if (alpha > 180 && x % 4 === 0 && y % 4 === 0) {
-        red += pixels.data[offset];
-        green += pixels.data[offset + 1];
-        blue += pixels.data[offset + 2];
-        samples += 1;
-      }
+      cropMask[y * cropWidth + x] = merged[maskY * maskWidth + maskX] > 40 ? 1 : 0;
+    }
+  }
+  const { alpha } = refineAlpha(pixels.data, cropMask, cropWidth, cropHeight);
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+  let samples = 0;
+  for (let index = 0; index < alpha.length; index += 1) {
+    const offset = index * 4;
+    pixels.data[offset + 3] = alpha[index];
+    if (alpha[index] > 180 && index % 3 === 0) {
+      red += pixels.data[offset];
+      green += pixels.data[offset + 1];
+      blue += pixels.data[offset + 2];
+      samples += 1;
     }
   }
   cropContext.putImageData(pixels, 0, 0);
