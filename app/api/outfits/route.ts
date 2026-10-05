@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const { db } = getWardrobeBindings();
     await db
       .prepare(
-        `INSERT INTO wardrobe_outfits (id, user_id, name, occasion, item_ids, favorite, created_at) VALUES (?, ?, ?, ?, ?, 0, ?)`,
+        `INSERT OR IGNORE INTO wardrobe_outfits (id, user_id, name, occasion, item_ids, favorite, created_at) VALUES (?, ?, ?, ?, ?, 0, ?)`,
       )
       .bind(
         payload.id,

@@ -47,6 +47,27 @@ export function colorSwatch(name: string) {
   return key ? colorSwatches[key] : "#c9ccc4";
 }
 
+type NetworkInformation = { type?: string; saveData?: boolean };
+
+/**
+ * True when the clothing models still need downloading and the phone says it is on cellular data
+ * or in data saver mode, so the app can ask first. Browsers that don't report this return false.
+ */
+export async function modelDownloadIsMetered() {
+  const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection;
+  if (!connection || !(connection.saveData || connection.type === "cellular")) return false;
+  if (segmenterPromise || styleModelPromise) return false;
+  try {
+    // transformers.js keeps downloaded model files in this Cache Storage bucket.
+    const cache = await caches.open("transformers-cache");
+    const keys = await cache.keys();
+    const cached = (model: string) => keys.some((request) => request.url.includes(model));
+    return !(cached(CLOTHING_MODEL) && cached(STYLE_MODEL));
+  } catch {
+    return true;
+  }
+}
+
 let segmenterPromise: Promise<(image: string) => Promise<Segment[]>> | null = null;
 
 async function getSegmenter(onProgress: (message: string) => void) {

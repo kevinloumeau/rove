@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ErrorReporter } from "@/components/error-reporter";
 import { ServiceWorker } from "@/components/service-worker";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -45,6 +46,7 @@ export default function RootLayout({
         {children}
         <Toaster position="bottom-center" />
         <ServiceWorker />
+        <ErrorReporter />
       </body>
     </html>
   );

@@ -80,7 +80,7 @@ test("nightly cleanup removes abandoned imports and leaves recent and kept work"
   addImport(sqlite, "fresh", "review", NOW - 1000);
   addItem(sqlite, "fresh-draft", "fresh", "draft", NOW - 1000);
   addImport(sqlite, "kept", "confirmed", old);
-  addItem(sqlite, "kept-piece", "kept", "confirmed", old);
+  addItem(sqlite, "kept-piece", "kept", "ready", old);
   addItem(sqlite, "kept-rejected", "kept", "rejected", old);
   const { objects, bucket } = fakeBucket([
     "abandoned.jpg",
@@ -103,7 +103,7 @@ test("nightly cleanup removes abandoned imports and leaves recent and kept work"
 test("confirming an import drops rejected pieces and the original photo", async () => {
   const { sqlite, db } = fakeD1();
   addImport(sqlite, "imp", "confirmed", NOW);
-  addItem(sqlite, "keep", "imp", "confirmed", NOW);
+  addItem(sqlite, "keep", "imp", "ready", NOW);
   addItem(sqlite, "drop", "imp", "rejected", NOW);
   const { objects, bucket } = fakeBucket(["imp.jpg", "keep.png", "drop.png"]);
 
@@ -116,7 +116,7 @@ test("confirming an import drops rejected pieces and the original photo", async 
 
 test("files still used by a piece are kept", async () => {
   const { sqlite, db } = fakeD1();
-  addItem(sqlite, "piece", null, "confirmed", NOW);
+  addItem(sqlite, "piece", null, "ready", NOW);
   const { objects, bucket } = fakeBucket(["piece.png", "orphan.png"]);
 
   assert.equal(await deleteIfUnused(db, bucket, ["piece.png", "orphan.png", "", "orphan.png"]), 1);
