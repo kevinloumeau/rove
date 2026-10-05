@@ -1395,7 +1395,7 @@ button.declutter-piece:hover {
   width: 19px;
   color: var(--blue);
 }
-.processing-copy ul {
+.processing-copy .import-steps {
   display: grid;
   gap: 13px;
   padding: 0;
@@ -2764,17 +2764,43 @@ button.declutter-piece:hover {
 }
 
 /* Friendly icons while an import is processing */
+.styling-status {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 6px 0 26px;
+  text-align: center;
+}
+.styling-status h3 {
+  margin: 12px 0 0;
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.styling-status p {
+  max-width: 30ch;
+  min-height: 2.6em;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
 .styling-icons {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 10px;
 }
 .styling-icons span {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
+  /* A soft highlight and shade so the pastel buttons read as little 3D pebbles. */
+  box-shadow:
+    inset 0 3px 4px rgba(255, 255, 255, 0.7),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.08),
+    0 6px 14px rgba(22, 24, 21, 0.1);
   animation: styling-bob 1.4s ease-in-out infinite;
 }
 .styling-icons span:nth-child(1) {
@@ -2797,7 +2823,17 @@ button.declutter-piece:hover {
   animation-delay: 0.45s;
 }
 .styling-icons svg {
-  width: 20px;
+  width: 24px;
+  height: 24px;
+}
+.styling-status + .import-steps {
+  width: fit-content;
+  margin-inline: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .styling-icons span {
+    animation: none;
+  }
 }
 @keyframes styling-bob {
   0%,
@@ -3206,7 +3242,7 @@ textarea:focus-visible {
   .processing-photo {
     background: #1f221d;
   }
-  .processing-copy ul {
+  .processing-copy .import-steps {
     color: #80847b;
   }
   .processing-copy li span {
