@@ -909,6 +909,9 @@ export default function Home() {
               <br />
               Build looks from clean, tagged pieces.
             </p>
+            <a className="rail-export" href="/api/export" download>
+              Export backup
+            </a>
           </div>
         </nav>
         <TabsContent value="closet" className="closet-view">
