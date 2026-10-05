@@ -9,7 +9,7 @@ test("names light-wash jeans from the style model", () => {
     fallbackCategory: "Bottoms",
     color: "Light blue",
     type: [
-      { label: "blue jeans", score: 0.82 },
+      { label: "denim jeans", score: 0.82 },
       { label: "chino pants", score: 0.1 },
     ],
     material: [{ label: "denim", score: 0.9 }],
@@ -65,4 +65,16 @@ test("falls back to the plain noun when the model is unsure or missing", () => {
     color: "Brown",
   });
   assert.equal(none.description, "Brown bag.");
+});
+
+test("denim pants read as chinos are named jeans", () => {
+  const result = describeGarment({
+    kind: "pants",
+    fallbackNoun: "pants",
+    fallbackCategory: "Bottoms",
+    color: "Light blue",
+    type: [{ label: "chino pants", score: 0.55 }],
+    material: [{ label: "denim", score: 0.7 }],
+  });
+  assert.equal(result.name, "Light blue jeans");
 });

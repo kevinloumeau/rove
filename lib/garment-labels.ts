@@ -27,7 +27,7 @@ export const typeOptions: Record<GarmentKind, TypeOption[]> = {
     { label: "zip-up jacket", noun: "jacket", category: outerwear },
   ],
   pants: [
-    { label: "blue jeans", noun: "jeans", material: "denim" },
+    { label: "denim jeans", noun: "jeans", material: "denim" },
     { label: "chino pants", noun: "chinos" },
     { label: "dress trousers", noun: "trousers" },
     { label: "sweatpants", noun: "sweatpants" },
@@ -119,13 +119,17 @@ export function describeGarment(input: {
   material?: Guess[];
   pattern?: Guess[];
 }) {
+  const materialLabel = best(input.material, MATERIAL_CONFIDENCE);
+  const materialWord = materialOptions.find((option) => option.label === materialLabel)?.word;
   const typeLabel = best(input.type, TYPE_CONFIDENCE);
-  const type = typeOptions[input.kind].find((option) => option.label === typeLabel);
+  let type = typeOptions[input.kind].find((option) => option.label === typeLabel);
+  // CLIP often reads straight-leg jeans as chinos; full-length denim pants are jeans.
+  if (input.kind === "pants" && materialWord === "denim" && type?.noun !== "shorts")
+    type = typeOptions.pants.find((option) => option.noun === "jeans");
   const noun = type?.noun ?? input.fallbackNoun;
   const category = type?.category ?? input.fallbackCategory;
 
-  const materialLabel = best(input.material, MATERIAL_CONFIDENCE);
-  const material = type?.material ?? materialOptions.find((option) => option.label === materialLabel)?.word;
+  const material = type?.material ?? materialWord;
   const pattern = patternOptions.find((option) => option.label === best(input.pattern, PATTERN_CONFIDENCE))?.word;
 
   const name = [input.color, pattern, noun].filter(Boolean).join(" ");
