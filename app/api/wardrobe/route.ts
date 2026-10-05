@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       .prepare(
         `
       SELECT i.id, i.import_id, i.name, i.category, i.color, i.season, i.description, i.image_key, i.thumb_key,
-        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.created_at,
+        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.kept_at, i.created_at,
         COUNT(w.id) AS wear_count, MAX(w.worn_on) AS last_worn
       FROM wardrobe_items i
       LEFT JOIN wardrobe_wears w ON w.item_id = i.id AND w.user_id = i.user_id
@@ -91,6 +91,12 @@ export async function PATCH(request: Request) {
       columns.push("in_laundry = ?");
       values.push(payload.inLaundry ? 1 : 0);
     }
+    if (payload.kept !== undefined) {
+      // "Keep" in the declutter review restarts that piece's idle clock.
+      if (payload.kept !== true) return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
+      columns.push("kept_at = ?");
+      values.push(Date.now());
+    }
     if (payload.category !== undefined) {
       if (typeof payload.category !== "string" || !CATEGORIES.has(payload.category))
         return Response.json({ error: "Choose a valid category." }, { status: 400 });
@@ -122,7 +128,9 @@ export async function DELETE(request: Request) {
     if (!id) return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
     const { db, bucket } = getWardrobeBindings();
     const item = await db
-      .prepare(`SELECT image_key, thumb_key FROM wardrobe_items WHERE id = ? AND user_id = ? AND status = 'ready'`)
+      .prepare(
+        `SELECT image_key, thumb_key FROM wardrobe_items WHERE id = ? AND user_id = ? AND status IN ('ready', 'archived')`,
+      )
       .bind(id, user.userId)
       .first<{ image_key: string; thumb_key: string }>();
     if (!item) return Response.json({ error: "That closet item was not found." }, { status: 404 });

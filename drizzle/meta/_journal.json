@@ -40,8 +40,15 @@
     {
       "idx": 5,
       "version": "6",
-      "when": 1791231272466,
-      "tag": "0005_outfit_journal",
+      "when": 1791230211224,
+      "tag": "0005_declutter",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791240636905,
+      "tag": "0006_outfit_journal",
       "breakpoints": true
     }
   ]

@@ -40,6 +40,11 @@ export const wardrobeItems = sqliteTable(
     priceCents: integer("price_cents"),
     inLaundry: integer("in_laundry", { mode: "boolean" }).notNull().default(false),
     status: text("status").notNull().default("draft"),
+    /** Why an archived piece left the closet: donate, sell or archive. Empty while the piece is in the closet. */
+    archiveReason: text("archive_reason").notNull().default(""),
+    archivedAt: integer("archived_at"),
+    /** When the wearer last chose "Keep" in the declutter review, so it isn't suggested again right away. */
+    keptAt: integer("kept_at"),
     createdAt: integer("created_at").notNull(),
   },
   (table) => [
