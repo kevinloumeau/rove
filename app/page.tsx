@@ -7,6 +7,7 @@ import {
   Check,
   ArrowUpDown,
   Camera,
+  ChartColumn,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -22,6 +23,7 @@ import {
   Sparkles,
   Trash2,
   WandSparkles,
+  WashingMachine,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +42,9 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ConfirmDeleteDialog, EditLookDialog, EditPieceDialog } from "@/components/closet-dialogs";
+import { ConfirmDeleteDialog, EditLookDialog, EditPieceDialog, type PieceChanges } from "@/components/closet-dialogs";
+import { ClosetInsights } from "@/components/closet-insights";
+import { costPerWear, formatMoney } from "@/lib/closet-stats";
 import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
 import { shrinkPhoto } from "@/lib/photo-resize";
 import type { SavedLook, WardrobeItem } from "@/lib/wardrobe-types";
@@ -262,10 +266,12 @@ export default function Home() {
         (activeCategory === "All" ||
           item.category === activeCategory ||
           (activeCategory === "Favorites" && item.favorite)) &&
-        `${item.name} ${item.category} ${item.color}`.toLowerCase().includes(query.toLowerCase()),
+        `${item.name} ${item.category} ${item.color} ${item.brand ?? ""}`.toLowerCase().includes(query.toLowerCase()),
     );
     if (sort === "A–Z") next = [...next].sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "Color") next = [...next].sort((a, b) => a.color.localeCompare(b.color));
+    if (sort === "Most worn") next = [...next].sort((a, b) => (b.wearCount ?? 0) - (a.wearCount ?? 0));
+    if (sort === "Least worn") next = [...next].sort((a, b) => (a.wearCount ?? 0) - (b.wearCount ?? 0));
     return next;
   }, [activeCategory, items, query, sort]);
   const selected = items.find((item) => selectedId !== null && sameId(item.id, selectedId)) ?? items[0];
@@ -304,7 +310,44 @@ export default function Home() {
       toast.error(errorMessage(error, "That favorite could not be saved."));
     });
   }
-  async function savePieceEdits(changes: Pick<WardrobeItem, "name" | "category" | "color" | "season" | "description">) {
+  function toggleLaundry(item: WardrobeItem) {
+    const inLaundry = !item.inLaundry;
+    updateItem(item.id, { inLaundry });
+    sendJson("/api/wardrobe", "PATCH", { id: item.id, inLaundry }).catch((error: unknown) => {
+      updateItem(item.id, { inLaundry: !inLaundry });
+      toast.error(errorMessage(error, "That change could not be saved."));
+    });
+  }
+  /** Logs today's wear for each piece; pieces already logged today are left alone. */
+  function logWear(pieces: WardrobeItem[]) {
+    const fresh = pieces.filter((piece) => piece.lastWorn !== todayIso);
+    if (!fresh.length) {
+      toast("Already logged for today");
+      return;
+    }
+    const before = new Map(fresh.map((piece) => [String(piece.id), piece]));
+    for (const piece of fresh) updateItem(piece.id, { wearCount: (piece.wearCount ?? 0) + 1, lastWorn: todayIso });
+    sendJson("/api/wears", "POST", { itemIds: fresh.map((piece) => String(piece.id)), date: todayIso })
+      .then(() => toast.success(fresh.length === 1 ? `Logged ${fresh[0].name}` : `Logged ${fresh.length} pieces`))
+      .catch((error: unknown) => {
+        for (const [, piece] of before) updateItem(piece.id, { wearCount: piece.wearCount, lastWorn: piece.lastWorn });
+        toast.error(errorMessage(error, "That wear could not be logged."));
+      });
+  }
+  function unlogWearToday(item: WardrobeItem) {
+    const previous = { wearCount: item.wearCount, lastWorn: item.lastWorn };
+    updateItem(item.id, { wearCount: Math.max(0, (item.wearCount ?? 1) - 1) });
+    sendJson(`/api/wears?itemId=${encodeURIComponent(String(item.id))}&date=${todayIso}`, "DELETE")
+      .then((payload) => {
+        const result = payload as { wearCount?: number; lastWorn?: string | null };
+        updateItem(item.id, { wearCount: result.wearCount ?? 0, lastWorn: result.lastWorn ?? null });
+      })
+      .catch((error: unknown) => {
+        updateItem(item.id, previous);
+        toast.error(errorMessage(error, "That wear could not be removed."));
+      });
+  }
+  async function savePieceEdits(changes: PieceChanges) {
     if (!editingItem) return;
     try {
       await sendJson("/api/wardrobe", "PATCH", { id: editingItem.id, ...changes });
@@ -386,7 +429,7 @@ export default function Home() {
   function shuffleLook() {
     const choices = slotDefs
       .map((slot) => {
-        const matches = items.filter((item) => slotFor(item.category) === slot.category);
+        const matches = items.filter((item) => slotFor(item.category) === slot.category && !item.inLaundry);
         return matches[Math.floor(Math.random() * matches.length)]?.id;
       })
       .filter((id): id is number | string => id !== undefined);
@@ -581,7 +624,54 @@ export default function Home() {
           <dt>Season</dt>
           <dd>{selected.season}</dd>
         </div>
+        {selected.brand ? (
+          <div>
+            <dt>Brand</dt>
+            <dd>{selected.brand}</dd>
+          </div>
+        ) : null}
+        {selected.size ? (
+          <div>
+            <dt>Size</dt>
+            <dd>{selected.size}</dd>
+          </div>
+        ) : null}
+        <div>
+          <dt>Worn</dt>
+          <dd>
+            {selected.wearCount ? `${selected.wearCount} ${selected.wearCount === 1 ? "time" : "times"}` : "Not yet"}
+          </dd>
+        </div>
+        {selected.price ? (
+          <div>
+            <dt>Cost per wear</dt>
+            <dd>{formatMoney(costPerWear(selected.price, selected.wearCount) ?? 0)}</dd>
+          </div>
+        ) : null}
       </dl>
+      {selected.notes ? <p className="detail-notes">{selected.notes}</p> : null}
+      <div className="wear-actions">
+        <Button
+          variant={selected.lastWorn === todayIso ? "secondary" : "outline"}
+          aria-pressed={selected.lastWorn === todayIso}
+          onClick={() => (selected.lastWorn === todayIso ? unlogWearToday(selected) : logWear([selected]))}
+        >
+          <Check /> {selected.lastWorn === todayIso ? "Worn today" : "Wore it today"}
+        </Button>
+        <Button
+          variant={selected.inLaundry ? "secondary" : "outline"}
+          aria-pressed={Boolean(selected.inLaundry)}
+          onClick={() => toggleLaundry(selected)}
+        >
+          <WashingMachine /> {selected.inLaundry ? "In the wash" : "Mark in wash"}
+        </Button>
+      </div>
+      {selected.lastWorn && selected.lastWorn !== todayIso ? (
+        <p className="detail-last-worn">
+          Last worn{" "}
+          {new Date(`${selected.lastWorn}T00:00:00`).toLocaleDateString(undefined, { month: "long", day: "numeric" })}
+        </p>
+      ) : null}
       {selected.tags?.length ? (
         <ul className="detail-tags" aria-label="Tags">
           {selected.tags.map((tag) => (
@@ -680,6 +770,10 @@ export default function Home() {
               <CalendarDays />
               <span>Calendar</span>
             </TabsTrigger>
+            <TabsTrigger value="insights">
+              <ChartColumn />
+              <span>Insights</span>
+            </TabsTrigger>
           </TabsList>
           <div className="rail-note">
             <Sparkles />
@@ -725,6 +819,8 @@ export default function Home() {
                   <option>Recently added</option>
                   <option>A–Z</option>
                   <option>Color</option>
+                  <option>Most worn</option>
+                  <option>Least worn</option>
                 </select>
                 <ChevronDown className="sort-chevron" />
                 <ArrowUpDown className="sort-icon" />
@@ -735,7 +831,7 @@ export default function Home() {
                 {visibleItems.map((item) => (
                   <article
                     key={item.id}
-                    className={`item-card ${selected && sameId(selected.id, item.id) ? "selected" : ""}`}
+                    className={`item-card ${selected && sameId(selected.id, item.id) ? "selected" : ""} ${item.inLaundry ? "in-laundry" : ""}`}
                     draggable
                     onDragStart={(event) => event.dataTransfer.setData("text/plain", String(item.id))}
                     onClick={() => {
@@ -756,6 +852,11 @@ export default function Home() {
                     </button>
                     <div className="item-image">
                       <img src={item.image} alt={item.name} />
+                      {item.inLaundry && (
+                        <span className="laundry-badge">
+                          <WashingMachine /> In the wash
+                        </span>
+                      )}
                     </div>
                     <div className="item-meta">
                       <p>{item.category}</p>
@@ -934,6 +1035,25 @@ export default function Home() {
                     ))}
                   </div>
                 )}
+                {outfitItems.some((item) => item.inLaundry) && (
+                  <p className="look-warning">
+                    <WashingMachine />{" "}
+                    {outfitItems
+                      .filter((item) => item.inLaundry)
+                      .map((item) => item.name)
+                      .join(", ")}{" "}
+                    {outfitItems.filter((item) => item.inLaundry).length === 1 ? "is" : "are"} in the wash.
+                  </p>
+                )}
+                <button
+                  disabled={!outfitItems.length || outfitItems.every((item) => item.lastWorn === todayIso)}
+                  onClick={() => logWear(outfitItems)}
+                >
+                  <Check />{" "}
+                  {outfitItems.length && outfitItems.every((item) => item.lastWorn === todayIso)
+                    ? "Worn today"
+                    : "Wear this look today"}
+                </button>
                 {canvasLookId && savedLooks.some((look) => look.id === canvasLookId) ? (
                   <>
                     <button className="primary" disabled={!outfitItems.length} onClick={updateCanvasLook}>
@@ -1112,6 +1232,20 @@ export default function Home() {
               </div>
             </aside>
           </div>
+        </TabsContent>
+        <TabsContent value="insights" className="insights-view">
+          <section className="insights-intro">
+            <h1>Closet insights</h1>
+            <p>What you reach for, what you paid, and what&apos;s waiting for its turn.</p>
+          </section>
+          <ClosetInsights
+            items={items}
+            onOpenPiece={(item) => {
+              setSelectedId(item.id);
+              setActiveTab("closet");
+              if (isNarrow(1100)) setDetailSheetOpen(true);
+            }}
+          />
         </TabsContent>
       </Tabs>
       <EditPieceDialog
