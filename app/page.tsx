@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Grid2X2,
+  HandHeart,
   Heart,
   Pencil,
   Layers3,
@@ -47,10 +48,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EditLookDialog, EditPieceDialog, type PieceChanges } from "@/components/closet-dialogs";
 import { ClosetInsights } from "@/components/closet-insights";
+import { DeclutterReview, useLetGoPile } from "@/components/declutter-review";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { CutoutEditor } from "@/components/cutout-editor";
 import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
 import { PackingDialog } from "@/components/packing-dialog";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
+import { isLetGoReason, letGoLabels, letGoReasons } from "@/lib/declutter";
 import { fetchWithRetry } from "@/lib/retry-fetch";
 import { colorSwatch, modelDownloadIsMetered, processWardrobeImage } from "@/lib/local-wardrobe";
 import { suggestLook } from "@/lib/outfit-shuffle";
@@ -598,6 +607,23 @@ export default function Home() {
       doomed.length === 1 ? "That piece could not be deleted." : "Those pieces could not be deleted.",
     );
   }
+  const pile = useLetGoPile({ active: activeTab === "insights", setItems, setOutfit, deferDelete });
+  /** "Keep" in the declutter review: restarts the piece's idle clock. */
+  function keepPiece(item: WardrobeItem) {
+    const keptAt = item.keptAt;
+    updateItem(item.id, { keptAt: todayIso });
+    sendJson("/api/wardrobe", "PATCH", { id: item.id, kept: true })
+      .then(() => toast.success(`Keeping ${item.name}`))
+      .catch((error: unknown) => {
+        updateItem(item.id, { keptAt });
+        toast.error(errorMessage(error, "That change could not be saved."));
+      });
+  }
+  function openPieceFromInsights(item: WardrobeItem) {
+    setSelectedId(item.id);
+    setActiveTab("closet");
+    if (isNarrow(1100)) setDetailSheetOpen(true);
+  }
   function togglePicked(id: number | string) {
     const key = String(id);
     setPicked((current) => (current.includes(key) ? current.filter((value) => value !== key) : [...current, key]));
@@ -1036,6 +1062,26 @@ export default function Home() {
         >
           <Scissors /> Fix cutout
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <HandHeart /> Let go
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {letGoReasons.map((reason) => (
+              <DropdownMenuItem
+                key={reason}
+                onSelect={() => {
+                  setDetailSheetOpen(false);
+                  pile.letGo([selected], reason);
+                }}
+              >
+                {letGoLabels[reason]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button
           variant="outline"
           className="danger"
@@ -1358,6 +1404,29 @@ export default function Home() {
                     <option value="">Move to…</option>
                     {pieceCategories.map((category) => (
                       <option key={category}>{category}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="bulk-select">
+                  <span className="sr-only">Let go of these pieces</span>
+                  <select
+                    value=""
+                    disabled={!picked.length}
+                    onChange={(event) => {
+                      const reason = event.target.value;
+                      if (!isLetGoReason(reason)) return;
+                      pile.letGo(
+                        items.filter((item) => picked.includes(String(item.id))),
+                        reason,
+                      );
+                      endSelecting();
+                    }}
+                  >
+                    <option value="">Let go…</option>
+                    {letGoReasons.map((reason) => (
+                      <option key={reason} value={reason}>
+                        {letGoLabels[reason]}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -1908,13 +1977,13 @@ export default function Home() {
             <h1>Closet insights</h1>
             <p>What you reach for, what you paid, and what&apos;s waiting for its turn.</p>
           </section>
-          <ClosetInsights
+          <ClosetInsights items={items} onOpenPiece={openPieceFromInsights} />
+          <DeclutterReview
             items={items}
-            onOpenPiece={(item) => {
-              setSelectedId(item.id);
-              setActiveTab("closet");
-              if (isNarrow(1100)) setDetailSheetOpen(true);
-            }}
+            today={todayIso}
+            pile={pile}
+            onKeep={keepPiece}
+            onOpenPiece={openPieceFromInsights}
           />
         </TabsContent>
       </Tabs>

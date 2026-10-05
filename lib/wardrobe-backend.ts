@@ -61,7 +61,16 @@ export function toWardrobeItem(row: Record<string, unknown>) {
     inLaundry: Boolean(row.in_laundry),
     wearCount: Number(row.wear_count ?? 0),
     lastWorn: typeof row.last_worn === "string" ? row.last_worn : null,
+    addedAt: dayOf(row.created_at),
+    keptAt: dayOf(row.kept_at),
+    archiveReason: String(row.archive_reason ?? ""),
+    archivedAt: dayOf(row.archived_at),
   };
+}
+
+/** YYYY-MM-DD (UTC) for a millisecond timestamp column, or null when it is empty. */
+function dayOf(value: unknown) {
+  return typeof value === "number" && value > 0 ? new Date(value).toISOString().slice(0, 10) : null;
 }
 
 /** YYYY-MM-DD, as sent by the browser for "today" in the wearer's own time zone. */
