@@ -15,6 +15,7 @@ import {
   Heart,
   Pencil,
   Layers3,
+  Luggage,
   Plus,
   ScanSearch,
   Search,
@@ -46,6 +47,7 @@ import { toast } from "sonner";
 import { EditLookDialog, EditPieceDialog, type PieceChanges } from "@/components/closet-dialogs";
 import { ClosetInsights } from "@/components/closet-insights";
 import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
+import { PackingDialog } from "@/components/packing-dialog";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
 import { colorSwatch, processWardrobeImage } from "@/lib/local-wardrobe";
 import { suggestLook } from "@/lib/outfit-shuffle";
@@ -98,6 +100,19 @@ type DuplicateMatch = { id: string; name: string; image: string };
 /** How long a delete can be undone before it is sent to the server. */
 const UNDO_MS = 6000;
 
+function addDays(date: string, days: number) {
+  const next = new Date(`${date}T00:00:00`);
+  next.setDate(next.getDate() + days);
+  return isoDate(next);
+}
+/** Monday-first week containing the date. */
+function weekOf(date: string) {
+  const day = new Date(`${date}T00:00:00`);
+  const monday = addDays(date, -((day.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
+}
+const LOOK_DRAG_TYPE = "application/x-rove-look";
+
 function isNarrow(maxWidth: number) {
   return typeof window !== "undefined" && window.matchMedia(`(max-width: ${maxWidth}px)`).matches;
 }
@@ -137,6 +152,10 @@ export default function Home() {
   const [occasionFilter, setOccasionFilter] = useState("All");
   const [plans, setPlans] = useState<Record<string, string>>({});
   const [planLookId, setPlanLookId] = useState("");
+  const [repeatWeeks, setRepeatWeeks] = useState(0);
+  const [calendarView, setCalendarView] = useState<"auto" | "month" | "week">("auto");
+  const [packingOpen, setPackingOpen] = useState(false);
+  const [dropDate, setDropDate] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processed, setProcessed] = useState(false);
@@ -214,6 +233,21 @@ export default function Home() {
       .catch(() => undefined);
     return () => controller.abort();
   }, [visibleMonth]);
+
+  /** Loads plans for a range the month view may not cover, such as a week that crosses months. */
+  const loadPlanRange = useCallback((from: string, to: string) => {
+    void fetch(`/api/plans?from=${from}&to=${to}`)
+      .then((response) => (response.ok ? (response.json() as Promise<{ plans?: Record<string, string> }>) : null))
+      .then((payload) => {
+        if (payload?.plans) setPlans((current) => ({ ...current, ...payload.plans }));
+      })
+      .catch(() => undefined);
+  }, []);
+  const selectedWeek = weekOf(selectedDate);
+  const selectedWeekKey = selectedWeek[0];
+  useEffect(() => {
+    loadPlanRange(selectedWeekKey, addDays(selectedWeekKey, 13));
+  }, [loadPlanRange, selectedWeekKey]);
 
   const addToOutfit = useCallback(
     (id: number | string) => {
@@ -597,15 +631,54 @@ export default function Home() {
       return next;
     });
   }
+  function planDates(dates: string[], outfitId: string) {
+    const previous = Object.fromEntries(dates.map((date) => [date, plans[date]]));
+    for (const date of dates) setPlan(date, outfitId);
+    sendJson("/api/plans", "POST", { dates, outfitId })
+      .then(() => {
+        if (dates.length > 1) toast.success(`Planned ${dates.length} days`);
+      })
+      .catch((error: unknown) => {
+        for (const date of dates) setPlan(date, previous[date]);
+        toast.error(errorMessage(error, "That day could not be planned."));
+      });
+  }
   function planSelectedLook() {
     if (!lookToPlan) return;
-    const date = selectedDate;
-    const previous = plans[date];
-    setPlan(date, lookToPlan);
-    sendJson("/api/plans", "POST", { date, outfitId: lookToPlan }).catch((error: unknown) => {
-      setPlan(date, previous);
-      toast.error(errorMessage(error, "That day could not be planned."));
-    });
+    // "Repeat weekly" plans the same weekday for the next few weeks too.
+    const dates = Array.from({ length: Math.max(1, repeatWeeks) }, (_, week) => addDays(selectedDate, week * 7));
+    planDates(dates, lookToPlan);
+  }
+  function lookDropProps(date: string) {
+    return {
+      onDragOver: (event: React.DragEvent) => {
+        if (!event.dataTransfer.types.includes(LOOK_DRAG_TYPE)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        setDropDate(date);
+      },
+      onDragLeave: () => setDropDate((current) => (current === date ? null : current)),
+      onDrop: (event: React.DragEvent) => {
+        const outfitId = event.dataTransfer.getData(LOOK_DRAG_TYPE);
+        setDropDate(null);
+        if (!outfitId) return;
+        event.preventDefault();
+        setSelectedDate(date);
+        planDates([date], outfitId);
+      },
+    };
+  }
+  function shiftWeek(offset: number) {
+    const next = addDays(selectedDate, offset * 7);
+    setSelectedDate(next);
+    const nextMonth = new Date(`${next}T00:00:00`);
+    setCalendarMonth(new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1));
+  }
+  function lookThumbs(look: SavedLook, count: number) {
+    return look.itemIds
+      .map((id) => items.find((item) => sameId(item.id, id)))
+      .filter((item): item is WardrobeItem => Boolean(item))
+      .slice(0, count);
   }
   function removePlan() {
     const date = selectedDate;
@@ -1443,7 +1516,7 @@ export default function Home() {
           <section className="calendar-intro">
             <div>
               <h1>Plan your month</h1>
-              <p>Put saved looks on the calendar so getting dressed is already decided.</p>
+              <p>Drag saved looks onto days, repeat them weekly, and pack for trips.</p>
             </div>
             <div className="occasion-list">
               {occasions.map((occasion) => (
@@ -1457,8 +1530,111 @@ export default function Home() {
               ))}
             </div>
           </section>
-          <div className="calendar-workspace">
+          {savedLooks.length > 0 && (
+            <div className="plan-looks" aria-label="Saved looks to drag onto the calendar">
+              {filteredLooks.map((look) => (
+                <button
+                  key={look.id}
+                  draggable
+                  className={lookToPlan === look.id ? "active" : ""}
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData(LOOK_DRAG_TYPE, look.id);
+                    event.dataTransfer.effectAllowed = "copy";
+                  }}
+                  onClick={() => setPlanLookId(look.id)}
+                  aria-pressed={lookToPlan === look.id}
+                >
+                  <span className="plan-look-thumbs">
+                    {lookThumbs(look, 3).map((item) => (
+                      <img key={item.id} src={item.image} alt="" />
+                    ))}
+                  </span>
+                  <span>{look.name}</span>
+                </button>
+              ))}
+              <p className="plan-looks-hint pointer-fine">Drag a look onto a day</p>
+            </div>
+          )}
+          <div className="calendar-workspace" data-view={calendarView}>
             <section className="month-panel">
+              <div className="calendar-view-switch view-switch" aria-label="Calendar view">
+                <button
+                  className={calendarView !== "month" ? "week-active" : ""}
+                  aria-pressed={calendarView === "week"}
+                  onClick={() => setCalendarView("week")}
+                >
+                  Week
+                </button>
+                <button
+                  className={calendarView !== "week" ? "month-active" : ""}
+                  aria-pressed={calendarView === "month"}
+                  onClick={() => setCalendarView("month")}
+                >
+                  Month
+                </button>
+              </div>
+              <div className="week-panel">
+                <div className="month-nav">
+                  <button aria-label="Previous week" onClick={() => shiftWeek(-1)}>
+                    <ChevronLeft />
+                  </button>
+                  <h2>
+                    {new Date(`${selectedWeek[0]}T00:00:00`).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                    {" – "}
+                    {new Date(`${selectedWeek[6]}T00:00:00`).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </h2>
+                  <button aria-label="Next week" onClick={() => shiftWeek(1)}>
+                    <ChevronRight />
+                  </button>
+                </div>
+                <ol className="week-list">
+                  {selectedWeek.map((date) => {
+                    const look = savedLooks.find((candidate) => candidate.id === plans[date]);
+                    const day = new Date(`${date}T00:00:00`);
+                    return (
+                      <li key={date}>
+                        <button
+                          className={`${selectedDate === date ? "selected" : ""} ${date === todayIso ? "today" : ""} ${dropDate === date ? "drop-target" : ""}`}
+                          aria-pressed={selectedDate === date}
+                          onClick={() => {
+                            setSelectedDate(date);
+                            if (isNarrow(760)) scrollIntoViewSoon(dayPanelRef.current);
+                          }}
+                          {...lookDropProps(date)}
+                        >
+                          <span className="week-day">
+                            <small>{day.toLocaleDateString(undefined, { weekday: "short" })}</small>
+                            <strong>{day.getDate()}</strong>
+                          </span>
+                          <span className="week-look">
+                            {look ? (
+                              <>
+                                <span className="plan-look-thumbs">
+                                  {lookThumbs(look, 3).map((item) => (
+                                    <img key={item.id} src={item.image} alt="" />
+                                  ))}
+                                </span>
+                                <span>
+                                  <strong>{look.name}</strong>
+                                  <small>{look.occasion}</small>
+                                </span>
+                              </>
+                            ) : (
+                              <small>Nothing planned</small>
+                            )}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
               <div className="month-heading">
                 <div className="month-nav">
                   <button aria-label="Previous month" onClick={() => shiftMonth(-1)}>
@@ -1488,13 +1664,14 @@ export default function Home() {
                   return (
                     <button
                       key={date}
-                      className={`${selectedDate === date ? "selected" : ""} ${look ? "planned" : ""} ${date === todayIso ? "today" : ""}`}
+                      className={`${selectedDate === date ? "selected" : ""} ${look ? "planned" : ""} ${date === todayIso ? "today" : ""} ${dropDate === date ? "drop-target" : ""}`}
                       aria-label={new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "full" })}
                       aria-pressed={selectedDate === date}
                       onClick={() => {
                         setSelectedDate(date);
                         if (isNarrow(760)) scrollIntoViewSoon(dayPanelRef.current);
                       }}
+                      {...lookDropProps(date)}
                     >
                       <span>{Number(date.slice(-2))}</span>
                       {thumb && <img src={thumb.image} alt="" />}
@@ -1544,8 +1721,28 @@ export default function Home() {
                     </option>
                   ))}
                 </select>
+                <label htmlFor="plan-repeat">Repeat</label>
+                <select
+                  id="plan-repeat"
+                  value={repeatWeeks}
+                  onChange={(event) => setRepeatWeeks(Number(event.target.value))}
+                >
+                  <option value={0}>Just this day</option>
+                  <option value={4}>
+                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
+                    4 weeks
+                  </option>
+                  <option value={8}>
+                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
+                    8 weeks
+                  </option>
+                  <option value={12}>
+                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
+                    12 weeks
+                  </option>
+                </select>
                 <Button disabled={!lookToPlan} onClick={planSelectedLook}>
-                  {plannedLook ? "Replace planned look" : "Plan this look"}
+                  {repeatWeeks ? `Plan ${repeatWeeks} weeks` : plannedLook ? "Replace planned look" : "Plan this look"}
                 </Button>
                 {plannedLook && (
                   <button className="remove-plan" onClick={removePlan}>
@@ -1553,6 +1750,9 @@ export default function Home() {
                   </button>
                 )}
               </div>
+              <Button variant="outline" className="pack-button" onClick={() => setPackingOpen(true)}>
+                <Luggage /> Pack for a trip
+              </Button>
             </aside>
           </div>
         </TabsContent>
@@ -1576,6 +1776,19 @@ export default function Home() {
           Add clothes <Plus />
         </button>
       )}
+      <PackingDialog
+        open={packingOpen}
+        onOpenChange={setPackingOpen}
+        startDate={selectedDate}
+        items={items}
+        looks={savedLooks}
+        onPlanDay={(date) => {
+          setPackingOpen(false);
+          setSelectedDate(date);
+          const month = new Date(`${date}T00:00:00`);
+          setCalendarMonth(new Date(month.getFullYear(), month.getMonth(), 1));
+        }}
+      />
       <EditPieceDialog
         item={editingItem}
         onOpenChange={(open) => !open && setEditingItem(null)}
