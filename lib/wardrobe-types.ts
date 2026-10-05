@@ -20,6 +20,13 @@ export type WardrobeItem = {
   wearCount?: number;
   /** ISO date (YYYY-MM-DD) of the most recent wear. */
   lastWorn?: string | null;
+  /** ISO date the piece was added to the closet. */
+  addedAt?: string | null;
+  /** ISO date of the last "Keep" in the declutter review. */
+  keptAt?: string | null;
+  /** donate, sell or archive for pieces in the let-go pile; empty in the closet. */
+  archiveReason?: string;
+  archivedAt?: string | null;
 };
 
 export type SavedLook = {
