@@ -1,4 +1,5 @@
 import { buildEntries } from "@/lib/journal";
+import { isFeeling } from "@/lib/look-ratings";
 import {
   ALLOWED_IMAGE_TYPES,
   MAX_UPLOAD_BYTES,
@@ -15,7 +16,7 @@ const PAGE_DAYS = 20;
 const NOTE_LIMIT = 2000;
 const EXTENSIONS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
-type JournalRow = { day: string; note: string; photo_key: string };
+type JournalRow = { day: string; note: string; photo_key: string; feeling: string };
 
 /**
  * The outfit journal, newest day first, a page of days at a time: GET /api/journal?before=YYYY-MM-DD.
@@ -58,7 +59,9 @@ export async function GET(request: Request) {
         )
         .bind(user.userId, oldest, newest),
       db
-        .prepare(`SELECT day, note, photo_key FROM wardrobe_journal WHERE user_id = ? AND day >= ? AND day <= ?`)
+        .prepare(
+          `SELECT day, note, photo_key, feeling FROM wardrobe_journal WHERE user_id = ? AND day >= ? AND day <= ?`,
+        )
         .bind(user.userId, oldest, newest),
       recent,
     ]);
@@ -68,6 +71,7 @@ export async function GET(request: Request) {
         date: row.day,
         note: row.note,
         photo: row.photo_key ? assetUrl(row.photo_key) : "",
+        feeling: row.feeling,
       })),
     );
     return Response.json({
@@ -82,22 +86,33 @@ export async function GET(request: Request) {
 
 async function currentRow(db: D1Database, userId: string, day: string) {
   return db
-    .prepare(`SELECT day, note, photo_key FROM wardrobe_journal WHERE user_id = ? AND day = ?`)
+    .prepare(`SELECT day, note, photo_key, feeling FROM wardrobe_journal WHERE user_id = ? AND day = ?`)
     .bind(userId, day)
     .first<JournalRow>();
 }
 
-/** Saves a day's note: PUT { date, note }. An empty note on a day without a photo removes the entry. */
+/**
+ * Saves a day's note and/or how the outfit felt: PUT { date, note?, feeling? }, where feeling is loved, fine,
+ * not-again, or "" to clear it. A day left with no note, photo or feeling is removed.
+ */
 export async function PUT(request: Request) {
   try {
     const user = await requireApiUser();
-    const payload = (await request.json()) as { date?: unknown; note?: unknown };
-    if (!isIsoDate(payload.date) || typeof payload.note !== "string")
+    const payload = (await request.json()) as { date?: unknown; note?: unknown; feeling?: unknown };
+    const hasNote = payload.note !== undefined;
+    const hasFeeling = payload.feeling !== undefined;
+    if (
+      !isIsoDate(payload.date) ||
+      (!hasNote && !hasFeeling) ||
+      (hasNote && typeof payload.note !== "string") ||
+      (hasFeeling && payload.feeling !== "" && !isFeeling(payload.feeling))
+    )
       return Response.json({ error: "Choose a day and write a note." }, { status: 400 });
-    const note = payload.note.trim().slice(0, NOTE_LIMIT);
     const { db } = getWardrobeBindings();
     const existing = await currentRow(db, user.userId, payload.date);
-    if (!note && !existing?.photo_key) {
+    const note = hasNote ? String(payload.note).trim().slice(0, NOTE_LIMIT) : (existing?.note ?? "");
+    const feeling = hasFeeling ? String(payload.feeling) : (existing?.feeling ?? "");
+    if (!note && !feeling && !existing?.photo_key) {
       await db
         .prepare(`DELETE FROM wardrobe_journal WHERE user_id = ? AND day = ?`)
         .bind(user.userId, payload.date)
@@ -105,13 +120,13 @@ export async function PUT(request: Request) {
     } else {
       await db
         .prepare(
-          `INSERT INTO wardrobe_journal (id, user_id, day, note, photo_key, updated_at) VALUES (?, ?, ?, ?, '', ?)
-           ON CONFLICT (user_id, day) DO UPDATE SET note = excluded.note, updated_at = excluded.updated_at`,
+          `INSERT INTO wardrobe_journal (id, user_id, day, note, photo_key, feeling, updated_at) VALUES (?, ?, ?, ?, '', ?, ?)
+           ON CONFLICT (user_id, day) DO UPDATE SET note = excluded.note, feeling = excluded.feeling, updated_at = excluded.updated_at`,
         )
-        .bind(crypto.randomUUID(), user.userId, payload.date, note, Date.now())
+        .bind(crypto.randomUUID(), user.userId, payload.date, note, feeling, Date.now())
         .run();
     }
-    return Response.json({ date: payload.date, note });
+    return Response.json({ date: payload.date, note, feeling });
   } catch (error) {
     return apiError(error, "That note could not be saved. Try again.");
   }
@@ -152,7 +167,7 @@ export async function POST(request: Request) {
   }
 }
 
-/** Removes a day's photo: DELETE /api/journal?date=YYYY-MM-DD. The note, if any, stays. */
+/** Removes a day's photo: DELETE /api/journal?date=YYYY-MM-DD. The note and rating, if any, stay. */
 export async function DELETE(request: Request) {
   try {
     const user = await requireApiUser();
@@ -163,7 +178,7 @@ export async function DELETE(request: Request) {
     if (!existing) return Response.json({ date, removed: true });
     await db
       .prepare(
-        existing.note
+        existing.note || existing.feeling
           ? `UPDATE wardrobe_journal SET photo_key = '', updated_at = ? WHERE user_id = ? AND day = ?`
           : `DELETE FROM wardrobe_journal WHERE updated_at <= ? AND user_id = ? AND day = ?`,
       )

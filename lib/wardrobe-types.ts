@@ -37,6 +37,10 @@ export type SavedLook = {
   itemIds: Array<number | string>;
   occasion: string;
   favorite?: boolean;
+  /** Last day every piece was logged as worn, or null. */
+  lastWorn?: string | null;
+  /** ISO date the look was saved. */
+  createdAt?: string | null;
 };
 
 export const pieceCategories = ["Tops", "Bottoms", "Outerwear", "Dresses", "Shoes", "Accessories", "Other"];

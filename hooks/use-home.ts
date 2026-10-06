@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { type PieceChanges } from "@/components/closet-dialogs";
 import { useLetGoPile } from "@/components/declutter-review";
 import { modelDownloadIsMetered } from "@/lib/local-wardrobe";
+import { lovedAgain, pairScores, type Feeling, type RatedDay } from "@/lib/look-ratings";
 import { suggestLook } from "@/lib/outfit-shuffle";
 import { makeThumbnail, photoHash, shrinkPhoto } from "@/lib/photo-resize";
 import { renderLookImage, shareLookImage } from "@/lib/share-look";
@@ -85,6 +86,19 @@ export function useHome() {
   const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
   const [editingLook, setEditingLook] = useState<SavedLook | null>(null);
   const [canvasLookId, setCanvasLookId] = useState<string | null>(null);
+  const [ratedDays, setRatedDays] = useState<RatedDay[]>([]);
+
+  useEffect(() => {
+    // Journal ratings, so outfit ideas lean toward combinations the wearer loved.
+    const controller = new AbortController();
+    void fetch("/api/journal/feelings", { signal: controller.signal })
+      .then((response) => (response.ok ? (response.json() as Promise<{ days?: RatedDay[] }>) : null))
+      .then((payload) => {
+        if (payload?.days) setRatedDays(payload.days);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -329,6 +343,15 @@ export function useHome() {
   );
   const plannedThisMonth = monthDates.filter((date) => savedLooks.some((look) => look.id === plans[date])).length;
   const todayIso = isoDate(new Date());
+  const pairs = useMemo(() => pairScores(ratedDays), [ratedDays]);
+  const lovedLook = useMemo(() => lovedAgain(ratedDays, items, todayIso), [ratedDays, items, todayIso]);
+  /** Keeps outfit ideas in step with a rating just saved in the journal. */
+  function rateDay(date: string, feeling: Feeling | "", itemIds: string[]) {
+    setRatedDays((current) => [
+      ...current.filter((day) => day.date !== date),
+      ...(feeling ? [{ date, feeling, itemIds }] : []),
+    ]);
+  }
   const selectedDateLabel = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, {
     month: "long",
     day: "numeric",
@@ -597,8 +620,8 @@ export function useHome() {
       });
   }
   function shuffleLook() {
-    // Color- and season-aware, skips the wash, and avoids repeating the look already on the canvas.
-    const look = suggestLook(items, { today: todayIso, current: outfit });
+    // Color- and season-aware, leans toward pairs rated well in the journal, skips the wash, and avoids repeating the look already on the canvas.
+    const look = suggestLook(items, { today: todayIso, current: outfit, pairs });
     if (!look.length) {
       toast("Add a top or a dress to get outfit ideas.");
       return;
@@ -633,6 +656,7 @@ export function useHome() {
       name: `Look ${String(savedLooks.length + 1).padStart(2, "0")}`,
       itemIds: outfitItems.map((item) => item.id),
       occasion: "Casual",
+      createdAt: todayIso,
     };
     setSavedLooks((current) => [next, ...current]);
     setPlanLookId(id);
@@ -670,12 +694,13 @@ export function useHome() {
       return next;
     });
   }
-  function planDates(dates: string[], outfitId: string) {
+  function planDates(dates: string[], outfitId: string, successLabel?: string) {
     const previous = Object.fromEntries(dates.map((date) => [date, plans[date]]));
     for (const date of dates) setPlan(date, outfitId);
     sendJson("/api/plans", "POST", { dates, outfitId })
       .then(() => {
-        if (dates.length > 1) toast.success(`Planned ${dates.length} days`);
+        if (successLabel) toast.success(successLabel);
+        else if (dates.length > 1) toast.success(`Planned ${dates.length} days`);
       })
       .catch((error: unknown) => {
         for (const date of dates) setPlan(date, previous[date]);
@@ -995,6 +1020,8 @@ export function useHome() {
     toggleFavorite,
     toggleLaundry,
     storedCount,
+    lovedLook,
+    rateDay,
     swapSeasonal,
     toggleStored,
     logWear,

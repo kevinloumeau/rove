@@ -11,14 +11,14 @@ test("merges wears and notes into one entry per day, newest first", () => {
       { itemId: "a", date: "2026-10-05" },
     ],
     [
-      { date: "2026-10-05", note: "Coffee with Sam", photo: "/p.jpg" },
+      { date: "2026-10-05", note: "Coffee with Sam", photo: "/p.jpg", feeling: "loved" },
       { date: "2026-10-04", note: "Rainy", photo: "" },
     ],
   );
   assert.deepEqual(entries, [
-    { date: "2026-10-05", itemIds: ["a"], note: "Coffee with Sam", photo: "/p.jpg" },
-    { date: "2026-10-04", itemIds: [], note: "Rainy", photo: "" },
-    { date: "2026-10-03", itemIds: ["a", "b"], note: "", photo: "" },
+    { date: "2026-10-05", itemIds: ["a"], note: "Coffee with Sam", photo: "/p.jpg", feeling: "loved" },
+    { date: "2026-10-04", itemIds: [], note: "Rainy", photo: "", feeling: "" },
+    { date: "2026-10-03", itemIds: ["a", "b"], note: "", photo: "", feeling: "" },
   ]);
 });
 

@@ -77,3 +77,13 @@ test("leaves pieces packed away for the season out of outfit ideas", () => {
     assert.ok(!look.some((piece) => piece.id === "stored-top"));
   }
 });
+
+test("favors pieces worn together on loved days", () => {
+  const look = [
+    { id: "tee", category: "Tops", color: "White", season: "All season" },
+    { id: "jeans", category: "Bottoms", color: "Blue", season: "All season" },
+  ];
+  const plain = scoreLook(look, "2026-10-06");
+  assert.equal(scoreLook(look, "2026-10-06", new Map([["jeans|tee", 2]])), plain + 2);
+  assert.equal(scoreLook(look, "2026-10-06", new Map([["jeans|tee", -6]])), plain - 4);
+});

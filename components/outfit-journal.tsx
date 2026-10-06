@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Camera, Flame, ImageOff, Plus, Search, X } from "lucide-react";
+import { BookOpen, Camera, Flame, Heart, ImageOff, Meh, Plus, Search, ThumbsDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { currentStreak, daysThisMonth, type JournalEntry } from "@/lib/journal";
+import { feelingLabels, feelings, isFeeling, type Feeling } from "@/lib/look-ratings";
 import { shrinkPhoto } from "@/lib/photo-resize";
 import { fetchWithRetry } from "@/lib/retry-fetch";
 import type { WardrobeItem } from "@/lib/wardrobe-types";
@@ -47,7 +48,7 @@ function dayLabel(date: string, today: string) {
 }
 
 function emptyEntry(date: string): JournalEntry {
-  return { date, itemIds: [], note: "", photo: "" };
+  return { date, itemIds: [], note: "", photo: "", feeling: "" };
 }
 
 /** Puts an entry in date order, newest first, replacing any entry for the same day. */
@@ -66,11 +67,14 @@ export function OutfitJournal({
   today,
   onOpenPiece,
   onWearChange,
+  onRate,
 }: {
   items: WardrobeItem[];
   today: string;
   onOpenPiece: (item: WardrobeItem) => void;
   onWearChange: (itemId: string, change: WearChange) => void;
+  /** Called after a day's rating is saved, so outfit ideas can learn from it. */
+  onRate?: (date: string, feeling: Feeling | "", itemIds: string[]) => void;
 }) {
   const [entries, setEntries] = useState<JournalEntry[] | null>(null);
   const [loggedDays, setLoggedDays] = useState<string[]>([]);
@@ -193,6 +197,30 @@ export function OutfitJournal({
     }
   }
 
+  /** Rates how a day's outfit felt; tapping the current rating clears it. */
+  async function saveFeeling(date: string, feeling: Feeling) {
+    const entry = entryFor(date);
+    const previous = entry.feeling;
+    const next = previous === feeling ? "" : feeling;
+    patch(date, () => ({ feeling: next }));
+    if (next) markLogged(date);
+    try {
+      await request(
+        "/api/journal",
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ date, feeling: next }),
+        },
+        "That rating could not be saved. Try again.",
+      );
+      onRate?.(date, next, entry.itemIds);
+    } catch (reason) {
+      patch(date, () => ({ feeling: previous }));
+      failure(reason, "That rating could not be saved. Try again.");
+    }
+  }
+
   async function savePhoto(date: string, file: File) {
     const previous = entryFor(date).photo;
     const preview = URL.createObjectURL(file);
@@ -287,6 +315,7 @@ export function OutfitJournal({
             onAddPieces={() => setPickingFor(entry.date)}
             onRemovePiece={(itemId) => void removePiece(entry.date, itemId)}
             onSaveNote={(note) => void saveNote(entry.date, note)}
+            onFeeling={(feeling) => void saveFeeling(entry.date, feeling)}
             onPhoto={(file) => void savePhoto(entry.date, file)}
             onRemovePhoto={() => void removePhoto(entry.date)}
           />
@@ -315,6 +344,8 @@ export function OutfitJournal({
   );
 }
 
+const feelingIcons = { loved: Heart, fine: Meh, "not-again": ThumbsDown } as const;
+
 function JournalDay({
   entry,
   label,
@@ -323,6 +354,7 @@ function JournalDay({
   onAddPieces,
   onRemovePiece,
   onSaveNote,
+  onFeeling,
   onPhoto,
   onRemovePhoto,
 }: {
@@ -333,6 +365,7 @@ function JournalDay({
   onAddPieces: () => void;
   onRemovePiece: (itemId: string) => void;
   onSaveNote: (note: string) => void;
+  onFeeling: (feeling: Feeling) => void;
   onPhoto: (file: File) => void;
   onRemovePhoto: () => void;
 }) {
@@ -407,6 +440,25 @@ function JournalDay({
           </li>
         </ul>
         {!pieces.length && <p className="journal-hint">Nothing logged yet. Tap + to add what you wore.</p>}
+        {pieces.length > 0 && (
+          <div className="journal-feeling" role="group" aria-label={`How the outfit felt: ${label}`}>
+            {feelings.map((feeling) => {
+              const Icon = feelingIcons[feeling];
+              const active = isFeeling(entry.feeling) && entry.feeling === feeling;
+              return (
+                <button
+                  key={feeling}
+                  className={`${feeling} ${active ? "active" : ""}`}
+                  aria-pressed={active}
+                  onClick={() => onFeeling(feeling)}
+                >
+                  <Icon aria-hidden fill={active && feeling === "loved" ? "currentColor" : "none"} />
+                  {feelingLabels[feeling]}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <textarea
           className="journal-note"
           placeholder="Where did you go? How did it feel?"

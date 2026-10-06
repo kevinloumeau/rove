@@ -4370,3 +4370,135 @@ textarea:focus-visible {
     margin-left: 36px;
   }
 }
+
+/* Look ratings */
+.journal-feeling {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.journal-feeling button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: var(--card);
+  font-size: 0.78rem;
+}
+.journal-feeling button svg {
+  width: 14px;
+  height: 14px;
+}
+.journal-feeling button:hover {
+  color: var(--foreground);
+}
+.journal-feeling button.active {
+  border-color: var(--foreground);
+  color: var(--background);
+  background: var(--foreground);
+}
+.journal-feeling button.loved.active {
+  border-color: #e0475b;
+  color: #fff;
+  background: #e0475b;
+}
+.ootd-again {
+  margin: 14px auto 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.ootd-again strong {
+  color: var(--foreground);
+}
+
+/* Forgotten looks */
+.forgotten-looks ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.forgotten-looks li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--secondary);
+}
+.forgotten-thumbs {
+  display: flex;
+  flex: none;
+}
+.forgotten-thumbs img {
+  width: 40px;
+  height: 40px;
+  margin-left: -10px;
+  border: 2px solid var(--secondary);
+  border-radius: 10px;
+  background: #fff;
+  object-fit: contain;
+}
+.forgotten-thumbs img:first-child {
+  margin-left: 0;
+}
+.forgotten-looks li > button.forgotten-open {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.forgotten-looks strong {
+  overflow: hidden;
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.forgotten-looks small {
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+}
+.forgotten-looks [data-slot="button"] {
+  flex: none;
+  margin-left: auto;
+  border-radius: 999px;
+}
+@media (max-width: 760px) {
+  .forgotten-looks li {
+    flex-wrap: wrap;
+  }
+  .forgotten-looks li > button.forgotten-open {
+    flex-basis: calc(100% - 120px);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .forgotten-thumbs img {
+    background: var(--garment-tile);
+  }
+}
+.ootd-again svg {
+  display: inline;
+  width: 13px;
+  height: 13px;
+  margin-right: 2px;
+  color: #e0475b;
+  vertical-align: -2px;
+}
+
+/* Long look names wrap, and on phones the look actions get their own row, so cards never overflow the page. */
+.look-card > div {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.look-card h2 {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .look-card .look-actions {
+    grid-column: 1 / -1;
+  }
+}

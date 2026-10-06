@@ -1,4 +1,6 @@
-// Picks outfit ideas that go together. Import-free so node's test runner can load it directly.
+// Picks outfit ideas that go together. Only imports other import-free libs, so node's test runner can load it directly.
+
+import { lookAffinity } from "./look-ratings.ts";
 
 export type ShufflePiece = {
   id: number | string;
@@ -56,8 +58,11 @@ function daysBetween(a: string, b: string) {
   return Math.round((Date.parse(`${b}T00:00:00`) - Date.parse(`${a}T00:00:00`)) / 86_400_000);
 }
 
+/** Pairs of piece ids ("a|b", sorted) scored by how the wearer rated outfits that had both. */
+export type PairScores = Map<string, number>;
+
 /** Higher is better. Exposed for tests. */
-export function scoreLook(pieces: ShufflePiece[], today: string) {
+export function scoreLook(pieces: ShufflePiece[], today: string, pairs?: PairScores) {
   const season = seasonOf(new Date(`${today}T00:00:00`));
   const statements = [...new Set(pieces.map((piece) => piece.color).filter((color) => !NEUTRALS.has(color)))];
   let score = 0;
@@ -72,6 +77,11 @@ export function scoreLook(pieces: ShufflePiece[], today: string) {
     else score -= 2;
     if (piece.lastWorn && daysBetween(piece.lastWorn, today) < 3) score -= 1;
   }
+  if (pairs)
+    score += lookAffinity(
+      pieces.map((piece) => piece.id),
+      pairs,
+    );
   return score;
 }
 
@@ -84,7 +94,7 @@ const OPTIONAL_LAYER_SEASONS = new Set(["spring", "fall", "winter"]);
  */
 export function suggestLook<T extends ShufflePiece>(
   pieces: T[],
-  options: { today: string; current?: Array<number | string>; random?: () => number },
+  options: { today: string; current?: Array<number | string>; random?: () => number; pairs?: PairScores },
 ): T[] {
   const random = options.random ?? Math.random;
   const clean = pieces.filter((piece) => !piece.inLaundry && !piece.storedAt);
@@ -109,7 +119,7 @@ export function suggestLook<T extends ShufflePiece>(
     const extra = pick(of("Accessories", "Other"));
     if (extra && random() < 0.6) look.push(extra);
     if (!look.length) continue;
-    let score = scoreLook(look, options.today);
+    let score = scoreLook(look, options.today, options.pairs);
     if (
       look
         .map((piece) => String(piece.id))

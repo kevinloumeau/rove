@@ -1,25 +1,37 @@
+import { lastWornTogether, wearsByDay } from "@/lib/forgotten-looks";
 import { apiError, getWardrobeBindings, requireApiUser } from "@/lib/wardrobe-backend";
 
 export const dynamic = "force-dynamic";
 
+/** Saved looks, newest first, each with the last day all its pieces were worn together. */
 export async function GET() {
   try {
     const user = await requireApiUser();
     const { db } = getWardrobeBindings();
-    const result = await db
-      .prepare(
-        `SELECT id, name, occasion, item_ids, favorite FROM wardrobe_outfits WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
-      )
-      .bind(user.userId)
-      .all();
+    const [looks, wears] = await db.batch<Record<string, unknown>>([
+      db
+        .prepare(
+          `SELECT id, name, occasion, item_ids, favorite, created_at FROM wardrobe_outfits WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
+        )
+        .bind(user.userId),
+      db
+        .prepare(`SELECT item_id, worn_on FROM wardrobe_wears WHERE user_id = ? ORDER BY worn_on DESC LIMIT 20000`)
+        .bind(user.userId),
+    ]);
+    const days = wearsByDay(wears.results.map((row) => ({ itemId: String(row.item_id), date: String(row.worn_on) })));
     return Response.json({
-      looks: result.results.map((row) => ({
-        id: String(row.id),
-        name: String(row.name),
-        occasion: String(row.occasion),
-        itemIds: JSON.parse(String(row.item_ids || "[]")),
-        favorite: Boolean(row.favorite),
-      })),
+      looks: looks.results.map((row) => {
+        const itemIds = JSON.parse(String(row.item_ids || "[]")) as Array<string | number>;
+        return {
+          id: String(row.id),
+          name: String(row.name),
+          occasion: String(row.occasion),
+          itemIds,
+          favorite: Boolean(row.favorite),
+          lastWorn: lastWornTogether(itemIds, days),
+          createdAt: typeof row.created_at === "number" ? new Date(row.created_at).toISOString().slice(0, 10) : null,
+        };
+      }),
     });
   } catch (error) {
     return apiError(error, "Your saved looks could not be loaded. Try again.");

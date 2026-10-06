@@ -76,6 +76,8 @@ export function ClosetTab({ home }: { home: HomeState }) {
     setSwapOpen,
     swapSeasonal,
     toggleStored,
+    lovedLook,
+    setOutfit,
   } = home;
   const storedView = activeCategory === "Stored";
   return (
@@ -89,6 +91,13 @@ export function ClosetTab({ home }: { home: HomeState }) {
             todayIso={todayIso}
             onOpenLook={loadLook}
             onWear={logWear}
+            lovedLook={lovedLook}
+            onStyle={(pieces) => {
+              setOutfit(pieces.map((piece) => piece.id));
+              setCanvasLookId(null);
+              setOutfitMode("canvas");
+              setActiveTab("outfits");
+            }}
             onPlanDay={(date) => {
               setCalendarMonth(new Date(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, 1));
               setSelectedDate(date);
