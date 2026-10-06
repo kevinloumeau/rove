@@ -36,20 +36,20 @@ function roundRect(context: CanvasRenderingContext2D, x: number, y: number, w: n
 
 /** Draws a 1080x1350 PNG card of the look: its name, the pieces on white tiles, and a footer. */
 export async function renderLookImage(title: string, subtitle: string, imageUrls: string[]) {
-  await document.fonts?.load('96px "Anton"').catch(() => undefined);
+  await document.fonts?.load('104px "Instrument Serif"').catch(() => undefined);
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("This browser cannot draw images.");
 
-  context.fillStyle = "#eef0ff";
+  context.fillStyle = "#f3eee8";
   context.fillRect(0, 0, WIDTH, HEIGHT);
-  context.fillStyle = "#161815";
+  context.fillStyle = "#1c1917";
   context.textAlign = "center";
-  context.font = '96px Anton, "Arial Narrow", Impact, sans-serif';
+  context.font = '104px "Instrument Serif", Georgia, serif';
   context.fillText(title, WIDTH / 2, 150, WIDTH - 120);
-  context.fillStyle = "#676b63";
+  context.fillStyle = "#6b6259";
   context.font = '36px "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif';
   context.fillText(subtitle, WIDTH / 2, 210, WIDTH - 120);
 
@@ -67,9 +67,9 @@ export async function renderLookImage(title: string, subtitle: string, imageUrls
     context.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
 
-  context.fillStyle = "#3e55f0";
+  context.fillStyle = "#6750d0";
   context.font = '600 30px "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif';
-  context.fillText("Styled with Rove", WIDTH / 2, HEIGHT - 50);
+  context.fillText("Styled with Rove ✨", WIDTH / 2, HEIGHT - 50);
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("The image could not be created.");

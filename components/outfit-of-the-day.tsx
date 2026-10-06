@@ -8,12 +8,11 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  CloudSun,
   Heart,
   MapPin,
   Shuffle,
 } from "lucide-react";
-import { type DayWeather, forecastUrl, parseForecast, weatherHint, weatherLabel } from "@/lib/weather";
+import { type DayWeather, forecastUrl, parseForecast, weatherEmoji, weatherHint, weatherLabel } from "@/lib/weather";
 import type { SavedLook, WardrobeItem } from "@/lib/wardrobe-types";
 
 const COORDS_KEY = "rove-weather-coords";
@@ -237,7 +236,15 @@ export function OutfitOfTheDay({
         </button>
       </div>
       <h2 className="display-title" id="ootd-title">
-        {day === todayIso ? "Outfit of the day" : look ? "Planned look" : "Nothing yet"}
+        {day === todayIso ? (
+          <>
+            Outfit of the <em>day</em>
+          </>
+        ) : look ? (
+          "Planned look"
+        ) : (
+          "Nothing yet"
+        )}
       </h2>
       <p className="ootd-date">
         {dayLabel}
@@ -246,7 +253,9 @@ export function OutfitOfTheDay({
       {dayWeather ? (
         <p className="ootd-weather">
           <span>
-            <CloudSun aria-hidden />
+            <span className="weather-emoji" aria-hidden>
+              {weatherEmoji(dayWeather.code)}
+            </span>
             {`${dayWeather.high}° / ${dayWeather.low}° · ${weatherLabel(dayWeather.code)}`}
           </span>
           {weatherHint(dayWeather, weather.fahrenheit)}

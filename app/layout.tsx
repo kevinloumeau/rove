@@ -20,8 +20,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f7f3" },
-    { media: "(prefers-color-scheme: dark)", color: "#121411" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f3ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#161412" },
   ],
 };
 
@@ -40,7 +40,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: colorSchemeScript }} />
         {/* Sent with credentials so the manifest loads through Cloudflare Access. */}
         <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
-        <link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossOrigin="" />
+        <link rel="preload" href="/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossOrigin="" />
       </head>
       <body className="antialiased">
         {children}

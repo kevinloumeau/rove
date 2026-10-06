@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ChartColumn, Lock, PartyPopper, WashingMachine, Repeat2, Sparkles } from "lucide-react";
+import { ArrowRight, ChartColumn, Lock, WashingMachine, Repeat2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { closetStats, formatMoney } from "@/lib/closet-stats";
 import { UNLOCK_WEARS, insightStage, nextStep } from "@/lib/insights-progress";
@@ -88,7 +88,7 @@ export function InsightsNextStep({
   }
   return (
     <section className="insight-card insight-next" aria-labelledby="next-title">
-      <p className="insight-eyebrow">Nice rotation</p>
+      <p className="insight-eyebrow">Nice rotation 👏</p>
       <h2 id="next-title">Every piece has been worn</h2>
       <p>Keep logging wears to see cost per wear drop over time.</p>
     </section>
@@ -111,7 +111,7 @@ export function InsightsProgress({
   return (
     <section className="insight-card insight-progress" aria-labelledby="progress-title">
       <h2 id="progress-title">
-        <PartyPopper /> {totalWears ? "Your progress" : "You're set up"}
+        <span aria-hidden>🎉</span> {totalWears ? "Your progress" : "You're set up"}
       </h2>
       <ul>
         <li>

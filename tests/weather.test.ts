@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { forecastUrl, parseForecast, weatherHint, weatherLabel } from "../lib/weather.ts";
+import { forecastUrl, parseForecast, weatherEmoji, weatherHint, weatherLabel } from "../lib/weather.ts";
 
 test("labels WMO codes", () => {
   assert.equal(weatherLabel(0), "Clear");
@@ -8,6 +8,12 @@ test("labels WMO codes", () => {
   assert.equal(weatherLabel(81), "Rain");
   assert.equal(weatherLabel(73), "Snow");
   assert.equal(weatherLabel(95), "Storms");
+});
+
+test("gives every label an emoji", () => {
+  assert.equal(weatherEmoji(0), "☀️");
+  assert.equal(weatherEmoji(63), "🌧️");
+  for (const code of [0, 1, 3, 45, 51, 61, 71, 95, 99, 4]) assert.ok(weatherEmoji(code));
 });
 
 test("gives dressing advice in either unit", () => {

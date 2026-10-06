@@ -64,7 +64,7 @@ export function OutfitsTab({ home }: { home: HomeState }) {
       <TabsContent value="outfits" className="outfit-view">
         <section className="outfit-intro">
           <div>
-            <h1>Style a look</h1>
+            <h1>Style a <em>look</em></h1>
             <p>Fill each slot, shuffle ideas, and save the combinations that work.</p>
           </div>
           <div className="view-switch" aria-label="Outfit view">
@@ -236,7 +236,7 @@ export function OutfitsTab({ home }: { home: HomeState }) {
           <section className="saved-look-grid">
             {!savedLooks.length && (
               <div className="empty-state saved-empty">
-                <Layers3 />
+                <span className="empty-emoji" aria-hidden>✨</span>
                 <h2>No saved looks yet</h2>
                 <p>Build an outfit on the canvas and save it to see it here.</p>
               </div>
