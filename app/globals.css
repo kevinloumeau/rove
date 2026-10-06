@@ -5602,3 +5602,17 @@ textarea:focus-visible {
     background: var(--blue);
   }
 }
+
+/* Outfit of the day is the hero of the closet tab, so the page title steps back */
+.closet-title h1 {
+  font-size: clamp(2.3rem, 3.4vw, 3rem);
+}
+@media (max-width: 760px) {
+  .closet-title h1 {
+    font-size: 2.2rem;
+  }
+  .closet-greeting {
+    margin-bottom: 2px;
+    font-size: 0.9rem;
+  }
+}
