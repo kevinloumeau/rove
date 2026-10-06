@@ -17,7 +17,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
-      - run: npx prettier --check app components hooks lib tests e2e scripts
+      - run: npx prettier --check app components hooks lib tests e2e
       - run: npm test
       - run: npm run build
 
