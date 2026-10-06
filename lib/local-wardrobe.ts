@@ -348,7 +348,11 @@ async function splitFalseDress(
   const input = {
     width,
     height,
-    dress: binary(dressSegments.map((segment) => segment.mask), width, height),
+    dress: binary(
+      dressSegments.map((segment) => segment.mask),
+      width,
+      height,
+    ),
     upper: binary(masksFor(["Upper-clothes"]), width, height),
     bottom,
     belt: binary(masksFor(["Belt"]), width, height),
@@ -358,7 +362,10 @@ async function splitFalseDress(
   if (!plan) return segments;
   if (plan.evidence !== "labels") {
     onProgress("Checking whether that's a dress…");
-    const cutout = await cutoutFromMasks(bitmap, dressSegments.map((segment) => segment.mask));
+    const cutout = await cutoutFromMasks(
+      bitmap,
+      dressSegments.map((segment) => segment.mask),
+    );
     if (!(await looksLikeSeparates(cutout?.preview ?? null, onProgress))) return segments;
   }
   const split = applyDressSplit(input, plan);

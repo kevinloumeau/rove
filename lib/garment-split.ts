@@ -145,9 +145,7 @@ export function planDressSplit(input: SplitInput): SplitPlan | null {
   const beltRows = rowCounts(belt, width, height);
   const beltCenter = centroid(beltRows, beltArea);
   const beltInMiddle =
-    beltArea >= Math.max(16, dressArea * 0.005) &&
-    beltCenter >= first + span * 0.2 &&
-    beltCenter <= first + span * 0.8;
+    beltArea >= Math.max(16, dressArea * 0.005) && beltCenter >= first + span * 0.2 && beltCenter <= first + span * 0.8;
 
   // The model saw a real top above and a real bottom below the "dress": it's separates.
   if (

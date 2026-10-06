@@ -42,13 +42,27 @@ test("splits when the model also saw a top above and trousers below", () => {
 
 test("cuts at the belt when one crosses the middle", () => {
   const belt = mask((x, y) => body(x, y) && y >= 78 && y < 83);
-  const plan = planDressSplit({ width, height, dress: mask((x, y) => body(x, y) && !belt[y * width + x]), upper: empty, bottom: empty, belt });
+  const plan = planDressSplit({
+    width,
+    height,
+    dress: mask((x, y) => body(x, y) && !belt[y * width + x]),
+    upper: empty,
+    bottom: empty,
+    belt,
+  });
   assert.deepEqual(plan, { waist: 80, evidence: "belt" });
 });
 
 test("ignores a belt at the hem", () => {
   const belt = mask((x, y) => body(x, y) && y >= 134);
-  const plan = planDressSplit({ width, height, dress: mask((x, y) => body(x, y) && y < 134), upper: empty, bottom: empty, belt });
+  const plan = planDressSplit({
+    width,
+    height,
+    dress: mask((x, y) => body(x, y) && y < 134),
+    upper: empty,
+    bottom: empty,
+    belt,
+  });
   assert.notEqual(plan?.evidence, "belt");
 });
 
