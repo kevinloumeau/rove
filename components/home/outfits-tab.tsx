@@ -76,7 +76,7 @@ export function OutfitsTab({ home }: { home: HomeState }) {
                     </button>
                   ))
                 ) : (
-                  <p className="rail-empty">No {activeSlot.toLowerCase()} yet. Add a photo to grow this slot.</p>
+                  <p className="rail-empty">No {activeSlot.toLowerCase()} yet. Add clothes to fill this slot.</p>
                 )}
               </div>
             </aside>
@@ -299,7 +299,7 @@ export function OutfitsTab({ home }: { home: HomeState }) {
               })}
             </ul>
           ) : (
-            <p className="rail-empty">Nothing in this slot yet. Add a photo to grow it.</p>
+            <p className="rail-empty">Nothing in this slot yet. Add clothes to fill it.</p>
           )}
           <button className="picker-done" onClick={() => setPickerOpen(false)}>
             Done
