@@ -200,7 +200,7 @@ export function OutfitOfTheDay({
               <li key={iso}>
                 <button
                   className={`${iso === day ? "active" : ""} ${plans[iso] ? "planned" : ""} ${iso < todayIso ? "past" : ""}`}
-                  aria-pressed={iso === day}
+                  aria-current={iso === day ? "true" : undefined}
                   aria-label={date.toLocaleDateString(undefined, { dateStyle: "full" })}
                   onClick={() => setDay(iso)}
                 >

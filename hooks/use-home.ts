@@ -59,6 +59,8 @@ export function useHome() {
   const [occasionFilter, setOccasionFilter] = useState("All");
   const [plans, setPlans] = useState<Record<string, string>>({});
   const [planLookId, setPlanLookId] = useState("");
+  /** A look picked to place on the calendar by tapping a day, shown with a sticky Plan bar. */
+  const [armedLookId, setArmedLookId] = useState<string | null>(null);
   const [repeatWeeks, setRepeatWeeks] = useState(0);
   const [calendarView, setCalendarView] = useState<"auto" | "month" | "week">("auto");
   const [calendarMode, setCalendarMode] = useState<"plan" | "journal">("plan");
@@ -615,7 +617,12 @@ export function useHome() {
     for (const date of dates) setPlan(date, outfitId);
     sendJson("/api/plans", "POST", { dates, outfitId })
       .then(() => {
-        if (dates.length > 1) toast.success(`Planned ${dates.length} days`);
+        const name = savedLooks.find((look) => look.id === outfitId)?.name ?? "Look";
+        toast.success(
+          dates.length > 1
+            ? `Planned ${name} for ${dates.length} days`
+            : `Planned ${name} for ${new Date(`${dates[0]}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`,
+        );
       })
       .catch((error: unknown) => {
         for (const date of dates) setPlan(date, previous[date]);
@@ -658,6 +665,14 @@ export function useHome() {
       .map((id) => items.find((item) => sameId(item.id, id)))
       .filter((item): item is WardrobeItem => Boolean(item))
       .slice(0, count);
+  }
+  /** Opens the calendar with this look ready to place on a day. */
+  function startPlanningLook(look: SavedLook) {
+    setOccasionFilter("All");
+    setPlanLookId(look.id);
+    setArmedLookId(look.id);
+    setCalendarMode("plan");
+    setActiveTab("calendar");
   }
   function removePlan() {
     const date = selectedDate;
@@ -855,6 +870,9 @@ export function useHome() {
     setPlans,
     planLookId,
     setPlanLookId,
+    armedLookId,
+    setArmedLookId,
+    startPlanningLook,
     repeatWeeks,
     setRepeatWeeks,
     calendarView,

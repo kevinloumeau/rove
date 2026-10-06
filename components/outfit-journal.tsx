@@ -407,15 +407,18 @@ function JournalDay({
           </li>
         </ul>
         {!pieces.length && <p className="journal-hint">Nothing logged yet. Tap + to add what you wore.</p>}
-        <textarea
-          className="journal-note"
-          placeholder="Where did you go? How did it feel?"
-          value={note}
-          maxLength={2000}
-          rows={2}
-          onChange={(event) => setNote(event.target.value)}
-          onBlur={() => onSaveNote(note)}
-        />
+        <label className="journal-note-field">
+          <span>Note</span>
+          <textarea
+            className="journal-note"
+            placeholder="Where did you go? How did it feel?"
+            value={note}
+            maxLength={2000}
+            rows={2}
+            onChange={(event) => setNote(event.target.value)}
+            onBlur={() => onSaveNote(note)}
+          />
+        </label>
       </div>
     </li>
   );

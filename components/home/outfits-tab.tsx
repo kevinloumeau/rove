@@ -1,6 +1,27 @@
 "use client";
 
-import { Check, Heart, Pencil, Layers3, Plus, Share2, Shuffle, Trash2, WashingMachine, X } from "lucide-react";
+import {
+  CalendarPlus,
+  Check,
+  Heart,
+  Pencil,
+  Layers3,
+  MoreHorizontal,
+  Plus,
+  Share2,
+  Shuffle,
+  Trash2,
+  WashingMachine,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { TabsContent } from "@/components/ui/tabs";
 import { colorSwatch } from "@/lib/local-wardrobe";
@@ -36,6 +57,7 @@ export function OutfitsTab({ home }: { home: HomeState }) {
     saveCurrentLook,
     loadLook,
     toggleLookFavorite,
+    startPlanningLook,
   } = home;
   return (
     <>
@@ -117,7 +139,7 @@ export function OutfitsTab({ home }: { home: HomeState }) {
                       <button
                         className="slot-select"
                         aria-label={item ? `${slot.label}: ${item.name}` : `Choose ${slot.label.toLowerCase()}`}
-                        aria-pressed={activeSlot === slot.category}
+                        aria-current={activeSlot === slot.category ? "true" : undefined}
                         onClick={() => {
                           setActiveSlot(slot.category);
                           // On phones pieces are picked from a bottom sheet instead of the side rail.
@@ -219,50 +241,76 @@ export function OutfitsTab({ home }: { home: HomeState }) {
                 <p>Build an outfit on the canvas and save it to see it here.</p>
               </div>
             )}
-            {savedLooks.map((look) => (
-              <article className="look-card" key={look.id}>
-                <button
-                  className={`look-heart ${look.favorite ? "active" : ""}`}
-                  aria-label={look.favorite ? `Unfavorite ${look.name}` : `Favorite ${look.name}`}
-                  onClick={() => toggleLookFavorite(look)}
-                >
-                  <Heart fill={look.favorite ? "currentColor" : "none"} />
-                </button>
-                <button className="look-collage" onClick={() => loadLook(look)}>
-                  {look.itemIds.slice(0, 4).map((id) => {
-                    const item = items.find((piece) => sameId(piece.id, id));
-                    return item ? <img key={id} src={item.thumb ?? item.image} alt={item.name} /> : null;
-                  })}
-                </button>
-                <div>
-                  <span>{look.occasion}</span>
-                  <h2>{look.name}</h2>
-                  <div className="look-actions">
-                    <button onClick={() => loadLook(look)}>Edit look</button>
-                    <button
-                      aria-label={`Share ${look.name}`}
-                      onClick={() =>
-                        shareLook(
-                          look.name,
-                          look.occasion,
-                          look.itemIds
-                            .map((id) => items.find((piece) => sameId(piece.id, id)))
-                            .filter((piece): piece is WardrobeItem => Boolean(piece)),
-                        )
-                      }
-                    >
-                      <Share2 />
-                    </button>
-                    <button aria-label={`Rename ${look.name}`} onClick={() => setEditingLook(look)}>
-                      <Pencil />
-                    </button>
-                    <button className="danger" aria-label={`Delete ${look.name}`} onClick={() => deleteLook(look)}>
-                      <Trash2 />
-                    </button>
+            {savedLooks.map((look) => {
+              const pieces = look.itemIds
+                .map((id) => items.find((piece) => sameId(piece.id, id)))
+                .filter((piece): piece is WardrobeItem => Boolean(piece));
+              return (
+                <article className="look-card" key={look.id}>
+                  <button
+                    className={`look-heart ${look.favorite ? "active" : ""}`}
+                    aria-label={look.favorite ? `Unfavorite ${look.name}` : `Favorite ${look.name}`}
+                    onClick={() => toggleLookFavorite(look)}
+                  >
+                    <Heart fill={look.favorite ? "currentColor" : "none"} />
+                  </button>
+                  <button
+                    className="look-collage"
+                    data-count={Math.min(pieces.length, 4)}
+                    aria-label={`Open ${look.name}`}
+                    onClick={() => loadLook(look)}
+                  >
+                    {pieces.slice(0, 4).map((item) => (
+                      <img
+                        key={item.id}
+                        src={item.thumb ?? item.image}
+                        alt=""
+                        width={480}
+                        height={480}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ))}
+                  </button>
+                  <div className="look-card-body">
+                    <h2>{look.name}</h2>
+                    <p>
+                      {look.occasion} · {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
+                    </p>
+                    <div className="look-card-actions">
+                      <Button variant="outline" className="look-edit" onClick={() => loadLook(look)}>
+                        <Pencil /> Edit
+                      </Button>
+                      <Button variant="outline" onClick={() => startPlanningLook(look)}>
+                        <CalendarPlus /> Plan
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="icon" aria-label={`More for ${look.name}`}>
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem className="phone-menu-only" onSelect={() => loadLook(look)}>
+                            <Layers3 /> Edit look
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => shareLook(look.name, look.occasion, pieces)}>
+                            <Share2 /> Share as image
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setEditingLook(look)}>
+                            <Pencil /> Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem variant="destructive" onSelect={() => deleteLook(look)}>
+                            <Trash2 /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </section>
         )}
       </TabsContent>

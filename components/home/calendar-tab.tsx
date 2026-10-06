@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ChevronLeft, ChevronRight, Luggage } from "lucide-react";
+import { CalendarDays, Check, ChevronLeft, ChevronRight, Luggage, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { OutfitJournal } from "@/components/outfit-journal";
@@ -47,16 +47,31 @@ export function CalendarTab({ home }: { home: HomeState }) {
     lookThumbs,
     removePlan,
     shiftMonth,
+    armedLookId,
+    setArmedLookId,
   } = home;
+  const armedLook = savedLooks.find((look) => look.id === armedLookId && look.id === lookToPlan);
+  const selectedShort = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
   return (
     <TabsContent value="calendar" className="calendar-view">
       <section className="calendar-intro">
         <div>
           <h1>{calendarMode === "plan" ? "Plan your month" : "Outfit journal"}</h1>
           <p>
-            {calendarMode === "plan"
-              ? "Drag saved looks onto days, repeat them weekly, and pack for trips."
-              : "What you wore each day, with a photo and a note to remember it by."}
+            {calendarMode === "plan" ? (
+              <>
+                <span className="pointer-fine">
+                  Drag saved looks onto days, repeat them weekly, and pack for trips.
+                </span>
+                <span className="pointer-coarse">Choose a look, then tap a day.</span>
+              </>
+            ) : (
+              "What you wore each day, with a photo and a note to remember it by."
+            )}
           </p>
         </div>
         <div className="view-switch" aria-label="Calendar mode">
@@ -95,19 +110,27 @@ export function CalendarTab({ home }: { home: HomeState }) {
             </div>
           </section>
           {savedLooks.length > 0 && (
-            <div className="plan-looks" aria-label="Saved looks to drag onto the calendar">
+            <div className="plan-looks" role="group" aria-label="Choose a look to plan">
               {filteredLooks.map((look) => (
                 <button
                   key={look.id}
                   draggable
-                  className={lookToPlan === look.id ? "active" : ""}
+                  className={armedLook?.id === look.id ? "active" : ""}
                   onDragStart={(event) => {
                     event.dataTransfer.setData(LOOK_DRAG_TYPE, look.id);
                     event.dataTransfer.effectAllowed = "copy";
                   }}
-                  onClick={() => setPlanLookId(look.id)}
-                  aria-pressed={lookToPlan === look.id}
+                  onClick={() => {
+                    if (armedLook?.id === look.id) {
+                      setArmedLookId(null);
+                      return;
+                    }
+                    setPlanLookId(look.id);
+                    setArmedLookId(look.id);
+                  }}
+                  aria-pressed={armedLook?.id === look.id}
                 >
+                  {armedLook?.id === look.id && <Check className="plan-look-check" aria-hidden />}
                   <span className="plan-look-thumbs">
                     {lookThumbs(look, 3).map((item) => (
                       <img key={item.id} src={item.thumb ?? item.image} alt="" />
@@ -116,7 +139,7 @@ export function CalendarTab({ home }: { home: HomeState }) {
                   <span>{look.name}</span>
                 </button>
               ))}
-              <p className="plan-looks-hint pointer-fine">Drag a look onto a day</p>
+              <p className="plan-looks-hint pointer-fine">Drag a look onto a day, or click one</p>
             </div>
           )}
           <div className="calendar-workspace" data-view={calendarView}>
@@ -165,10 +188,11 @@ export function CalendarTab({ home }: { home: HomeState }) {
                       <li key={date}>
                         <button
                           className={`${selectedDate === date ? "selected" : ""} ${date === todayIso ? "today" : ""} ${dropDate === date ? "drop-target" : ""}`}
-                          aria-pressed={selectedDate === date}
+                          aria-current={selectedDate === date ? "true" : undefined}
                           onClick={() => {
                             setSelectedDate(date);
-                            if (isNarrow(760)) scrollIntoViewSoon(dayPanelRef.current);
+                            // While a look is chosen, the sticky Plan bar confirms, so the page stays put.
+                            if (isNarrow(760) && !armedLook) scrollIntoViewSoon(dayPanelRef.current);
                           }}
                           {...lookDropProps(date)}
                         >
@@ -230,10 +254,11 @@ export function CalendarTab({ home }: { home: HomeState }) {
                       key={date}
                       className={`${selectedDate === date ? "selected" : ""} ${look ? "planned" : ""} ${date === todayIso ? "today" : ""} ${dropDate === date ? "drop-target" : ""}`}
                       aria-label={new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "full" })}
-                      aria-pressed={selectedDate === date}
+                      aria-current={selectedDate === date ? "true" : undefined}
                       onClick={() => {
                         setSelectedDate(date);
-                        if (isNarrow(760)) scrollIntoViewSoon(dayPanelRef.current);
+                        // While a look is chosen, the sticky Plan bar confirms, so the page stays put.
+                        if (isNarrow(760) && !armedLook) scrollIntoViewSoon(dayPanelRef.current);
                       }}
                       {...lookDropProps(date)}
                     >
@@ -252,7 +277,7 @@ export function CalendarTab({ home }: { home: HomeState }) {
                   <div className="day-look">
                     {plannedLook.itemIds.map((id) => {
                       const item = items.find((piece) => sameId(piece.id, id));
-                      return item ? <img key={id} src={item.image} alt={item.name} /> : null;
+                      return item ? <img key={id} src={item.thumb ?? item.image} alt={item.name} /> : null;
                     })}
                   </div>
                   <span>
@@ -319,6 +344,39 @@ export function CalendarTab({ home }: { home: HomeState }) {
               </Button>
             </aside>
           </div>
+          {armedLook && (
+            <div className="plan-confirm" role="region" aria-label="Plan the chosen look">
+              <span className="plan-look-thumbs" aria-hidden>
+                {lookThumbs(armedLook, 2).map((item) => (
+                  <img key={item.id} src={item.thumb ?? item.image} alt="" />
+                ))}
+              </span>
+              <p aria-live="polite">
+                <strong>{armedLook.name}</strong>
+                <span>
+                  {plans[selectedDate] === armedLook.id ? "Already on " : "On "}
+                  {selectedShort}
+                  {repeatWeeks ? `, then weekly for ${repeatWeeks} weeks` : ""}
+                </span>
+              </p>
+              <Button
+                disabled={plans[selectedDate] === armedLook.id && !repeatWeeks}
+                onClick={() => {
+                  planSelectedLook();
+                  setArmedLookId(null);
+                }}
+              >
+                Plan
+              </Button>
+              <button
+                className="plan-confirm-cancel"
+                aria-label="Stop planning this look"
+                onClick={() => setArmedLookId(null)}
+              >
+                <X />
+              </button>
+            </div>
+          )}
         </>
       )}
     </TabsContent>
