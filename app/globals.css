@@ -115,7 +115,7 @@ button {
   color: inherit;
   text-decoration: none;
   font-size: 1.28rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.03em;
 }
 .brand-mark {
@@ -138,7 +138,7 @@ button {
 }
 .closet-count span {
   color: var(--foreground);
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .add-button {
@@ -232,7 +232,7 @@ button {
   font-size: clamp(2.4rem, 5vw, 4.6rem);
   line-height: 0.95;
   letter-spacing: -0.04em;
-  font-weight: 650;
+  font-weight: 600;
 }
 .section-heading p,
 .outfit-intro p {
@@ -354,7 +354,7 @@ button {
   color: var(--foreground);
   background: #efe8e2;
   font-size: 0.84rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .select-toggle.active {
   color: #fff;
@@ -535,14 +535,14 @@ button {
   line-height: 1;
   text-transform: none;
   letter-spacing: 0;
-  font-weight: 700;
+  font-weight: 600;
 }
 .item-meta h2 {
   overflow: hidden;
   margin: 0;
   font-size: 0.94rem;
   line-height: 1.35;
-  font-weight: 650;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -672,7 +672,7 @@ button {
   color: var(--accent-foreground);
   background: var(--accent);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .laundry-badge svg {
   width: 13px;
@@ -711,7 +711,7 @@ button {
   font-size: clamp(2.4rem, 5vw, 4.6rem);
   line-height: 0.95;
   letter-spacing: -0.04em;
-  font-weight: 650;
+  font-weight: 600;
 }
 .insights-intro p {
   margin: 12px 0 0;
@@ -1125,7 +1125,7 @@ button.declutter-piece:hover {
   justify-content: space-between;
   color: #463b74;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .canvas-header p {
   margin: 0;
@@ -1260,7 +1260,7 @@ button.declutter-piece:hover {
   border-radius: 11px;
   background: #fff;
   font-size: 0.84rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .look-notes button svg {
   width: 15px;
@@ -1351,7 +1351,7 @@ button.declutter-piece:hover {
   background: var(--blue);
   font-size: 0.75rem;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 600;
   box-shadow: 0 5px 12px rgba(62, 49, 113, 0.18);
 }
 .detection-one {
@@ -1392,7 +1392,7 @@ button.declutter-piece:hover {
   gap: 9px;
   margin: 0 0 25px;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .process-status svg {
   width: 19px;
@@ -1444,7 +1444,7 @@ button.declutter-piece:hover {
   gap: 5px;
   color: var(--ink-soft);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .generated-fields textarea {
   min-height: 70px;
@@ -1585,7 +1585,7 @@ button.declutter-piece:hover {
   color: var(--ink-soft);
   background: transparent;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .view-switch button.active {
   color: #fff;
@@ -1640,7 +1640,7 @@ button.declutter-piece:hover {
   color: #514580;
   background: rgba(255, 255, 255, 0.68);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .canvas-header button svg {
   width: 14px;
@@ -1694,14 +1694,14 @@ button.declutter-piece:hover {
   line-height: 1;
   text-transform: none;
   letter-spacing: 0;
-  font-weight: 750;
+  font-weight: 600;
 }
 .empty-slot {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .empty-slot svg {
   width: 14px;
@@ -1792,7 +1792,7 @@ button.declutter-piece:hover {
   line-height: 1;
   text-transform: none;
   letter-spacing: 0;
-  font-weight: 700;
+  font-weight: 600;
 }
 .look-card h2 {
   margin: 0;
@@ -1822,7 +1822,7 @@ button.declutter-piece:hover {
   font-size: clamp(2.4rem, 5vw, 4.6rem);
   line-height: 0.95;
   letter-spacing: -0.04em;
-  font-weight: 650;
+  font-weight: 600;
 }
 .calendar-intro p {
   margin: 12px 0 0;
@@ -1887,7 +1887,7 @@ button.declutter-piece:hover {
   font-size: 0.75rem;
   text-transform: none;
   letter-spacing: 0;
-  font-weight: 700;
+  font-weight: 600;
 }
 .calendar-grid > button {
   position: relative;
@@ -1936,7 +1936,7 @@ button.declutter-piece:hover {
   font-size: 0.75rem;
   text-transform: none;
   letter-spacing: 0;
-  font-weight: 700;
+  font-weight: 600;
 }
 .day-panel > h2 {
   margin: 0 0 18px;
@@ -1989,7 +1989,7 @@ button.declutter-piece:hover {
 .plan-control label {
   color: var(--ink-soft);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .plan-control select {
   width: 100%;
@@ -2326,7 +2326,7 @@ button.declutter-piece:hover {
 }
 .calendar-grid > button.today:not(.selected) > span {
   color: var(--blue);
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .empty-state .empty-action svg {
@@ -2412,7 +2412,7 @@ button.declutter-piece:hover {
   gap: 5px;
   color: var(--ink-soft);
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .edit-row {
   display: grid;
@@ -2522,7 +2522,7 @@ button.declutter-piece:hover {
 }
 .week-strip li span.today {
   color: var(--foreground);
-  font-weight: 700;
+  font-weight: 600;
 }
 .week-arrow {
   display: grid;
@@ -2560,7 +2560,7 @@ button.declutter-piece:hover {
   border-radius: 999px;
   color: var(--foreground);
   background: #fff;
-  font-weight: 650;
+  font-weight: 600;
 }
 .ootd-weather svg,
 .ootd-weather-ask svg {
@@ -2634,7 +2634,7 @@ button.declutter-piece:hover {
   color: var(--foreground);
   background: #fff;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .ootd-actions button.primary {
   color: #fff;
@@ -2772,7 +2772,7 @@ button.declutter-piece:hover {
   border-radius: 999px;
   color: #fff;
   background: #332f2a;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Floating "Add clothes" pill, phones only */
@@ -2791,7 +2791,7 @@ button.declutter-piece:hover {
 .styling-status h3 {
   margin: 12px 0 0;
   font-size: 1.65rem;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
@@ -2931,7 +2931,7 @@ button.declutter-piece:hover {
     background: var(--foreground);
     box-shadow: 0 14px 30px rgba(23, 21, 29, 0.28);
     font-size: 0.95rem;
-    font-weight: 650;
+    font-weight: 600;
     transform: translateX(-50%);
   }
   .fab-add svg {
@@ -3441,7 +3441,7 @@ textarea:focus-visible {
   color: var(--foreground);
   background: var(--card);
   font-size: 0.84rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: grab;
 }
 .plan-looks > button.active {
@@ -3597,7 +3597,7 @@ textarea:focus-visible {
   gap: 5px;
   color: var(--ink-soft);
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .packing-summary,
 .packing-note {
@@ -4465,7 +4465,7 @@ textarea:focus-visible {
 .filter-sheet h2 {
   margin: 0 0 6px;
   font-size: 1.2rem;
-  font-weight: 750;
+  font-weight: 600;
 }
 .filter-sheet-body {
   display: grid;
@@ -4481,7 +4481,7 @@ textarea:focus-visible {
 .filter-group legend {
   margin-bottom: 8px;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .filter-group > div {
   display: flex;
@@ -4532,7 +4532,7 @@ textarea:focus-visible {
   border: 0;
   border-radius: 999px;
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .filter-clear {
   color: var(--foreground);
@@ -4629,7 +4629,7 @@ textarea:focus-visible {
     border-radius: 999px;
     color: var(--foreground);
     background: transparent;
-    font-weight: 650;
+    font-weight: 600;
   }
   .filter-button svg {
     width: 17px;
@@ -4752,7 +4752,7 @@ textarea:focus-visible {
 .insight-next p.insight-eyebrow {
   color: var(--accent-foreground);
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: none;
 }
@@ -4780,7 +4780,7 @@ textarea:focus-visible {
   margin-left: 6px;
   color: var(--muted-foreground);
   font-size: 0.85rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .insight-hint span {
   line-height: 1.4;
@@ -4856,7 +4856,7 @@ textarea:focus-visible {
   overflow: hidden;
   margin: 0;
   font-size: 1.05rem;
-  font-weight: 650;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4987,7 +4987,7 @@ textarea:focus-visible {
 .journal-note-field > span {
   color: var(--muted-foreground);
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Very narrow screens and 200% zoom on phones: the week strip still fits. */
@@ -5045,7 +5045,7 @@ textarea:focus-visible {
 .swap-card h2 {
   margin: 0;
   font-size: 0.92rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .swap-card p {
   margin: 2px 0 0;
@@ -5083,7 +5083,7 @@ textarea:focus-visible {
   height: 14px;
 }
 .category-list button b {
-  font-weight: 650;
+  font-weight: 600;
   opacity: 0.6;
 }
 .item-card.is-stored .item-image img {
@@ -5514,4 +5514,91 @@ textarea:focus-visible {
 }
 .insight-progress h2 > span {
   font-size: 1.2em;
+}
+
+/* Calmer chrome: a quiet nav, a lighter Add button, less bold text */
+.rail-tabs button {
+  font-weight: 500 !important;
+}
+.rail-tabs button svg {
+  stroke-width: 1.6;
+}
+.rail-tabs button[data-state="active"] {
+  color: var(--foreground) !important;
+  background: var(--secondary) !important;
+  box-shadow: none !important;
+}
+@media (max-width: 760px) {
+  .rail {
+    height: 60px;
+    border-color: color-mix(in srgb, var(--border), transparent 30%);
+    background: color-mix(in srgb, var(--card), transparent 12%);
+    box-shadow: 0 8px 28px rgba(60, 45, 30, 0.1);
+  }
+  .rail-tabs button {
+    height: 48px !important;
+    gap: 3px !important;
+    font-size: 0.75rem !important;
+  }
+  .rail-tabs button svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+  .fab-add {
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + 70px);
+    height: 46px;
+    padding: 0 8px 0 20px;
+    gap: 10px;
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--card), transparent 6%);
+    box-shadow: 0 8px 24px rgba(60, 45, 30, 0.12);
+    backdrop-filter: blur(14px);
+    font-weight: 500;
+  }
+  .fab-add svg {
+    width: 30px;
+    height: 30px;
+    padding: 7px;
+    border-radius: 50%;
+    color: var(--background);
+    background: var(--foreground);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .rail-tabs button[data-state="active"] {
+    color: var(--foreground) !important;
+    background: var(--secondary) !important;
+  }
+}
+@media (prefers-color-scheme: dark) and (max-width: 760px) {
+  .rail {
+    background: color-mix(in srgb, var(--card), transparent 8%);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  }
+  .fab-add {
+    border-color: var(--border);
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--card), transparent 6%);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+@media (max-width: 760px) and (max-height: 560px) {
+  .fab-add {
+    width: 46px;
+    padding: 0;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .week-strip li button {
+    border-color: rgba(255, 245, 235, 0.14);
+    background: rgba(255, 245, 235, 0.06);
+  }
+  .week-strip li button.planned {
+    border-color: #8a7bd6;
+  }
+  .week-strip li button.active {
+    border-color: var(--blue);
+    background: var(--blue);
+  }
 }
