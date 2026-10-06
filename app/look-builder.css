@@ -1,0 +1,571 @@
+/* Look builder (Outfits > Build): a vertical stack of cutouts on a soft backdrop, after Kevin's reference.
+   Uses the soft editorial tokens from globals.css (--plate, --card, --foreground, --blue, --soft-shadow). */
+
+.look-builder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "stage panel"
+    "stage actions";
+  gap: 16px;
+  height: clamp(560px, calc(100vh - 300px), 880px);
+}
+
+/* ---- Stage ---- */
+.lb-stage {
+  grid-area: stage;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 32px;
+  --lb-grid: color-mix(in srgb, var(--foreground) 5%, transparent);
+  background:
+    radial-gradient(90% 70% at 50% 40%, color-mix(in srgb, var(--card) 70%, transparent), transparent 75%),
+    linear-gradient(to right, var(--lb-grid) 1px, transparent 1px) center / 48px 48px,
+    linear-gradient(to bottom, var(--lb-grid) 1px, transparent 1px) center / 48px 48px,
+    var(--plate);
+}
+.lb-stack {
+  position: absolute;
+  inset: 64px 20px 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.lb-slot {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+}
+.lb-slot.filled {
+  flex: var(--lb-weight, 1) 1 0;
+  max-height: var(--lb-max, 30%);
+}
+.lb-slot[data-slot="Outerwear"],
+.lb-slot[data-slot="Tops"] {
+  --lb-weight: 1.2;
+  --lb-max: 40%;
+}
+.lb-slot[data-slot="Bottoms"] {
+  --lb-weight: 1.5;
+  --lb-max: 48%;
+}
+.lb-slot[data-slot="Shoes"],
+.lb-slot[data-slot="Accessories"] {
+  --lb-weight: 0.8;
+  --lb-max: 24%;
+}
+.lb-slot.empty {
+  flex: 0 0 auto;
+}
+
+.lb-piece {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+}
+.lb-piece-select {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: none;
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+.lb-piece-select:hover {
+  transform: scale(1.02);
+}
+.lb-piece-select img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: min(64vw, 420px);
+  aspect-ratio: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 18px rgba(60, 45, 30, 0.16));
+}
+/* On wide screens the side panel follows the chosen piece, so mark it; phones open a sheet instead. */
+@media (min-width: 761px) {
+  .lb-piece-select[aria-current="true"] {
+    outline: 2px solid color-mix(in srgb, var(--blue) 45%, transparent);
+    outline-offset: 2px;
+  }
+}
+.lb-piece-select:focus-visible,
+.lb-add:focus-visible,
+.lb-remove:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* The small dark × sits on the piece, as in the reference. */
+.lb-remove {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  background: rgba(28, 25, 23, 0.82);
+  color: #fff;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.lb-remove::before {
+  content: "";
+  position: absolute;
+  inset: -9px;
+}
+.lb-remove svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+}
+
+/* The + between pieces: a small dark circle with the slot name beside it. */
+.lb-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px 0 5px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.lb-add svg {
+  width: 26px;
+  height: 26px;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  stroke-width: 2.5;
+}
+.lb-add:hover {
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  color: var(--foreground);
+}
+@media (min-width: 761px) {
+  .lb-add[aria-current="true"] {
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: var(--soft-shadow);
+  }
+  .lb-add[aria-current="true"] svg {
+    background: var(--blue);
+    color: #fff;
+  }
+}
+
+.lb-hint {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 20px;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.lb-stage-tools {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+}
+.lb-stage-tools button {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  color: var(--foreground);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+.lb-stage-tools button:hover {
+  background: var(--card);
+}
+.lb-stage-tools svg {
+  width: 18px;
+  height: 18px;
+}
+
+.lb-stage-foot {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+}
+.lb-palette {
+  display: flex;
+  gap: 4px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+}
+.lb-palette i {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.lb-wash {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.lb-wash svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---- Pieces: side panel on wide screens, bottom sheet on phones ---- */
+.lb-panel {
+  grid-area: panel;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: var(--card);
+}
+.lb-panel-list,
+.lb-sheet-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.lb-slot-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: none;
+}
+.lb-slot-tabs button {
+  position: relative;
+  flex: 1 1 0;
+  min-width: max-content;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.lb-slot-tabs button[aria-current="true"] {
+  border-color: var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
+}
+.lb-slot-tabs i {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--blue);
+}
+.lb-pieces {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lb-pieces button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--plate) 55%, var(--card));
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+}
+.lb-pieces button:hover {
+  border-color: var(--border);
+}
+.lb-pieces button.active {
+  border-color: var(--blue);
+  background: var(--accent);
+}
+.lb-pieces img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--plate);
+  object-fit: contain;
+}
+.lb-pieces span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.lb-pieces strong {
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-pieces small {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+.lb-pieces svg {
+  width: 18px;
+  height: 18px;
+  color: var(--muted-foreground);
+}
+.lb-pieces button.active svg {
+  color: var(--accent-foreground);
+}
+.lb-empty {
+  margin: 8px 4px;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+/* ---- Actions: one dark primary, like the reference ---- */
+.lb-actions {
+  grid-area: actions;
+  display: flex;
+  gap: 8px;
+}
+.lb-actions button {
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.lb-actions button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.lb-actions svg {
+  width: 18px;
+  height: 18px;
+}
+.lb-save {
+  flex: 1;
+  min-width: 0;
+  padding: 0 18px;
+  border: 0;
+  background: var(--foreground);
+  color: var(--background);
+}
+.lb-save span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-secondary {
+  flex: none;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+}
+.lb-more {
+  flex: none;
+  width: 52px;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.lb-sheet {
+  max-height: 80dvh;
+  gap: 14px;
+  padding: 10px 16px max(16px, env(safe-area-inset-bottom));
+  border: 0;
+  border-radius: 28px 28px 0 0;
+  background: var(--background);
+}
+.lb-sheet::before {
+  content: "";
+  width: 40px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: var(--border);
+}
+.lb-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lb-sheet-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 400;
+  line-height: 1.1;
+}
+.lb-sheet-close {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+}
+.lb-sheet-close svg {
+  width: 18px;
+  height: 18px;
+}
+.lb-sheet .lb-pieces button {
+  background: var(--card);
+}
+.lb-sheet-done {
+  flex: none;
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* ---- Phones: the whole look fits on one screen, actions just above the nav ---- */
+@media (max-width: 760px) {
+  .look-builder {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "stage"
+      "actions";
+    gap: 12px;
+    height: auto;
+  }
+  .lb-panel {
+    display: none;
+  }
+  .lb-stage {
+    height: max(400px, calc(100dvh - 330px));
+    border-radius: 28px;
+  }
+  .lb-stack {
+    inset: 60px 12px 48px;
+  }
+  .lb-piece-select img {
+    max-width: 62vw;
+  }
+  /* Heading and Build/Saved switch share one row so the look gets the room. */
+  .outfit-view .outfit-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .outfit-view .outfit-intro > div > p {
+    display: none;
+  }
+  .outfit-view .outfit-intro h1 {
+    font-size: 2.5rem;
+    white-space: nowrap;
+  }
+  .outfit-view .view-switch {
+    width: auto;
+    flex: none;
+  }
+  .outfit-view .view-switch button {
+    padding: 0 14px;
+    white-space: nowrap;
+  }
+  .lb-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .lb-secondary {
+    width: 52px;
+    padding: 0;
+  }
+}
+
+@media (pointer: coarse) {
+  .lb-add {
+    height: 44px;
+  }
+  .lb-stage-tools button {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Dark: a lighter pool of light behind the stack so dark garments still read. */
+@media (prefers-color-scheme: dark) {
+  .lb-stage {
+    --lb-grid: color-mix(in srgb, var(--foreground) 6%, transparent);
+    background:
+      radial-gradient(70% 60% at 50% 45%, rgba(255, 244, 230, 0.12), transparent 75%),
+      linear-gradient(to right, var(--lb-grid) 1px, transparent 1px) center / 48px 48px,
+      linear-gradient(to bottom, var(--lb-grid) 1px, transparent 1px) center / 48px 48px,
+      var(--plate);
+  }
+  .lb-piece-select img {
+    filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.35));
+  }
+}

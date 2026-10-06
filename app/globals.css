@@ -1053,85 +1053,6 @@ button.declutter-piece:hover {
   justify-content: space-between;
   margin-bottom: 32px;
 }
-.styling-workspace {
-  min-height: 620px;
-  display: grid;
-  grid-template-columns: 230px minmax(380px, 1fr) 230px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 24px 60px rgba(41, 38, 34, 0.08);
-}
-.piece-rail {
-  padding: 22px 16px;
-  border-right: 1px solid var(--border);
-}
-.piece-rail h2 {
-  margin: 0 0 15px 6px;
-  font-size: 0.84rem;
-  text-transform: none;
-  letter-spacing: 0;
-}
-.piece-rail > div {
-  display: grid;
-  gap: 7px;
-}
-.piece-rail button {
-  display: grid;
-  grid-template-columns: 47px 1fr 18px;
-  align-items: center;
-  gap: 10px;
-  min-height: 60px;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 11px;
-  color: var(--foreground);
-  background: transparent;
-  text-align: left;
-  font-size: 0.8rem;
-}
-.piece-rail button:hover {
-  background: var(--secondary);
-}
-.piece-rail img {
-  width: 44px;
-  height: 48px;
-  object-fit: contain;
-}
-.piece-rail svg {
-  width: 16px;
-  color: var(--ink-soft);
-}
-.outfit-canvas {
-  position: relative;
-  min-height: 620px;
-  overflow: hidden;
-  background: var(--blue-soft);
-}
-.outfit-canvas::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 40%);
-}
-.canvas-header {
-  position: absolute;
-  z-index: 2;
-  top: 20px;
-  left: 22px;
-  right: 22px;
-  display: flex;
-  justify-content: space-between;
-  color: #463b74;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.canvas-header p {
-  margin: 0;
-  color: #5d5482;
-  font-weight: 500;
-}
 .look-stack {
   position: absolute;
   z-index: 2;
@@ -1173,16 +1094,6 @@ button.declutter-piece:hover {
 .look-piece button svg {
   width: 14px;
 }
-.canvas-floor {
-  position: absolute;
-  left: 17%;
-  right: 17%;
-  bottom: 47px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(83, 70, 133, 0.13);
-  filter: blur(12px);
-}
 .canvas-empty {
   position: relative;
   z-index: 2;
@@ -1207,28 +1118,6 @@ button.declutter-piece:hover {
   margin: 7px 0 0;
   font-size: 0.86rem;
 }
-.look-notes {
-  padding: 26px 22px;
-  border-left: 1px solid var(--border);
-}
-.look-notes > p {
-  margin: 0 0 40px;
-  color: var(--ink-soft);
-  font-size: 0.75rem;
-  text-transform: none;
-  letter-spacing: 0;
-}
-.look-notes h2 {
-  margin: 0 0 12px;
-  font-size: 1.3rem;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-.look-notes > span {
-  color: var(--ink-soft);
-  font-size: 0.84rem;
-  line-height: 1.55;
-}
 .palette {
   display: flex;
   gap: 6px;
@@ -1248,22 +1137,6 @@ button.declutter-piece:hover {
 }
 .palette i:nth-child(3) {
   background: #7b7fa6;
-}
-.look-notes button {
-  width: 100%;
-  min-height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: #fff;
-  font-size: 0.84rem;
-  font-weight: 600;
-}
-.look-notes button svg {
-  width: 15px;
 }
 .upload-dialog {
   max-width: 760px !important;
@@ -1602,89 +1475,6 @@ button.declutter-piece:hover {
   background: color-mix(in srgb, currentColor, transparent 86%);
   font-size: 0.75rem;
 }
-.rail-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 6px 15px;
-}
-.rail-heading h2 {
-  margin: 0;
-}
-.rail-heading > span {
-  color: var(--ink-soft);
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-}
-.rail-empty {
-  margin: 8px 6px;
-  color: var(--ink-soft);
-  font-size: 0.8rem;
-  line-height: 1.5;
-}
-.outfit-canvas {
-  min-height: 640px;
-}
-.canvas-header > div {
-  display: flex;
-  gap: 7px;
-}
-.canvas-header button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 34px;
-  padding: 0 10px;
-  border: 1px solid rgba(93, 81, 142, 0.16);
-  border-radius: 9px;
-  color: #514580;
-  background: rgba(255, 255, 255, 0.68);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.canvas-header button svg {
-  width: 14px;
-}
-.slot-stack {
-  position: absolute;
-  z-index: 2;
-  inset: 67px 7% 40px;
-  display: grid;
-  grid-template-rows: repeat(5, 1fr);
-  gap: 6px;
-}
-.outfit-slot {
-  position: relative;
-  min-height: 0;
-  display: grid;
-  place-items: center;
-  border: 1px dashed rgba(91, 79, 141, 0.22);
-  border-radius: 13px;
-  color: #7a6fa4;
-  background: rgba(255, 255, 255, 0.2);
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-.outfit-slot:hover,
-.outfit-slot.active {
-  border-color: #8d7fc7;
-  background: rgba(255, 255, 255, 0.5);
-}
-.outfit-slot.active {
-  box-shadow: inset 0 0 0 1px #8d7fc7;
-}
-.outfit-slot.filled {
-  border-style: solid;
-  background: rgba(255, 255, 255, 0.28);
-}
-.outfit-slot img {
-  width: 58%;
-  height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 12px 12px rgba(60, 46, 114, 0.16));
-}
 .slot-label {
   position: absolute;
   left: 10px;
@@ -1695,35 +1485,6 @@ button.declutter-piece:hover {
   text-transform: none;
   letter-spacing: 0;
   font-weight: 600;
-}
-.empty-slot {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.empty-slot svg {
-  width: 14px;
-}
-.remove-slot {
-  position: absolute;
-  right: 8px;
-  top: 7px;
-  display: grid;
-  place-items: center;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  color: #625692;
-  background: rgba(255, 255, 255, 0.85);
-}
-.remove-slot svg {
-  width: 13px;
-}
-.look-notes button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
 }
 .saved-look-grid {
   display: grid;
@@ -2021,12 +1782,6 @@ button.declutter-piece:hover {
   .wardrobe-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .styling-workspace {
-    grid-template-columns: 190px minmax(350px, 1fr);
-  }
-  .look-notes {
-    display: none;
-  }
 }
 @media (max-width: 760px) {
   .topbar {
@@ -2169,38 +1924,6 @@ button.declutter-piece:hover {
   .view-switch button {
     flex: 1;
   }
-  .styling-workspace {
-    min-height: 0;
-    display: flex;
-    flex-direction: column-reverse;
-    overflow: visible;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-  .piece-rail {
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    background: #fff;
-  }
-  .piece-rail > div:last-child {
-    display: flex;
-    overflow-x: auto;
-  }
-  .piece-rail button {
-    min-width: 170px;
-  }
-  .outfit-canvas {
-    min-height: 560px;
-    margin-bottom: 14px;
-    border-radius: 14px;
-  }
-  .slot-stack {
-    inset: 66px 12px 34px;
-  }
-  .outfit-slot img {
-    width: 56%;
-  }
   .saved-look-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 22px 10px;
@@ -2275,27 +1998,6 @@ button.declutter-piece:hover {
 }
 
 /* Slot selection sits under the remove button rather than wrapping it. */
-.slot-select {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 22px 12px 8px;
-  border: 0;
-  border-radius: inherit;
-  color: inherit;
-  background: transparent;
-  cursor: pointer;
-}
-.slot-select img {
-  max-height: 100%;
-  min-height: 0;
-}
-.remove-slot {
-  z-index: 1;
-  border: 0;
-  cursor: pointer;
-}
 
 .month-nav {
   display: flex;
@@ -2390,14 +2092,6 @@ button.declutter-piece:hover {
 .look-actions svg {
   width: 14px;
   height: 14px;
-}
-.look-notes button + button {
-  margin-top: 8px;
-}
-.look-notes button.primary {
-  border-color: var(--foreground);
-  color: #fff;
-  background: var(--foreground);
 }
 .edit-dialog form {
   display: grid;
@@ -2648,132 +2342,11 @@ button.declutter-piece:hover {
 }
 
 /* Outfit builder: cutouts stacked on a soft grid, with + and × markers */
-.outfit-canvas {
-  background-color: #eeedf2;
-  background-image:
-    linear-gradient(rgba(148, 140, 132, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 140, 132, 0.09) 1px, transparent 1px);
-  background-size: 44px 44px;
-}
-.outfit-canvas::before {
-  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 55%);
-}
-.outfit-slot,
-.outfit-slot.filled,
-.outfit-slot:hover,
-.outfit-slot.active {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
 .slot-label {
   display: none;
 }
-.empty-slot {
-  flex-direction: column;
-  gap: 6px;
-  color: #655e58;
-  font-size: 0.75rem;
-}
-.empty-slot svg {
-  width: 26px;
-  height: 26px;
-  padding: 6px;
-  border-radius: 50%;
-  color: #fff;
-  background: #332f2a;
-}
-.outfit-slot.active .empty-slot svg {
-  box-shadow: 0 0 0 4px rgba(113, 87, 215, 0.25);
-  background: var(--blue);
-}
-.outfit-slot.active.filled .slot-select img {
-  filter: drop-shadow(0 0 0 transparent) drop-shadow(0 12px 14px rgba(113, 87, 215, 0.28));
-}
-.outfit-slot img {
-  filter: drop-shadow(0 14px 14px rgba(34, 32, 43, 0.18));
-}
-.remove-slot {
-  left: 50%;
-  right: auto;
-  top: 2px;
-  width: 24px;
-  height: 24px;
-  color: #fff;
-  background: rgba(51, 47, 42, 0.85);
-  transform: translateX(-50%);
-}
-.look-notes button.primary {
-  min-height: 48px;
-  border-radius: 999px;
-}
 
 /* Piece picker sheet (phones) */
-.picker-sheet {
-  max-height: 80vh;
-  gap: 12px;
-  padding: 18px 16px max(16px, env(safe-area-inset-bottom));
-  border-radius: 24px 24px 0 0;
-  background: #f7f3ef;
-}
-.picker-sheet h2 {
-  text-align: center;
-  font-size: 1rem;
-  text-transform: capitalize;
-}
-.picker-sheet ul {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style: none;
-}
-.picker-sheet li button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 14px 8px 8px;
-  border: 0;
-  border-radius: 16px;
-  background: #fff;
-  text-align: left;
-}
-.picker-sheet li button.active {
-  box-shadow: inset 0 0 0 2px var(--foreground);
-}
-.picker-sheet li img {
-  width: 54px;
-  height: 54px;
-  flex: none;
-  object-fit: contain;
-  border-radius: 12px;
-  background: #f8f6f3;
-}
-.picker-sheet li span {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-}
-.picker-sheet li strong {
-  font-size: 0.86rem;
-}
-.picker-sheet li small {
-  color: var(--ink-soft);
-  font-size: 0.8rem;
-}
-.picker-sheet li svg {
-  width: 18px;
-}
-.picker-done {
-  height: 50px;
-  border: 0;
-  border-radius: 999px;
-  color: #fff;
-  background: #332f2a;
-  font-weight: 600;
-}
 
 /* Floating "Add clothes" pill, phones only */
 .fab-add {
@@ -2864,33 +2437,6 @@ button.declutter-piece:hover {
 
 @media (max-width: 1100px) {
   /* The notes column is hidden here, so its save buttons move under the canvas. */
-  .styling-workspace .look-notes {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    padding: 14px 16px;
-    border-top: 1px solid var(--border);
-    border-left: 0;
-  }
-  .styling-workspace .look-notes > p,
-  .styling-workspace .look-notes > h2,
-  .styling-workspace .look-notes > span,
-  .styling-workspace .look-notes .palette {
-    display: none;
-  }
-  .styling-workspace .look-notes button {
-    width: auto;
-    flex: 1 1 180px;
-  }
-  .styling-workspace .look-notes button + button {
-    margin-top: 0;
-  }
-  .styling-workspace .look-notes .look-warning {
-    flex-basis: 100%;
-    margin: 0;
-  }
 }
 @media (max-width: 760px) {
   .topbar .add-button {
@@ -2961,20 +2507,6 @@ button.declutter-piece:hover {
   }
   .ootd-collage {
     grid-auto-rows: 130px;
-  }
-  .outfit-view .styling-workspace {
-    flex-direction: column;
-  }
-  .styling-workspace .piece-rail {
-    display: none;
-  }
-  .styling-workspace .look-notes {
-    padding: 0;
-    border: 0;
-  }
-  .styling-workspace .look-notes button {
-    min-height: 48px;
-    border-radius: 999px;
   }
 }
 
@@ -3073,8 +2605,7 @@ textarea:focus-visible {
     background: rgba(20, 18, 17, 0.92);
   }
   .rail-tabs button[data-state="active"],
-  .view-switch button.active,
-  .look-notes button.primary {
+  .view-switch button.active {
     color: #191614 !important;
     box-shadow: none !important;
   }
@@ -3114,7 +2645,6 @@ textarea:focus-visible {
   .day-panel {
     background: #1a1816;
   }
-  .styling-workspace,
   .calendar-workspace {
     background: var(--card);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
@@ -3142,9 +2672,6 @@ textarea:focus-visible {
   .edit-fields select {
     background: color-mix(in srgb, var(--input), transparent 70%);
   }
-  .look-notes button:not(.primary) {
-    background: var(--secondary);
-  }
   .category-list button:hover {
     background: var(--secondary);
   }
@@ -3162,8 +2689,7 @@ textarea:focus-visible {
   .extracted-thumb img,
   .look-collage img,
   .day-look img,
-  .calendar-grid > button img,
-  .piece-rail img {
+  .calendar-grid > button img {
     filter: var(--garment-shadow);
   }
   .item-card.selected .item-image {
@@ -3183,52 +2709,21 @@ textarea:focus-visible {
   }
 
   /* Outfit canvas */
-  .outfit-canvas::before {
-    background: radial-gradient(circle at 50% 36%, rgba(180, 165, 240, 0.2), rgba(180, 165, 240, 0) 45%);
-  }
-  .canvas-header,
   .canvas-empty h2 {
     color: #e2dcf9;
   }
-  .canvas-header p,
   .canvas-empty {
     color: #aea5d0;
   }
-  .canvas-header button {
-    border-color: rgba(187, 173, 242, 0.22);
-    color: #e2dcf9;
-    background: rgba(28, 24, 44, 0.6);
-  }
-  .outfit-slot {
-    border-color: rgba(187, 173, 242, 0.26);
-    color: #bbb2de;
-    background: rgba(255, 255, 255, 0.03);
-  }
-  .outfit-slot:hover,
-  .outfit-slot.active {
-    border-color: #a896ee;
-    background: rgba(255, 255, 255, 0.07);
-  }
-  .outfit-slot.active {
-    box-shadow: inset 0 0 0 1px #a896ee;
-  }
-  .outfit-slot.filled {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  .outfit-slot img,
   .look-piece img {
     filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.3)) drop-shadow(0 18px 18px rgba(0, 0, 0, 0.45));
   }
   .slot-label {
     color: #cbc4ea;
   }
-  .remove-slot,
   .look-piece button {
     color: #e2dcf9;
     background: rgba(40, 34, 61, 0.9);
-  }
-  .canvas-floor {
-    background: rgba(0, 0, 0, 0.45);
   }
 
   /* Calendar */
@@ -3290,10 +2785,6 @@ textarea:focus-visible {
   .rail {
     background: rgba(20, 18, 17, 0.97);
   }
-  .piece-rail {
-    background: var(--card);
-  }
-  .styling-workspace,
   .calendar-workspace {
     background: transparent;
     box-shadow: none;
@@ -3307,8 +2798,7 @@ textarea:focus-visible {
   .insight-card,
   .week-strip li button,
   .ootd-actions button,
-  .ootd-weather span,
-  .picker-sheet li button {
+  .ootd-weather span {
     border-color: var(--border);
     color: var(--foreground);
     background: var(--card);
@@ -3351,48 +2841,12 @@ textarea:focus-visible {
     background: rgba(255, 255, 255, 0.04);
   }
   .ootd-collage span,
-  .insight-pieces img,
-  .picker-sheet li img {
+  .insight-pieces img {
     background: var(--garment-tile);
   }
   .ootd-weather-ask {
     color: var(--ink-soft);
     background: rgba(255, 255, 255, 0.06);
-  }
-  .outfit-canvas {
-    background-color: #23201d;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  }
-  .outfit-canvas::before {
-    background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 55%);
-  }
-  .outfit-slot,
-  .outfit-slot.filled,
-  .outfit-slot:hover,
-  .outfit-slot.active {
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-  .empty-slot {
-    color: var(--ink-soft);
-  }
-  .empty-slot svg,
-  .remove-slot {
-    color: #191614;
-    background: var(--foreground);
-  }
-  .picker-sheet {
-    background: #1a1816;
-  }
-  .picker-sheet li button.active {
-    box-shadow: inset 0 0 0 2px var(--foreground);
-  }
-  .picker-done {
-    color: #191614;
-    background: var(--foreground);
   }
   .rail {
     border-color: rgba(255, 255, 255, 0.06);
@@ -3886,55 +3340,7 @@ textarea:focus-visible {
 }
 
 /* Builder sizing: chosen pieces get the room, empty slots shrink to a compact + button. */
-.slot-stack {
-  position: relative;
-  inset: auto;
-  min-height: inherit;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 64px 8% 32px;
-}
-.outfit-slot {
-  flex: 0 0 72px;
-}
-.outfit-slot.filled {
-  flex: 1 0 clamp(170px, 24vh, 260px);
-}
-@media (min-width: 761px) {
-  .outfit-canvas {
-    min-height: 780px;
-  }
-}
-.outfit-slot.filled .slot-select {
-  padding: 6px 0;
-}
-.outfit-slot img {
-  width: auto;
-  max-width: 82%;
-  height: 100%;
-}
 /* The × sits beside the piece, not on top of it. */
-.outfit-slot.filled .remove-slot {
-  left: auto;
-  right: calc(50% - min(150px, 41%) - 18px);
-  top: 12px;
-  transform: none;
-}
-@media (max-width: 760px) {
-  .slot-stack {
-    padding: 60px 12px 28px;
-  }
-  .outfit-slot {
-    flex-basis: 64px;
-  }
-  .outfit-slot.filled {
-    flex-basis: clamp(170px, 26vh, 240px);
-  }
-  .outfit-slot.filled .remove-slot {
-    right: 14%;
-  }
-}
 
 /* Outfit journal (Calendar > Journal). */
 .calendar-occasions {
@@ -5438,49 +4844,18 @@ textarea:focus-visible {
 }
 
 /* Builder canvas: warm linen instead of a blue-gray drafting grid */
-.outfit-canvas {
-  background-color: #f1ebe3;
-  background-image:
-    linear-gradient(rgba(120, 95, 70, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 95, 70, 0.06) 1px, transparent 1px);
-}
-.canvas-header,
-.canvas-header h2 {
-  color: var(--foreground);
-}
-.canvas-header button {
-  border-color: var(--border);
-  border-radius: 999px;
-  color: var(--foreground);
-  background: var(--card);
-}
 @media (prefers-color-scheme: dark) {
-  .outfit-canvas {
-    background-color: #1f1c19;
-    background-image:
-      linear-gradient(rgba(255, 240, 220, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 240, 220, 0.04) 1px, transparent 1px);
-  }
-  .canvas-header,
-  .canvas-header h2,
   .canvas-empty h2 {
     color: var(--foreground);
   }
-  .canvas-header p,
   .canvas-empty {
     color: var(--ink-soft);
-  }
-  .canvas-header button {
-    border-color: var(--border);
-    color: var(--foreground);
-    background: var(--secondary);
   }
 }
 
 /* Cards and panels: tone and a whisper of shadow, no hard rules */
 .insight-card,
 .look-card,
-.styling-workspace,
 .calendar-workspace {
   border-radius: 26px;
 }

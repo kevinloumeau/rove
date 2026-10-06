@@ -3,6 +3,7 @@ import { ErrorReporter } from "@/components/error-reporter";
 import { ServiceWorker } from "@/components/service-worker";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
+import "./look-builder.css";
 
 export const metadata: Metadata = {
   title: "Rove — Your personal wardrobe",
