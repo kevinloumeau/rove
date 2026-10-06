@@ -12,6 +12,9 @@ test("names common garment colors", () => {
     [[20, 20, 22], "Black"],
     [[200, 180, 140], "Beige"],
     [[110, 75, 50], "Brown"],
+    [[54, 32, 27], "Brown"], // dark brown ribbed tank in shade
+    [[61, 46, 42], "Brown"], // brown trousers
+    [[110, 30, 42], "Burgundy"],
     [[180, 45, 42], "Red"],
     [[67, 119, 76], "Green"],
     [[219, 128, 153], "Pink"],

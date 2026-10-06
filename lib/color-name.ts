@@ -46,6 +46,8 @@ export function colorName(red: number, green: number, blue: number) {
 
   if (lightness < 0.13) return "Black";
   // Faint tints near white or black read as neutrals.
+  // Dark warm tones barely off gray (brown wool, brown trousers in shade) still read as brown.
+  if (lightness < 0.3 && chroma >= 0.05 && saturation < 0.35 && (hue < 50 || hue >= 345)) return "Brown";
   if (chroma < 0.08 || saturation < 0.12) {
     if (lightness > 0.86) return "White";
     if (lightness > 0.66) return "Light gray";
@@ -73,7 +75,8 @@ export function colorName(red: number, green: number, blue: number) {
   }
   if (hue >= 255 && hue < 290) return "Purple";
   if (hue >= 290 && hue < 345) return lightness < 0.35 ? "Purple" : "Pink";
-  // Reds wrap around 0°.
+  // Reds wrap around 0°. Dark, muted reds are brown fabric in shadow, not burgundy.
+  if (lightness < 0.4 && saturation < 0.45) return "Brown";
   if (lightness > 0.65) return "Pink";
   if (lightness < 0.3) return "Burgundy";
   return "Red";

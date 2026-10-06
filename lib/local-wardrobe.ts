@@ -3,6 +3,7 @@
 import { colorName, colorSwatches } from "./color-name";
 import { refineAlpha, removeSpecks } from "./cutout-refine";
 import { keepRealGarments } from "./garment-filter";
+import { type BinaryMask, applyDressSplit, planDressSplit } from "./garment-split";
 import {
   type GarmentKind,
   type Guess,
@@ -276,12 +277,119 @@ async function cutoutFromMasks(bitmap: ImageBitmap, masks: SegmentMask[]) {
   return { blob, color, preview: previewBlob };
 }
 
+const SEPARATES_TEMPLATE = "a photo of a person wearing {}";
+const outfitShapes = [
+  { label: "a dress", separates: false },
+  { label: "a jumpsuit", separates: false },
+  { label: "a top and trousers", separates: true },
+  { label: "a top tucked into pants with a belt", separates: true },
+  { label: "a top and a skirt", separates: true },
+];
+
+/** Asks the style model whether a dress cutout is really a top and a bottom. False when unsure or unavailable. */
+async function looksLikeSeparates(preview: Blob | null, onProgress: (message: string) => void) {
+  if (!preview) return false;
+  const url = URL.createObjectURL(preview);
+  try {
+    const classify = await getStyleModel(onProgress);
+    const guesses = await classify(
+      url,
+      outfitShapes.map((shape) => shape.label),
+      { hypothesis_template: SEPARATES_TEMPLATE },
+    );
+    const separates = guesses
+      .filter((guess) => outfitShapes.find((shape) => shape.label === guess.label)?.separates)
+      .reduce((sum, guess) => sum + guess.score, 0);
+    return separates > 0.5;
+  } catch (error) {
+    console.warn("Style model unavailable; keeping the dress whole", error);
+    return false;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function binary(masks: SegmentMask[], width: number, height: number): BinaryMask {
+  const result = new Uint8Array(width * height);
+  for (const mask of masks)
+    for (let y = 0; y < height; y += 1)
+      for (let x = 0; x < width; x += 1) if (maskValue(mask, x, y) > 40) result[y * width + x] = 1;
+  return result;
+}
+
+function toSegment(label: string, mask: BinaryMask, width: number, height: number): Segment {
+  return { label, mask: { data: mask.map((value) => (value ? 255 : 0)), width, height, channels: 1 } };
+}
+
+/**
+ * The clothing model can read a top and trousers of similar color as one dress. When the photo
+ * shows a dress, check whether it's really separates and, if so, cut it at the waist into the
+ * top and the bottom (pants unless the model saw a skirt).
+ */
+async function splitFalseDress(
+  segments: Segment[],
+  bitmap: ImageBitmap,
+  onProgress: (message: string) => void,
+): Promise<Segment[]> {
+  const dressSegments = segments.filter((segment) => segment.label === "Dress");
+  if (!dressSegments.length) return segments;
+  const { width, height } = dressSegments[0].mask;
+  const masksFor = (labels: string[]) =>
+    segments.filter((segment) => labels.includes(segment.label)).map((segment) => segment.mask);
+  const pantsMask = binary(masksFor(["Pants"]), width, height);
+  const skirtMask = binary(masksFor(["Skirt"]), width, height);
+  const bottom = pantsMask.map((value, index) => value | skirtMask[index]);
+
+  const sample = document.createElement("canvas");
+  sample.width = width;
+  sample.height = height;
+  const sampleContext = sample.getContext("2d", { willReadFrequently: true });
+  sampleContext?.drawImage(bitmap, 0, 0, width, height);
+  const input = {
+    width,
+    height,
+    dress: binary(
+      dressSegments.map((segment) => segment.mask),
+      width,
+      height,
+    ),
+    upper: binary(masksFor(["Upper-clothes"]), width, height),
+    bottom,
+    belt: binary(masksFor(["Belt"]), width, height),
+    rgba: sampleContext?.getImageData(0, 0, width, height).data,
+  };
+  const plan = planDressSplit(input);
+  if (!plan) return segments;
+  if (plan.evidence !== "labels") {
+    onProgress("Checking whether that's a dress…");
+    const cutout = await cutoutFromMasks(
+      bitmap,
+      dressSegments.map((segment) => segment.mask),
+    );
+    if (!(await looksLikeSeparates(cutout?.preview ?? null, onProgress))) return segments;
+  }
+  const split = applyDressSplit(input, plan);
+  let skirtArea = 0;
+  let pantsArea = 0;
+  for (let index = 0; index < skirtMask.length; index += 1) {
+    skirtArea += skirtMask[index];
+    pantsArea += pantsMask[index];
+  }
+  const bottomLabel = skirtArea > pantsArea ? "Skirt" : "Pants";
+  return [
+    ...segments.filter((segment) => !["Dress", "Upper-clothes", "Pants", "Skirt"].includes(segment.label)),
+    toSegment("Upper-clothes", split.top, width, height),
+    toSegment(bottomLabel, split.bottom, width, height),
+  ];
+}
+
 export async function processWardrobeImage(file: File, onProgress: (message: string) => void): Promise<LocalGarment[]> {
   const segmenter = await getSegmenter(onProgress);
   const sourceUrl = URL.createObjectURL(file);
   try {
     onProgress("Finding garments on this device…");
-    const [segments, bitmap] = await Promise.all([segmenter(sourceUrl), createImageBitmap(file)]);
+    const [rawSegments, bitmap] = await Promise.all([segmenter(sourceUrl), createImageBitmap(file)]);
+    const segments = await splitFalseDress(rawSegments, bitmap, onProgress);
     const found = garmentGroups.flatMap((group) => {
       const masks = segments.filter((segment) => group.labels.includes(segment.label)).map((segment) => segment.mask);
       const small = group.category === "Shoes" || group.category === "Accessories";

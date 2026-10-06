@@ -7,7 +7,7 @@ It's a Next.js App Router app running on [vinext](https://github.com/cloudflare/
 - **D1** (`DB`) stores pieces, imports, looks and plans. The Drizzle schema is in `db/schema.ts`, and the migrations are in `drizzle/`.
 - **R2** (`BUCKET`) stores the uploaded photos and the garment cut-outs.
 - **Cloudflare Access** handles sign-in. `lib/auth.ts` verifies the Access JWT on every API request, and the user's Access `sub` is the key for their data.
-- Garment segmentation runs on-device with `@huggingface/transformers` (`Xenova/segformer_b0_clothes`). The browser downloads the model from huggingface.co on first use.
+- Garment segmentation runs on-device with `@huggingface/transformers` (`Xenova/segformer_b2_clothes`, about 29 MB once). The browser downloads the model through the Worker on first use.
 
 ## Local development
 
