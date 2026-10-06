@@ -7,18 +7,20 @@ export type JournalEntry = {
   note: string;
   /** Image URL, or empty when the day has no photo. */
   photo: string;
+  /** loved, fine or not-again; empty when the day isn't rated. */
+  feeling: string;
 };
 
 /** Merges logged wears and journal notes into one entry per day, newest first. */
 export function buildEntries(
   wears: Array<{ itemId: string; date: string }>,
-  notes: Array<{ date: string; note: string; photo: string }>,
+  notes: Array<{ date: string; note: string; photo: string; feeling?: string }>,
 ): JournalEntry[] {
   const days = new Map<string, JournalEntry>();
   const entry = (date: string) => {
     let found = days.get(date);
     if (!found) {
-      found = { date, itemIds: [], note: "", photo: "" };
+      found = { date, itemIds: [], note: "", photo: "", feeling: "" };
       days.set(date, found);
     }
     return found;
@@ -27,7 +29,8 @@ export function buildEntries(
     const day = entry(wear.date);
     if (!day.itemIds.includes(wear.itemId)) day.itemIds.push(wear.itemId);
   }
-  for (const note of notes) Object.assign(entry(note.date), { note: note.note, photo: note.photo });
+  for (const note of notes)
+    Object.assign(entry(note.date), { note: note.note, photo: note.photo, feeling: note.feeling ?? "" });
   return [...days.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
 

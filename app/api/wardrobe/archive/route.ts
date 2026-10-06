@@ -12,7 +12,7 @@ export async function GET() {
       .prepare(
         `
       SELECT i.id, i.import_id, i.name, i.category, i.color, i.season, i.description, i.image_key, i.thumb_key,
-        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.kept_at, i.created_at,
+        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.kept_at, i.stored_at, i.created_at,
         i.archive_reason, i.archived_at, COUNT(w.id) AS wear_count, MAX(w.worn_on) AS last_worn
       FROM wardrobe_items i
       LEFT JOIN wardrobe_wears w ON w.item_id = i.id AND w.user_id = i.user_id
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Choose donate, sell or archive." }, { status: 400 });
     const result = await db
       .prepare(
-        `UPDATE wardrobe_items SET status = 'archived', archive_reason = ?, archived_at = ?, in_laundry = 0
+        `UPDATE wardrobe_items SET status = 'archived', archive_reason = ?, archived_at = ?, in_laundry = 0, stored_at = NULL
          WHERE user_id = ? AND status IN ('ready', 'archived') AND id IN (${placeholders})`,
       )
       .bind(payload.reason, now, user.userId, ...ids)

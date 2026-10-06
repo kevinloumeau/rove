@@ -1,0 +1,1 @@
+ALTER TABLE `wardrobe_journal` ADD `feeling` text DEFAULT '' NOT NULL;

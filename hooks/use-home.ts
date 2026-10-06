@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { type PieceChanges } from "@/components/closet-dialogs";
 import { useLetGoPile } from "@/components/declutter-review";
 import { modelDownloadIsMetered } from "@/lib/local-wardrobe";
+import { lovedAgain, pairScores, type Feeling, type RatedDay } from "@/lib/look-ratings";
 import { suggestLook } from "@/lib/outfit-shuffle";
 import { makeThumbnail, photoHash, shrinkPhoto } from "@/lib/photo-resize";
 import { renderLookImage, shareLookImage } from "@/lib/share-look";
@@ -65,6 +66,7 @@ export function useHome() {
   const [calendarView, setCalendarView] = useState<"auto" | "month" | "week">("auto");
   const [calendarMode, setCalendarMode] = useState<"plan" | "journal">("plan");
   const [packingOpen, setPackingOpen] = useState(false);
+  const [swapOpen, setSwapOpen] = useState(false);
   const [dropDate, setDropDate] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -87,6 +89,19 @@ export function useHome() {
   const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
   const [editingLook, setEditingLook] = useState<SavedLook | null>(null);
   const [canvasLookId, setCanvasLookId] = useState<string | null>(null);
+  const [ratedDays, setRatedDays] = useState<RatedDay[]>([]);
+
+  useEffect(() => {
+    // Journal ratings, so outfit ideas lean toward combinations the wearer loved.
+    const controller = new AbortController();
+    void fetch("/api/journal/feelings", { signal: controller.signal })
+      .then((response) => (response.ok ? (response.json() as Promise<{ days?: RatedDay[] }>) : null))
+      .then((payload) => {
+        if (payload?.days) setRatedDays(payload.days);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -290,8 +305,11 @@ export function useHome() {
   const visibleItems = useMemo(() => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
     let next = items.filter((item) => {
+      // Packed-away pieces show under the Stored chip, or when searched for by name.
+      if (activeCategory === "Stored" ? !item.storedAt : item.storedAt && !words.length) return false;
       if (
         activeCategory !== "All" &&
+        activeCategory !== "Stored" &&
         item.category !== activeCategory &&
         !(activeCategory === "Favorites" && item.favorite)
       )
@@ -310,7 +328,8 @@ export function useHome() {
   }, [activeCategory, colorFilter, items, query, seasonFilter, sort]);
   const filtersActive = colorFilter !== "All colors" || seasonFilter !== "All seasons";
   const selected = items.find((item) => selectedId !== null && sameId(item.id, selectedId)) ?? items[0];
-  const railItems = items.filter((item) => slotFor(item.category) === activeSlot);
+  const storedCount = items.filter((item) => item.storedAt).length;
+  const railItems = items.filter((item) => !item.storedAt && slotFor(item.category) === activeSlot);
   const outfitItems = outfit
     .map((id) => items.find((item) => sameId(item.id, id)))
     .filter((item): item is WardrobeItem => Boolean(item));
@@ -327,6 +346,15 @@ export function useHome() {
   );
   const plannedThisMonth = monthDates.filter((date) => savedLooks.some((look) => look.id === plans[date])).length;
   const todayIso = isoDate(new Date());
+  const pairs = useMemo(() => pairScores(ratedDays), [ratedDays]);
+  const lovedLook = useMemo(() => lovedAgain(ratedDays, items, todayIso), [ratedDays, items, todayIso]);
+  /** Keeps outfit ideas in step with a rating just saved in the journal. */
+  function rateDay(date: string, feeling: Feeling | "", itemIds: string[]) {
+    setRatedDays((current) => [
+      ...current.filter((day) => day.date !== date),
+      ...(feeling ? [{ date, feeling, itemIds }] : []),
+    ]);
+  }
   const selectedDateLabel = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, {
     month: "long",
     day: "numeric",
@@ -360,6 +388,62 @@ export function useHome() {
         updateItem(item.id, { inLaundry: !inLaundry });
         toast.error(errorMessage(error, "That change could not be saved."));
       });
+  }
+  /** Packs pieces away for the season (or brings them back), 200 at a time to fit the API. */
+  function setStored(pieces: WardrobeItem[], stored: boolean) {
+    const changing = pieces.filter((piece) => Boolean(piece.storedAt) !== stored);
+    if (!changing.length) return Promise.resolve();
+    const before = new Map(changing.map((piece) => [String(piece.id), piece.storedAt ?? null]));
+    setItems((current) =>
+      current.map((item) => (before.has(String(item.id)) ? { ...item, storedAt: stored ? todayIso : null } : item)),
+    );
+    const ids = [...before.keys()];
+    const chunks = Array.from({ length: Math.ceil(ids.length / 200) }, (_, index) =>
+      ids.slice(index * 200, index * 200 + 200),
+    );
+    return Promise.all(chunks.map((chunk) => sendJson("/api/wardrobe", "PATCH", { ids: chunk, stored }))).catch(
+      (error: unknown) => {
+        setItems((current) =>
+          current.map((item) =>
+            before.has(String(item.id)) ? { ...item, storedAt: before.get(String(item.id)) } : item,
+          ),
+        );
+        throw error;
+      },
+    );
+  }
+  /** Applies a seasonal swap, with an undo. */
+  function swapSeasonal(packAway: WardrobeItem[], bringBack: WardrobeItem[]) {
+    setSwapOpen(false);
+    const undo = () => {
+      Promise.all([setStored(packAway, false), setStored(bringBack, true)]).catch((error: unknown) =>
+        toast.error(errorMessage(error, "That swap could not be undone.")),
+      );
+    };
+    const parts = [
+      packAway.length ? `Packed away ${packAway.length}` : "",
+      bringBack.length ? `brought back ${bringBack.length}` : "",
+    ].filter(Boolean);
+    Promise.all([setStored(packAway, true), setStored(bringBack, false)])
+      .then(() => {
+        const label = parts.join(", ");
+        toast.success(`${label.charAt(0).toUpperCase()}${label.slice(1)}`, {
+          action: { label: "Undo", onClick: undo },
+        });
+      })
+      .catch((error: unknown) => toast.error(errorMessage(error, "That swap could not be saved.")));
+  }
+  function toggleStored(pieces: WardrobeItem[]) {
+    const stored = !pieces.every((piece) => piece.storedAt);
+    setStored(pieces, stored)
+      .then(() =>
+        toast.success(
+          pieces.length === 1
+            ? `${stored ? "Packed away" : "Brought back"} ${pieces[0].name}`
+            : `${stored ? "Packed away" : "Brought back"} ${pieces.length} pieces`,
+        ),
+      )
+      .catch((error: unknown) => toast.error(errorMessage(error, "That change could not be saved.")));
   }
   /** Logs today's wear for each piece; pieces already logged today are left alone. */
   function logWear(pieces: WardrobeItem[]) {
@@ -584,8 +668,8 @@ export function useHome() {
       });
   }
   function shuffleLook() {
-    // Color- and season-aware, skips the wash, and avoids repeating the look already on the canvas.
-    const look = suggestLook(items, { today: todayIso, current: outfit });
+    // Color- and season-aware, leans toward pairs rated well in the journal, skips the wash, and avoids repeating the look already on the canvas.
+    const look = suggestLook(items, { today: todayIso, current: outfit, pairs });
     if (!look.length) {
       toast("Add a top or a dress to get outfit ideas.");
       return;
@@ -620,6 +704,7 @@ export function useHome() {
       name: `Look ${String(savedLooks.length + 1).padStart(2, "0")}`,
       itemIds: outfitItems.map((item) => item.id),
       occasion: "Casual",
+      createdAt: todayIso,
     };
     setSavedLooks((current) => [next, ...current]);
     setPlanLookId(id);
@@ -657,16 +742,17 @@ export function useHome() {
       return next;
     });
   }
-  function planDates(dates: string[], outfitId: string) {
+  function planDates(dates: string[], outfitId: string, successLabel?: string) {
     const previous = Object.fromEntries(dates.map((date) => [date, plans[date]]));
     for (const date of dates) setPlan(date, outfitId);
     sendJson("/api/plans", "POST", { dates, outfitId })
       .then(() => {
         const name = savedLooks.find((look) => look.id === outfitId)?.name ?? "Look";
         toast.success(
-          dates.length > 1
-            ? `Planned ${name} for ${dates.length} days`
-            : `Planned ${name} for ${new Date(`${dates[0]}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`,
+          successLabel ??
+            (dates.length > 1
+              ? `Planned ${name} for ${dates.length} days`
+              : `Planned ${name} for ${new Date(`${dates[0]}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`),
         );
       })
       .catch((error: unknown) => {
@@ -926,6 +1012,8 @@ export function useHome() {
     setCalendarMode,
     packingOpen,
     setPackingOpen,
+    swapOpen,
+    setSwapOpen,
     dropDate,
     setDropDate,
     preview,
@@ -997,6 +1085,11 @@ export function useHome() {
     updateItem,
     toggleFavorite,
     toggleLaundry,
+    storedCount,
+    lovedLook,
+    rateDay,
+    swapSeasonal,
+    toggleStored,
     logWear,
     unlogWearToday,
     savePieceEdits,

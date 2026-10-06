@@ -47,6 +47,7 @@ export function CalendarTab({ home }: { home: HomeState }) {
     lookThumbs,
     removePlan,
     shiftMonth,
+    rateDay,
     armedLookId,
     setArmedLookId,
   } = home;
@@ -93,6 +94,7 @@ export function CalendarTab({ home }: { home: HomeState }) {
             if (isNarrow(1100)) setDetailSheetOpen(true);
           }}
           onWearChange={(itemId, change) => updateItem(itemId, change)}
+          onRate={rateDay}
         />
       ) : (
         <>

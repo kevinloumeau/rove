@@ -65,3 +65,25 @@ test("a dress replaces the top and bottom", () => {
 test("returns nothing for an empty closet", () => {
   assert.deepEqual(suggestLook([], { today: "2026-10-05" }), []);
 });
+
+test("leaves pieces packed away for the season out of outfit ideas", () => {
+  const pieces = [
+    { id: "tee", category: "Tops", color: "White", season: "All season" },
+    { id: "stored-top", category: "Tops", color: "Black", season: "Summer", storedAt: "2026-09-30" },
+    { id: "jeans", category: "Bottoms", color: "Blue", season: "All season" },
+  ];
+  for (let run = 0; run < 20; run += 1) {
+    const look = suggestLook(pieces, { today: "2026-10-06" });
+    assert.ok(!look.some((piece) => piece.id === "stored-top"));
+  }
+});
+
+test("favors pieces worn together on loved days", () => {
+  const look = [
+    { id: "tee", category: "Tops", color: "White", season: "All season" },
+    { id: "jeans", category: "Bottoms", color: "Blue", season: "All season" },
+  ];
+  const plain = scoreLook(look, "2026-10-06");
+  assert.equal(scoreLook(look, "2026-10-06", new Map([["jeans|tee", 2]])), plain + 2);
+  assert.equal(scoreLook(look, "2026-10-06", new Map([["jeans|tee", -6]])), plain - 4);
+});

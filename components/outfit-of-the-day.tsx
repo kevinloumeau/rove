@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   CloudSun,
+  Heart,
   MapPin,
   Shuffle,
 } from "lucide-react";
@@ -113,6 +114,8 @@ export function OutfitOfTheDay({
   onPlanDay,
   onWear,
   onSurprise,
+  lovedLook,
+  onStyle,
 }: {
   items: WardrobeItem[];
   looks: SavedLook[];
@@ -122,6 +125,10 @@ export function OutfitOfTheDay({
   onPlanDay: (date: string) => void;
   onWear: (pieces: WardrobeItem[]) => void;
   onSurprise: () => void;
+  /** A loved outfit from the journal to suggest when today has no plan. */
+  lovedLook?: { date: string; pieces: WardrobeItem[] } | null;
+  /** Opens pieces on the outfit canvas. */
+  onStyle?: (pieces: WardrobeItem[]) => void;
 }) {
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date(`${todayIso}T00:00:00`)));
   const [day, setDay] = useState(todayIso);
@@ -136,12 +143,17 @@ export function OutfitOfTheDay({
     return date;
   });
   const look = looks.find((candidate) => candidate.id === plans[day]);
-  const pieces = (look?.itemIds ?? [])
-    .map((id) => items.find((item) => String(item.id) === String(id)))
-    .filter((item): item is WardrobeItem => Boolean(item));
+  // With nothing planned today, suggest wearing a loved outfit from the journal again.
+  const again = !look && day === todayIso && lovedLook ? lovedLook : null;
+  const pieces = again
+    ? again.pieces
+    : (look?.itemIds ?? [])
+        .map((id) => items.find((item) => String(item.id) === String(id)))
+        .filter((item): item is WardrobeItem => Boolean(item));
   const dayDate = new Date(`${day}T00:00:00`);
   const dayLabel = `${dayDate.toLocaleDateString(undefined, { weekday: "long" })} ${dayDate.getDate()}`;
-  const wornToday = day === todayIso && pieces.length > 0 && pieces.every((piece) => piece.lastWorn === todayIso);
+  const wornToday =
+    day === todayIso && (look || again) && pieces.length > 0 && pieces.every((piece) => piece.lastWorn === todayIso);
 
   function setCollapsed(next: boolean) {
     setCollapsedChoice(next);
@@ -163,9 +175,12 @@ export function OutfitOfTheDay({
   }
 
   const todayLook = looks.find((candidate) => candidate.id === plans[todayIso]);
-  const todayPieces = (todayLook?.itemIds ?? [])
-    .map((id) => items.find((item) => String(item.id) === String(id)))
-    .filter((item): item is WardrobeItem => Boolean(item));
+  const todayAgain = !todayLook && lovedLook ? lovedLook : null;
+  const todayPieces = todayAgain
+    ? todayAgain.pieces
+    : (todayLook?.itemIds ?? [])
+        .map((id) => items.find((item) => String(item.id) === String(id)))
+        .filter((item): item is WardrobeItem => Boolean(item));
 
   if (collapsed)
     return (
@@ -180,7 +195,13 @@ export function OutfitOfTheDay({
           </span>
           <span className="ootd-compact-copy">
             <strong>Outfit of the day</strong>
-            <span>{todayLook ? todayLook.name : "Nothing planned for today"}</span>
+            <span>
+              {todayLook
+                ? todayLook.name
+                : todayAgain
+                  ? "A look you loved. Wear it again?"
+                  : "Nothing planned for today"}
+            </span>
           </span>
           <ChevronDown aria-hidden />
         </button>
@@ -243,7 +264,8 @@ export function OutfitOfTheDay({
         <button
           className="ootd-collage"
           data-count={Math.min(pieces.length, 4)}
-          onClick={used(() => look && onOpenLook(look))}
+          aria-label={again ? "Style this loved outfit" : look ? `Open ${look.name}` : undefined}
+          onClick={used(() => (look ? onOpenLook(look) : again && onStyle?.(again.pieces)))}
         >
           {pieces.slice(0, 4).map((piece) => (
             <span key={piece.id}>
@@ -256,10 +278,19 @@ export function OutfitOfTheDay({
           {looks.length ? "No look planned for this day yet." : "Save a look on the Outfits tab, then plan it here."}
         </p>
       )}
+      {again && (
+        <p className="ootd-again">
+          <Heart aria-hidden /> You loved this on{" "}
+          <strong>
+            {new Date(`${again.date}T00:00:00`).toLocaleDateString(undefined, { month: "long", day: "numeric" })}
+          </strong>
+          . Wear it again?
+        </p>
+      )}
       <div className="ootd-actions">
-        {look && day === todayIso ? (
-          <button className="primary" disabled={wornToday} onClick={used(() => onWear(pieces))}>
-            <Check /> {wornToday ? "Worn today" : "Wear this today"}
+        {(look || again) && day === todayIso ? (
+          <button className="primary" disabled={Boolean(wornToday)} onClick={used(() => onWear(pieces))}>
+            <Check /> {wornToday ? "Worn today" : again ? "Wear it again" : "Wear this today"}
           </button>
         ) : (
           <button className="primary" onClick={used(() => onPlanDay(day))}>

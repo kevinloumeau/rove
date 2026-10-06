@@ -3,6 +3,7 @@
 import { TabsContent } from "@/components/ui/tabs";
 import { ClosetInsights, InsightsNextStep, InsightsProgress } from "@/components/closet-insights";
 import { DeclutterReview } from "@/components/declutter-review";
+import { ForgottenLooks } from "@/components/forgotten-looks";
 import { Wishlist } from "@/components/wishlist";
 import { declutterCandidates, idleChoices } from "@/lib/declutter";
 import { insightStage } from "@/lib/insights-progress";
@@ -20,6 +21,8 @@ export function InsightsTab({ home }: { home: HomeState }) {
     setActiveTab,
     setOutfitMode,
     addToOutfit,
+    loadLook,
+    planDates,
   } = home;
   const { showRecommendations } = insightStage(items);
   // The let-go review only appears once something has actually sat unworn for the shortest window.
@@ -45,6 +48,22 @@ export function InsightsTab({ home }: { home: HomeState }) {
         }}
       />
       <ClosetInsights items={items} onOpenPiece={openPieceFromInsights} />
+      {savedLooks.length > 0 && (
+        <ForgottenLooks
+          items={items}
+          looks={savedLooks}
+          plans={plans}
+          today={todayIso}
+          onOpenLook={loadLook}
+          onPlan={(date, look) =>
+            planDates(
+              [date],
+              look.id,
+              `Planned ${look.name} for ${new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })}`,
+            )
+          }
+        />
+      )}
       <Wishlist items={items} looks={savedLooks} today={todayIso} showGaps={showRecommendations} />
       <DeclutterReview
         items={items}
