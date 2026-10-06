@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, HandHeart, Pencil, Plus, Scissors, Trash2, WashingMachine } from "lucide-react";
+import { Camera, Check, HandHeart, Pencil, Plus, Scissors, Trash2, WashingMachine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ export function PieceDetails({ home }: { home: HomeState }) {
     setActiveTab,
     setDetailSheetOpen,
     setFixingItem,
+    setStudioItem,
     setEditingItem,
     addToOutfit,
     selected,
@@ -130,6 +131,15 @@ export function PieceDetails({ home }: { home: HomeState }) {
           }}
         >
           <Scissors /> Fix cutout
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setDetailSheetOpen(false);
+            setStudioItem(selected);
+          }}
+        >
+          <Camera /> Studio photo
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -80,6 +80,7 @@ export function useHome() {
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const batchCancelled = useRef(false);
   const [fixingItem, setFixingItem] = useState<WardrobeItem | null>(null);
+  const [studioItem, setStudioItem] = useState<WardrobeItem | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
   const [editingLook, setEditingLook] = useState<SavedLook | null>(null);
@@ -894,6 +895,8 @@ export function useHome() {
     setSkipDuplicates,
     fixingItem,
     setFixingItem,
+    studioItem,
+    setStudioItem,
     fileRef,
     editingItem,
     setEditingItem,

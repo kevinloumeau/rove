@@ -17,6 +17,8 @@ export default defineConfig(async () => {
         configPath: "./wrangler.jsonc",
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
+        // Workers AI only runs on Cloudflare; locally env.AI is a stub that fails, so dev needs no login.
+        remoteBindings: false,
       }),
     ],
   };

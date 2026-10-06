@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EditLookDialog, EditPieceDialog } from "@/components/closet-dialogs";
 import { CutoutEditor } from "@/components/cutout-editor";
+import { StudioPhoto } from "@/components/studio-photo";
 import { PackingDialog } from "@/components/packing-dialog";
 import { useHome } from "@/hooks/use-home";
 import { ClosetTab } from "@/components/home/closet-tab";
@@ -56,6 +57,8 @@ export default function Home() {
 
     fixingItem,
     setFixingItem,
+    studioItem,
+    setStudioItem,
     fileRef,
     editingItem,
     setEditingItem,
@@ -182,6 +185,15 @@ export default function Home() {
           updateItem(id, { image, thumb });
           setFixingItem(null);
           toast.success("Cutout saved");
+        }}
+      />
+      <StudioPhoto
+        item={studioItem}
+        onOpenChange={(open) => !open && setStudioItem(null)}
+        onSaved={(id, image, thumb) => {
+          updateItem(id, { image, thumb });
+          setStudioItem(null);
+          toast.success("Studio photo saved");
         }}
       />
       <EditPieceDialog
