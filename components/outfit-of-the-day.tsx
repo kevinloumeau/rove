@@ -1,11 +1,40 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, Check, CloudSun, Heart, MapPin, Shuffle } from "lucide-react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  CloudSun,
+  Heart,
+  MapPin,
+  Shuffle,
+} from "lucide-react";
 import { type DayWeather, forecastUrl, parseForecast, weatherHint, weatherLabel } from "@/lib/weather";
 import type { SavedLook, WardrobeItem } from "@/lib/wardrobe-types";
 
 const COORDS_KEY = "rove-weather-coords";
+const COLLAPSED_KEY = "rove-ootd-collapsed";
+
+/** Whether the card starts folded. Read once per page load, so using the card folds it from the next visit on. */
+function storedCollapsed() {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function rememberCollapsed(collapsed: boolean) {
+  try {
+    localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0");
+  } catch {
+    /* not remembered: the card opens again next visit */
+  }
+}
+const noSubscribe = () => () => {};
 
 function usesFahrenheit() {
   return /^en-(US|LR)|^my\b/i.test(navigator.language);
@@ -104,6 +133,9 @@ export function OutfitOfTheDay({
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date(`${todayIso}T00:00:00`)));
   const [day, setDay] = useState(todayIso);
   const weather = useForecast();
+  const startsCollapsed = useSyncExternalStore(noSubscribe, storedCollapsed, () => false);
+  const [collapsedChoice, setCollapsedChoice] = useState<boolean | null>(null);
+  const collapsed = collapsedChoice ?? startsCollapsed;
   const dayWeather = weather.days.find((entry) => entry.date === day);
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
@@ -123,6 +155,18 @@ export function OutfitOfTheDay({
   const wornToday =
     day === todayIso && (look || again) && pieces.length > 0 && pieces.every((piece) => piece.lastWorn === todayIso);
 
+  function setCollapsed(next: boolean) {
+    setCollapsedChoice(next);
+    rememberCollapsed(next);
+  }
+  /** After the first real use the card folds away on later visits, leaving room for the closet. */
+  function used<T extends unknown[]>(action: (...args: T) => void) {
+    return (...args: T) => {
+      if (collapsedChoice === null) rememberCollapsed(true);
+      action(...args);
+    };
+  }
+
   function shiftWeek(offset: number) {
     const next = new Date(weekStart);
     next.setDate(weekStart.getDate() + offset * 7);
@@ -130,8 +174,42 @@ export function OutfitOfTheDay({
     setDay(isoDate(next));
   }
 
+  const todayLook = looks.find((candidate) => candidate.id === plans[todayIso]);
+  const todayAgain = !todayLook && lovedLook ? lovedLook : null;
+  const todayPieces = todayAgain
+    ? todayAgain.pieces
+    : (todayLook?.itemIds ?? [])
+        .map((id) => items.find((item) => String(item.id) === String(id)))
+        .filter((item): item is WardrobeItem => Boolean(item));
+
+  if (collapsed)
+    return (
+      <section className="ootd ootd-compact" aria-label="Outfit of the day">
+        <button className="ootd-expand" aria-expanded={false} onClick={() => setCollapsed(false)}>
+          <span className="ootd-compact-thumbs" aria-hidden>
+            {todayPieces.length ? (
+              todayPieces.slice(0, 3).map((piece) => <img key={piece.id} src={piece.thumb ?? piece.image} alt="" />)
+            ) : (
+              <CalendarDays />
+            )}
+          </span>
+          <span className="ootd-compact-copy">
+            <strong>Outfit of the day</strong>
+            <span>
+              {todayLook
+                ? todayLook.name
+                : todayAgain
+                  ? "A look you loved. Wear it again?"
+                  : "Nothing planned for today"}
+            </span>
+          </span>
+          <ChevronDown aria-hidden />
+        </button>
+      </section>
+    );
+
   return (
-    <section className="ootd" aria-label="Outfit of the day">
+    <section className="ootd" aria-labelledby="ootd-title">
       <div className="week-strip">
         <button className="week-arrow" aria-label="Previous week" onClick={() => shiftWeek(-1)}>
           <ArrowLeft />
@@ -158,8 +236,8 @@ export function OutfitOfTheDay({
           <ArrowRight />
         </button>
       </div>
-      <h2 className="display-title">
-        {day === todayIso ? "Outfit of the Day" : look ? "Planned look" : "Nothing yet"}
+      <h2 className="display-title" id="ootd-title">
+        {day === todayIso ? "Outfit of the day" : look ? "Planned look" : "Nothing yet"}
       </h2>
       <p className="ootd-date">
         {dayLabel}
@@ -168,7 +246,8 @@ export function OutfitOfTheDay({
       {dayWeather ? (
         <p className="ootd-weather">
           <span>
-            <CloudSun /> {dayWeather.high}° / {dayWeather.low}° · {weatherLabel(dayWeather.code)}
+            <CloudSun aria-hidden />
+            {`${dayWeather.high}° / ${dayWeather.low}° · ${weatherLabel(dayWeather.code)}`}
           </span>
           {weatherHint(dayWeather, weather.fahrenheit)}
         </p>
@@ -186,11 +265,11 @@ export function OutfitOfTheDay({
           className="ootd-collage"
           data-count={Math.min(pieces.length, 4)}
           aria-label={again ? "Style this loved outfit" : look ? `Open ${look.name}` : undefined}
-          onClick={() => (look ? onOpenLook(look) : again && onStyle?.(again.pieces))}
+          onClick={used(() => (look ? onOpenLook(look) : again && onStyle?.(again.pieces)))}
         >
           {pieces.slice(0, 4).map((piece) => (
             <span key={piece.id}>
-              <img src={piece.image} alt={piece.name} />
+              <img src={piece.thumb ?? piece.image} alt={piece.name} />
             </span>
           ))}
         </button>
@@ -210,16 +289,24 @@ export function OutfitOfTheDay({
       )}
       <div className="ootd-actions">
         {(look || again) && day === todayIso ? (
-          <button className="primary" disabled={Boolean(wornToday)} onClick={() => onWear(pieces)}>
+          <button className="primary" disabled={Boolean(wornToday)} onClick={used(() => onWear(pieces))}>
             <Check /> {wornToday ? "Worn today" : again ? "Wear it again" : "Wear this today"}
           </button>
         ) : (
-          <button className="primary" onClick={() => onPlanDay(day)}>
+          <button className="primary" onClick={used(() => onPlanDay(day))}>
             <CalendarDays /> {look ? "Change plan" : "Plan this day"}
           </button>
         )}
-        <button onClick={onSurprise} disabled={!items.length}>
+        <button onClick={used(onSurprise)} disabled={!items.length}>
           <Shuffle /> Surprise me
+        </button>
+        <button
+          className="ootd-collapse"
+          aria-expanded
+          aria-label="Fold away outfit of the day"
+          onClick={() => setCollapsed(true)}
+        >
+          <ChevronUp />
         </button>
       </div>
     </section>

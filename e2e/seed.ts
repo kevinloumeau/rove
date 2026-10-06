@@ -1,8 +1,10 @@
 import { deflateSync } from "node:zlib";
 import type { APIRequestContext } from "@playwright/test";
 
-// A solid-color PNG, so seeding needs no fixtures and skips the in-browser cutout model.
-function solidPng(size: number, [r, g, b]: [number, number, number]) {
+type Rgb = [number, number, number];
+
+// A PNG drawn pixel by pixel, so tests need no image fixtures.
+function png(size: number, pixel: (x: number, y: number) => Rgb) {
   const crcTable = Array.from({ length: 256 }, (_, n) => {
     let c = n;
     for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
@@ -26,8 +28,10 @@ function solidPng(size: number, [r, g, b]: [number, number, number]) {
   header.writeUInt32BE(size, 4);
   header[8] = 8;
   header[9] = 2;
-  const row = Buffer.concat([Buffer.from([0]), Buffer.from(Array.from({ length: size }, () => [r, g, b]).flat())]);
-  const pixels = deflateSync(Buffer.concat(Array.from({ length: size }, () => row)));
+  const rows = Array.from({ length: size }, (_, y) =>
+    Buffer.concat([Buffer.from([0]), Buffer.from(Array.from({ length: size }, (_, x) => pixel(x, y)).flat())]),
+  );
+  const pixels = deflateSync(Buffer.concat(rows));
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk("IHDR", header),
@@ -36,13 +40,21 @@ function solidPng(size: number, [r, g, b]: [number, number, number]) {
   ]);
 }
 
-export type SeedPiece = {
-  name: string;
-  category: string;
-  color: string;
-  rgb: [number, number, number];
-  season?: string;
-};
+// A solid-color PNG, so seeding skips the in-browser cutout model.
+function solidPng(size: number, color: Rgb) {
+  return png(size, () => color);
+}
+
+// Stands in for a Workers AI studio photo: a piece with a white logo on a white backdrop.
+export function studioShotPng(size: number, color: Rgb) {
+  return png(size, (x, y) => {
+    const inPiece = x > size * 0.3 && x < size * 0.7 && y > size * 0.2 && y < size * 0.8;
+    const inLogo = Math.abs(x - size / 2) < size * 0.06 && Math.abs(y - size * 0.4) < size * 0.06;
+    return inPiece && !inLogo ? color : [255, 255, 255];
+  });
+}
+
+export type SeedPiece = { name: string; category: string; color: string; rgb: Rgb; season?: string };
 
 // Adds pieces through the same two API calls the upload dialog makes.
 export async function seedPieces(request: APIRequestContext, pieces: SeedPiece[]) {

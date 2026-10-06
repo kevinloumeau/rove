@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import {
   Check,
   ArrowUpDown,
   ChevronDown,
+  SlidersHorizontal,
   Grid2X2,
   Heart,
   Package,
@@ -25,6 +27,9 @@ import { isLetGoReason, letGoLabels, letGoReasons } from "@/lib/declutter";
 import { pieceCategories, seasons } from "@/lib/wardrobe-types";
 import { categories, sameId, isNarrow } from "@/lib/home-utils";
 import { PieceDetails } from "@/components/home/piece-details";
+import { ClosetFilterSheet } from "@/components/closet-filters";
+import { activeFilterCount, primaryCategories, sortOptions } from "@/lib/closet-filters";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { type HomeState } from "@/hooks/use-home";
 
 export function ClosetTab({ home }: { home: HomeState }) {
@@ -80,9 +85,59 @@ export function ClosetTab({ home }: { home: HomeState }) {
     setOutfit,
   } = home;
   const storedView = activeCategory === "Stored";
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  // The side panel only shows on wide screens; skipping it elsewhere keeps its full-size photo from loading.
+  const showDetailPanel = useMediaQuery("(min-width: 1101px)");
+  const filterCount = activeFilterCount({ category: activeCategory, color: colorFilter, season: seasonFilter, sort });
+  const phoneCategories = primaryCategories(
+    categories,
+    items.map((item) => item.category),
+    // The Stored chip sits after the categories, so it isn't swapped in as a category.
+    storedView ? "All" : activeCategory,
+  );
+  const storedChip = (storedCount > 0 || storedView) && (
+    <button
+      className={`stored-chip ${storedView ? "active" : ""}`}
+      aria-pressed={storedView}
+      onClick={() => setActiveCategory("Stored")}
+    >
+      <Package aria-hidden /> Stored <b>{storedCount}</b>
+    </button>
+  );
+  const selectToggle = (
+    <button
+      className={`select-toggle ${selecting ? "active" : ""}`}
+      aria-pressed={selecting}
+      disabled={!items.length}
+      onClick={() => (selecting ? endSelecting() : setSelecting(true))}
+    >
+      {selecting ? "Done" : "Select"}
+    </button>
+  );
   return (
     <TabsContent value="closet" className="closet-view">
       <section className="closet-main">
+        <div className="section-heading">
+          <div className="closet-title">
+            <h1>{storedView ? "Packed away" : "Your closet"}</h1>
+            <p>
+              {storedView
+                ? "Stored for the off season. Bring pieces back any time."
+                : "Everything you own, ready to wear again."}
+            </p>
+            <span className="phone-only">{selectToggle}</span>
+          </div>
+          <div className="search-wrap">
+            <Search />
+            <Input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search your closet"
+              aria-label="Search your closet"
+            />
+          </div>
+        </div>
         {items.length > 0 && (
           <OutfitOfTheDay
             items={items}
@@ -112,23 +167,30 @@ export function ClosetTab({ home }: { home: HomeState }) {
           />
         )}
         {items.length > 0 && <SeasonalSwapCard items={items} todayIso={todayIso} onReview={() => setSwapOpen(true)} />}
-        <div className="section-heading">
-          <div>
-            <h1>{storedView ? "Packed away" : "Your closet"}</h1>
-            <p>
-              {storedView
-                ? "Stored for the off season. Bring pieces back any time."
-                : "Everything you own, ready to wear again."}
-            </p>
-          </div>
-          <div className="search-wrap">
-            <Search />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search your closet"
-              aria-label="Search your closet"
-            />
+        <div className="phone-filter-row">
+          <button
+            className={`filter-button ${filterCount ? "active" : ""}`}
+            onClick={() => setFilterSheetOpen(true)}
+            aria-label={filterCount ? `Filter and sort, ${filterCount} active` : "Filter and sort"}
+          >
+            <SlidersHorizontal aria-hidden /> Filter
+            {filterCount > 0 && <b aria-hidden>{filterCount}</b>}
+          </button>
+          <div className="category-list" aria-label="Filter by category">
+            {phoneCategories.map((category) => (
+              <button
+                key={category}
+                className={activeCategory === category ? "active" : ""}
+                aria-pressed={activeCategory === category}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+            {storedChip}
+            <button onClick={() => setFilterSheetOpen(true)}>
+              More <ChevronDown aria-hidden />
+            </button>
           </div>
         </div>
         <div className="filter-row">
@@ -137,19 +199,13 @@ export function ClosetTab({ home }: { home: HomeState }) {
               <button
                 key={category}
                 className={activeCategory === category ? "active" : ""}
+                aria-pressed={activeCategory === category}
                 onClick={() => setActiveCategory(category)}
               >
                 {category}
               </button>
             ))}
-            {(storedCount > 0 || storedView) && (
-              <button
-                className={`stored-chip ${storedView ? "active" : ""}`}
-                onClick={() => setActiveCategory("Stored")}
-              >
-                <Package aria-hidden /> Stored <b>{storedCount}</b>
-              </button>
-            )}
+            {storedChip}
           </div>
           <div className="filter-tools">
             <label className={`pill-select ${colorFilter !== "All colors" ? "active" : ""}`}>
@@ -188,28 +244,19 @@ export function ClosetTab({ home }: { home: HomeState }) {
             <label className="sort-control">
               <span className="sr-only">Sort closet</span>
               <select value={sort} onChange={(event) => setSort(event.target.value)}>
-                <option>Recently added</option>
-                <option>A–Z</option>
-                <option>Color</option>
-                <option>Most worn</option>
-                <option>Least worn</option>
+                {sortOptions.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
               </select>
               <ChevronDown className="sort-chevron" />
               <ArrowUpDown className="sort-icon" />
             </label>
-            <button
-              className={`select-toggle ${selecting ? "active" : ""}`}
-              aria-pressed={selecting}
-              disabled={!items.length}
-              onClick={() => (selecting ? endSelecting() : setSelecting(true))}
-            >
-              {selecting ? "Done" : "Select"}
-            </button>
+            {selectToggle}
           </div>
         </div>
         {visibleItems.length ? (
           <div className="wardrobe-grid">
-            {visibleItems.map((item) => (
+            {visibleItems.map((item, index) => (
               <article
                 key={item.id}
                 className={`item-card ${!selecting && selected && sameId(selected.id, item.id) ? "selected" : ""} ${item.inLaundry ? "in-laundry" : ""} ${item.storedAt && !storedView ? "is-stored" : ""} ${selecting && picked.includes(String(item.id)) ? "picked" : ""}`}
@@ -243,7 +290,14 @@ export function ClosetTab({ home }: { home: HomeState }) {
                   </button>
                 )}
                 <div className="item-image">
-                  <img src={item.thumb ?? item.image} alt={item.name} />
+                  <img
+                    src={item.thumb ?? item.image}
+                    alt={item.name}
+                    width={480}
+                    height={480}
+                    loading={index < 6 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
                   {item.inLaundry ? (
                     <span className="laundry-badge">
                       <WashingMachine /> In the wash
@@ -294,7 +348,7 @@ export function ClosetTab({ home }: { home: HomeState }) {
             <h2>Your closet is empty</h2>
             <p>Add a photo of a piece or a full outfit and Rove will cut out each garment.</p>
             <Button className="empty-action" onClick={() => setDialogOpen(true)}>
-              <Plus /> Add your first photo
+              <Plus /> Add clothes
             </Button>
           </div>
         )}
@@ -385,7 +439,7 @@ export function ClosetTab({ home }: { home: HomeState }) {
         )}
       </section>
       <aside className="detail-panel" aria-label="Selected item details">
-        {selected ? (
+        {!showDetailPanel ? null : selected ? (
           <div className="detail-sticky">
             <PieceDetails home={home} />
           </div>
@@ -401,6 +455,21 @@ export function ClosetTab({ home }: { home: HomeState }) {
         items={items}
         todayIso={todayIso}
         onSwap={swapSeasonal}
+      />
+      <ClosetFilterSheet
+        open={filterSheetOpen}
+        onOpenChange={setFilterSheetOpen}
+        categories={categories}
+        category={activeCategory}
+        setCategory={setActiveCategory}
+        colors={closetColors}
+        color={colorFilter}
+        setColor={setColorFilter}
+        season={seasonFilter}
+        setSeason={setSeasonFilter}
+        sort={sort}
+        setSort={setSort}
+        resultCount={visibleItems.length}
       />
       <Sheet open={detailSheetOpen && Boolean(selected)} onOpenChange={setDetailSheetOpen}>
         <SheetContent side="bottom" className="piece-sheet">

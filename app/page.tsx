@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Archive, CalendarDays, ChartColumn, Layers3, Plus, Shirt, Sparkles } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EditLookDialog, EditPieceDialog } from "@/components/closet-dialogs";
 import { CutoutEditor } from "@/components/cutout-editor";
+import { StudioPhoto } from "@/components/studio-photo";
 import { PackingDialog } from "@/components/packing-dialog";
 import { useHome } from "@/hooks/use-home";
 import { ClosetTab } from "@/components/home/closet-tab";
@@ -13,8 +15,26 @@ import { CalendarTab } from "@/components/home/calendar-tab";
 import { InsightsTab } from "@/components/home/insights-tab";
 import { UploadDialog } from "@/components/home/upload-dialog";
 
+/** True while the page is scrolling down, so the floating Add button gets out of the way of what's under it. */
+function useScrollingDown() {
+  const [down, setDown] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 8) return;
+      setDown(y > last && y > 120);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return down;
+}
+
 export default function Home() {
   const home = useHome();
+  const fabHidden = useScrollingDown();
   const {
     items,
     activeTab,
@@ -56,6 +76,8 @@ export default function Home() {
 
     fixingItem,
     setFixingItem,
+    studioItem,
+    setStudioItem,
     fileRef,
     editingItem,
     setEditingItem,
@@ -79,10 +101,6 @@ export default function Home() {
           </span>
           <span>Rove</span>
         </a>
-        <p className="closet-count">
-          <span>{items.length}</span> {items.length === 1 ? "piece" : "pieces"} · <span>{savedLooks.length}</span>{" "}
-          {savedLooks.length === 1 ? "saved look" : "saved looks"}
-        </p>
         <UploadDialog
           {...{
             dialogOpen,
@@ -158,7 +176,7 @@ export default function Home() {
         <InsightsTab home={home} />
       </Tabs>
       {activeTab === "closet" && !selecting && items.length > 0 && (
-        <button className="fab-add" onClick={() => setDialogOpen(true)}>
+        <button className={`fab-add ${fabHidden ? "tucked" : ""}`} onClick={() => setDialogOpen(true)}>
           Add clothes <Plus />
         </button>
       )}
@@ -182,6 +200,15 @@ export default function Home() {
           updateItem(id, { image, thumb });
           setFixingItem(null);
           toast.success("Cutout saved");
+        }}
+      />
+      <StudioPhoto
+        item={studioItem}
+        onOpenChange={(open) => !open && setStudioItem(null)}
+        onSaved={(id, image, thumb) => {
+          updateItem(id, { image, thumb });
+          setStudioItem(null);
+          toast.success("Studio photo saved");
         }}
       />
       <EditPieceDialog

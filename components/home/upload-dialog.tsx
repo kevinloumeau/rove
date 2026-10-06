@@ -115,7 +115,7 @@ export function UploadDialog({
     >
       <DialogTrigger asChild>
         <Button className="add-button">
-          <Plus /> Add photo
+          <Plus /> Add clothes
         </Button>
       </DialogTrigger>
       <DialogContent className={`upload-dialog ${uploadMode === "look" ? "look-import-dialog" : ""}`}>
@@ -125,7 +125,7 @@ export function UploadDialog({
               ? "Full look detected"
               : uploadMode === "single"
                 ? "One piece detected"
-                : "Add to your closet"}
+                : "Add clothes"}
           </DialogTitle>
           <DialogDescription>
             {uploadMode === "look"

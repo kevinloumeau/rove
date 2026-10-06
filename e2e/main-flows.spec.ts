@@ -32,7 +32,7 @@ test.beforeAll(async ({ request }) => {
 test("closet lists pieces and search narrows them", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText(top).first()).toBeVisible();
-  await page.getByRole("textbox", { name: "Search your closet" }).fill(`jeans ${run}`);
+  await page.getByRole("searchbox", { name: "Search your closet" }).fill(`jeans ${run}`);
   await expect(page.getByText(bottom).first()).toBeVisible();
   await expect(page.getByText(top)).toHaveCount(0);
 });

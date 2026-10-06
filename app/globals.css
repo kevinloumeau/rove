@@ -3821,6 +3821,52 @@ textarea:focus-visible {
   }
 }
 
+/* Studio photo: the current cutout beside the generated product shot. */
+.studio-dialog {
+  max-width: 720px !important;
+}
+.studio-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.studio-compare figure {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+.studio-compare figcaption {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  text-align: center;
+}
+.studio-frame {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--muted);
+}
+.studio-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.studio-working {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+.studio-working svg {
+  width: 16px;
+  height: 16px;
+  animation: styling-bob 1s ease-in-out infinite;
+}
+
 /* Builder sizing: chosen pieces get the room, empty slots shrink to a compact + button. */
 .slot-stack {
   position: relative;
@@ -4281,12 +4327,324 @@ textarea:focus-visible {
   }
 }
 
+/* Closet controls (design review): heading first, a foldable outfit card, and one Filter sheet on phones */
+.topbar {
+  grid-template-columns: 1fr auto;
+}
+.phone-only,
+.phone-filter-row {
+  display: none;
+}
+.ootd-actions .ootd-collapse {
+  justify-content: center;
+  width: 42px;
+  padding: 0;
+  color: var(--muted-foreground);
+}
+.ootd.ootd-compact {
+  padding: 0;
+  text-align: left;
+}
+.ootd-expand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 18px 12px 12px;
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+.ootd-compact-thumbs {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 48px;
+  padding: 0 4px;
+  border-radius: 14px;
+  color: var(--blue);
+  background: #fff;
+}
+.ootd-compact-thumbs img {
+  width: 34px;
+  height: 40px;
+  object-fit: contain;
+}
+.ootd-compact-thumbs img + img {
+  margin-left: -10px;
+}
+.ootd-compact-thumbs svg {
+  width: 22px;
+}
+.ootd-compact-copy {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-width: 0;
+}
+.ootd-compact-copy strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 400;
+  line-height: 1.1;
+}
+.ootd-compact-copy span {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ootd-expand > svg {
+  flex: 0 0 auto;
+  width: 22px;
+}
+.closet-main > .ootd {
+  margin-bottom: 28px;
+}
+/* The details panel follows the grid and scrolls on its own when it is taller than the window. */
+.detail-sticky {
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  top: 72px;
+}
+.detail-actions button,
+.wear-actions button {
+  min-width: 0;
+  height: auto;
+  min-height: 44px;
+  padding: 6px 8px;
+  font-size: 0.84rem;
+  white-space: normal;
+}
+.fab-add {
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    visibility 0.2s;
+}
+
+/* Phone filter sheet */
+.filter-sheet {
+  max-height: 86vh;
+  gap: 0;
+  padding: 18px 16px max(16px, env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+}
+.filter-sheet h2 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+.filter-sheet-body {
+  display: grid;
+  gap: 18px;
+  overflow-y: auto;
+  padding: 8px 0 16px;
+}
+.filter-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.filter-group legend {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.filter-group > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.filter-group label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--foreground);
+  background: var(--card);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.filter-group label.active {
+  border-color: var(--foreground);
+  color: var(--background);
+  background: var(--foreground);
+}
+.filter-group label:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.filter-group input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.filter-group svg {
+  width: 16px;
+}
+.filter-sheet-footer {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.filter-sheet-footer button {
+  min-height: 50px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 650;
+}
+.filter-clear {
+  color: var(--foreground);
+  background: var(--secondary);
+}
+.filter-clear:disabled {
+  opacity: 0.5;
+}
+.filter-apply {
+  color: var(--background);
+  background: var(--foreground);
+}
+
+@media (max-width: 760px) {
+  .phone-only {
+    display: contents;
+  }
+  .filter-row {
+    display: none;
+  }
+  .section-heading {
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .closet-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .closet-title h1 {
+    font-size: 2.5rem;
+  }
+  .closet-title p {
+    display: none;
+  }
+  .closet-title .select-toggle {
+    min-height: 44px;
+    margin: 0;
+    padding: 0 18px;
+    font-size: 0.95rem;
+  }
+  .closet-main .section-heading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .closet-main .search-wrap {
+    width: 100%;
+  }
+  .search-wrap input {
+    height: 48px;
+    font-size: 1rem;
+  }
+  .closet-main > .ootd {
+    margin: 0 0 18px;
+  }
+  .closet-main > .ootd:not(.ootd-compact) {
+    padding-top: 18px;
+  }
+  .phone-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .phone-filter-row .category-list {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    /* A soft edge hints that more chips scroll in from the right. */
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+  .phone-filter-row .category-list button,
+  .filter-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 0.95rem;
+  }
+  .phone-filter-row .category-list button svg {
+    width: 16px;
+  }
+  .filter-button {
+    flex: 0 0 auto;
+    gap: 6px;
+    border: 1px solid var(--foreground);
+    border-radius: 999px;
+    color: var(--foreground);
+    background: transparent;
+    font-weight: 650;
+  }
+  .filter-button svg {
+    width: 17px;
+  }
+  .filter-button b {
+    display: grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 0.78rem;
+  }
+  /* Room for the floating Add button and the bottom navigation under the last row. */
+  .workspace {
+    padding-bottom: calc(max(10px, env(safe-area-inset-bottom)) + 150px);
+  }
+  html {
+    scroll-padding-bottom: 150px;
+  }
+  .fab-add.tucked {
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 24px);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .ootd-compact-thumbs {
+    color: var(--blue-text);
+    background: var(--garment-tile);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fab-add {
+    transition: none;
+  }
+}
+
 /* Seasonal swap */
 .swap-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: -24px 0 28px;
+  margin: 0 0 28px;
   padding: 14px 14px 14px 18px;
   border-radius: 22px;
   background: var(--secondary);
@@ -4360,7 +4718,6 @@ textarea:focus-visible {
 @media (max-width: 760px) {
   .swap-card {
     flex-wrap: wrap;
-    margin-top: -12px;
   }
   .swap-card > div {
     flex-basis: calc(100% - 80px);
