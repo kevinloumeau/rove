@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Archive, CalendarDays, ChartColumn, Layers3, Plus, Shirt, Sparkles } from "lucide-react";
+import { Archive, CalendarDays, ChartColumn, Layers3, Plus, Sparkles } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EditLookDialog, EditPieceDialog } from "@/components/closet-dialogs";
@@ -98,10 +98,7 @@ export default function Home() {
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="#top" aria-label="Rove closet home">
-          <span className="brand-mark">
-            <Shirt />
-          </span>
-          <span>Rove</span>
+          <span className="brand-word">rove</span>
         </a>
         <UploadDialog
           {...{

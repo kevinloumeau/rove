@@ -3,28 +3,28 @@
 @import "../vendor/shadcn-tailwind-4.13.0.css";
 
 :root {
-  --background: #f6f7f3;
-  --foreground: #161815;
+  --background: #f8f5f2;
+  --foreground: #191614;
   --card: #fff;
-  --card-foreground: #161815;
+  --card-foreground: #191614;
   --popover: #fff;
-  --popover-foreground: #161815;
-  --primary: #161815;
+  --popover-foreground: #191614;
+  --primary: #191614;
   --primary-foreground: #fff;
-  --secondary: #eef0eb;
-  --secondary-foreground: #161815;
-  --muted: #eef0eb;
-  --muted-foreground: #5d6159;
-  --accent: #e4e8ff;
-  --accent-foreground: #2437ab;
+  --secondary: #f3eee8;
+  --secondary-foreground: #191614;
+  --muted: #f3eee8;
+  --muted-foreground: #645d56;
+  --accent: #ece8fb;
+  --accent-foreground: #4a3798;
   --destructive: #bb2b2b;
-  --border: #dfe2db;
-  --input: #d7dbd3;
-  --ring: #3e55f0;
+  --border: #e1dedc;
+  --input: #dad7d4;
+  --ring: #7157d7;
   --radius: 0.8rem;
-  --blue: #3e55f0;
-  --blue-soft: #e9ecff;
-  --ink-soft: #5d6159;
+  --blue: #7157d7;
+  --blue-soft: #efecfc;
+  --ink-soft: #645d56;
 }
 @theme inline {
   --color-background: var(--background);
@@ -74,15 +74,15 @@ button {
   cursor: pointer;
 }
 ::selection {
-  background: #cfd5ff;
-  color: #141c59;
+  background: #ddd6f8;
+  color: #281e4f;
 }
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c8cbc4;
+  background: #cbc8c4;
   border: 3px solid var(--background);
   border-radius: 20px;
 }
@@ -104,7 +104,7 @@ button {
   align-items: center;
   padding: 0 30px;
   border-bottom: 1px solid var(--border);
-  background: rgba(246, 247, 243, 0.94);
+  background: rgba(248, 245, 242, 0.94);
   backdrop-filter: blur(16px);
 }
 .brand {
@@ -115,7 +115,7 @@ button {
   color: inherit;
   text-decoration: none;
   font-size: 1.28rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.03em;
 }
 .brand-mark {
@@ -126,7 +126,7 @@ button {
   border-radius: 11px;
   color: #fff;
   background: var(--blue);
-  box-shadow: 0 8px 18px rgba(62, 85, 240, 0.2);
+  box-shadow: 0 8px 18px rgba(113, 87, 215, 0.2);
 }
 .brand-mark svg {
   width: 19px;
@@ -138,7 +138,7 @@ button {
 }
 .closet-count span {
   color: var(--foreground);
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .add-button {
@@ -188,7 +188,7 @@ button {
 .rail-tabs button[data-state="active"] {
   color: #fff !important;
   background: var(--foreground) !important;
-  box-shadow: 0 9px 20px rgba(22, 24, 21, 0.13) !important;
+  box-shadow: 0 9px 20px rgba(25, 22, 20, 0.13) !important;
 }
 .rail-tabs button::after {
   display: none;
@@ -232,7 +232,7 @@ button {
   font-size: clamp(2.4rem, 5vw, 4.6rem);
   line-height: 0.95;
   letter-spacing: -0.04em;
-  font-weight: 650;
+  font-weight: 600;
 }
 .section-heading p,
 .outfit-intro p {
@@ -288,7 +288,7 @@ button {
 }
 .category-list button:hover {
   color: var(--foreground);
-  background: #eceee9;
+  background: #f1ece6;
 }
 .category-list button.active {
   border-color: var(--foreground);
@@ -352,9 +352,9 @@ button {
   border: 0;
   border-radius: 999px;
   color: var(--foreground);
-  background: #e9ebe6;
+  background: #efe8e2;
   font-size: 0.84rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .select-toggle.active {
   color: #fff;
@@ -372,7 +372,7 @@ button {
   place-items: center;
   width: 28px;
   height: 28px;
-  border: 2px solid rgba(22, 24, 21, 0.25);
+  border: 2px solid rgba(25, 22, 20, 0.25);
   border-radius: 50%;
   color: #fff;
   background: rgba(255, 255, 255, 0.9);
@@ -399,8 +399,8 @@ button {
   padding: 6px 6px 6px 18px;
   border-radius: 999px;
   color: #fff;
-  background: rgba(22, 24, 21, 0.94);
-  box-shadow: 0 18px 40px rgba(20, 20, 20, 0.25);
+  background: rgba(25, 22, 20, 0.94);
+  box-shadow: 0 18px 40px rgba(22, 20, 18, 0.25);
   backdrop-filter: blur(14px);
   transform: translateX(-50%);
   overflow-x: auto;
@@ -485,7 +485,7 @@ button {
 .item-card.selected .item-image {
   box-shadow:
     inset 0 0 0 2px var(--blue),
-    0 18px 36px rgba(34, 41, 28, 0.1);
+    0 18px 36px rgba(38, 35, 31, 0.1);
 }
 .item-image {
   aspect-ratio: 4/5;
@@ -501,7 +501,7 @@ button {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 14px 16px rgba(20, 20, 20, 0.12));
+  filter: drop-shadow(0 14px 16px rgba(22, 20, 18, 0.12));
 }
 .heart-button {
   position: absolute;
@@ -514,9 +514,9 @@ button {
   height: 34px;
   border: 0;
   border-radius: 50%;
-  color: #555951;
+  color: #5b554f;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 6px 16px rgba(20, 20, 20, 0.08);
+  box-shadow: 0 6px 16px rgba(22, 20, 18, 0.08);
 }
 .heart-button svg {
   width: 16px;
@@ -533,16 +533,16 @@ button {
   color: var(--blue);
   font-size: 0.75rem;
   line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
 }
 .item-meta h2 {
   overflow: hidden;
   margin: 0;
   font-size: 0.94rem;
   line-height: 1.35;
-  font-weight: 650;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -552,7 +552,7 @@ button {
 }
 .detail-panel {
   border-left: 1px solid var(--border);
-  background: #eff1ec;
+  background: #f3eeea;
 }
 .detail-sticky {
   position: sticky;
@@ -572,7 +572,7 @@ button {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 14px 18px rgba(20, 20, 20, 0.12));
+  filter: drop-shadow(0 14px 18px rgba(22, 20, 18, 0.12));
 }
 .detail-copy h2 {
   margin: 0 0 10px;
@@ -588,13 +588,13 @@ button {
 }
 .detail-sticky dl {
   margin: 26px 0;
-  border-top: 1px solid #d3d7cf;
+  border-top: 1px solid #d6d3d0;
 }
 .detail-sticky dl div {
   display: flex;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid #d3d7cf;
+  border-bottom: 1px solid #d6d3d0;
   font-size: 0.8rem;
 }
 .detail-sticky dt {
@@ -624,7 +624,7 @@ button {
   max-height: 88vh;
   overflow-y: auto;
   border-radius: 20px 20px 0 0;
-  background: #eff1ec;
+  background: #f3eeea;
 }
 .detail-notes {
   margin: -8px 0 20px;
@@ -672,7 +672,7 @@ button {
   color: var(--accent-foreground);
   background: var(--accent);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .laundry-badge svg {
   width: 13px;
@@ -711,7 +711,7 @@ button {
   font-size: clamp(2.4rem, 5vw, 4.6rem);
   line-height: 0.95;
   letter-spacing: -0.04em;
-  font-weight: 650;
+  font-weight: 600;
 }
 .insights-intro p {
   margin: 12px 0 0;
@@ -797,7 +797,7 @@ button {
   flex: none;
   object-fit: contain;
   border-radius: 8px;
-  background: #f6f7f3;
+  background: #f8f5f2;
 }
 .insight-pieces span {
   display: grid;
@@ -929,7 +929,7 @@ button.declutter-piece:hover {
   flex: none;
   object-fit: contain;
   border-radius: 8px;
-  background: #f6f7f3;
+  background: #f8f5f2;
 }
 .declutter-piece span {
   display: grid;
@@ -1061,7 +1061,7 @@ button.declutter-piece:hover {
   border: 1px solid var(--border);
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 24px 60px rgba(37, 43, 32, 0.08);
+  box-shadow: 0 24px 60px rgba(41, 38, 34, 0.08);
 }
 .piece-rail {
   padding: 22px 16px;
@@ -1070,8 +1070,8 @@ button.declutter-piece:hover {
 .piece-rail h2 {
   margin: 0 0 15px 6px;
   font-size: 0.84rem;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .piece-rail > div {
   display: grid;
@@ -1123,13 +1123,13 @@ button.declutter-piece:hover {
   right: 22px;
   display: flex;
   justify-content: space-between;
-  color: #303a7f;
+  color: #463b74;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .canvas-header p {
   margin: 0;
-  color: #4b538b;
+  color: #5d5482;
   font-weight: 500;
 }
 .look-stack {
@@ -1154,7 +1154,7 @@ button.declutter-piece:hover {
   max-width: 115%;
   max-height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 22px 20px rgba(33, 45, 127, 0.17));
+  filter: drop-shadow(0 22px 20px rgba(60, 46, 114, 0.17));
 }
 .look-piece button {
   position: absolute;
@@ -1167,7 +1167,7 @@ button.declutter-piece:hover {
   height: 28px;
   border: 0;
   border-radius: 50%;
-  color: #48549b;
+  color: #60548f;
   background: rgba(255, 255, 255, 0.8);
 }
 .look-piece button svg {
@@ -1180,7 +1180,7 @@ button.declutter-piece:hover {
   bottom: 47px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(58, 68, 145, 0.13);
+  background: rgba(83, 70, 133, 0.13);
   filter: blur(12px);
 }
 .canvas-empty {
@@ -1190,7 +1190,7 @@ button.declutter-piece:hover {
   display: grid;
   place-content: center;
   justify-items: center;
-  color: #4f578e;
+  color: #615885;
   text-align: center;
 }
 .canvas-empty svg {
@@ -1200,7 +1200,7 @@ button.declutter-piece:hover {
 }
 .canvas-empty h2 {
   margin: 0;
-  color: #303a7f;
+  color: #463b74;
   font-size: 1.2rem;
 }
 .canvas-empty p {
@@ -1215,8 +1215,8 @@ button.declutter-piece:hover {
   margin: 0 0 40px;
   color: var(--ink-soft);
   font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .look-notes h2 {
   margin: 0 0 12px;
@@ -1241,13 +1241,13 @@ button.declutter-piece:hover {
   background: #d70c10;
   box-shadow:
     inset 0 0 0 3px #fff,
-    0 0 0 1px #dadcd6;
+    0 0 0 1px #dcd9d6;
 }
 .palette i:nth-child(2) {
-  background: #1a1c1e;
+  background: #1f1c19;
 }
 .palette i:nth-child(3) {
-  background: #7391ae;
+  background: #7b7fa6;
 }
 .look-notes button {
   width: 100%;
@@ -1260,7 +1260,7 @@ button.declutter-piece:hover {
   border-radius: 11px;
   background: #fff;
   font-size: 0.84rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .look-notes button svg {
   width: 15px;
@@ -1285,17 +1285,17 @@ button.declutter-piece:hover {
   place-content: center;
   justify-items: center;
   gap: 8px;
-  border: 1px dashed #aeb5dc;
+  border: 1px dashed #bbb4d6;
   border-radius: 15px;
-  color: #545d95;
-  background: #f4f5ff;
+  color: #665d8c;
+  background: #f7f6fd;
 }
 .drop-zone:hover {
   border-color: var(--blue);
   background: var(--blue-soft);
 }
 .drop-zone strong {
-  color: #27316f;
+  color: #3b3165;
   font-size: 1.05rem;
 }
 .drop-zone > span:last-child {
@@ -1324,7 +1324,7 @@ button.declutter-piece:hover {
   place-items: center;
   min-height: 330px;
   border-radius: 15px;
-  background: #f0f1ed;
+  background: #f4efea;
 }
 .processing-photo img {
   width: 100%;
@@ -1338,7 +1338,7 @@ button.declutter-piece:hover {
   inset: 6% 11%;
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 13px;
-  box-shadow: 0 0 0 1px rgba(62, 85, 240, 0.45);
+  box-shadow: 0 0 0 1px rgba(113, 87, 215, 0.45);
   pointer-events: none;
 }
 .detection-label {
@@ -1351,8 +1351,8 @@ button.declutter-piece:hover {
   background: var(--blue);
   font-size: 0.75rem;
   line-height: 1;
-  font-weight: 700;
-  box-shadow: 0 5px 12px rgba(37, 49, 125, 0.18);
+  font-weight: 600;
+  box-shadow: 0 5px 12px rgba(62, 49, 113, 0.18);
 }
 .detection-one {
   top: 17%;
@@ -1369,7 +1369,7 @@ button.declutter-piece:hover {
   right: 8%;
   height: 2px;
   background: var(--blue);
-  box-shadow: 0 0 18px 4px rgba(62, 85, 240, 0.35);
+  box-shadow: 0 0 18px 4px rgba(113, 87, 215, 0.35);
   animation: scan 1.35s ease-in-out infinite;
 }
 @keyframes scan {
@@ -1392,7 +1392,7 @@ button.declutter-piece:hover {
   gap: 9px;
   margin: 0 0 25px;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .process-status svg {
   width: 19px;
@@ -1404,7 +1404,7 @@ button.declutter-piece:hover {
   padding: 0;
   margin: 0;
   list-style: none;
-  color: #62665e;
+  color: #69625b;
   font-size: 0.82rem;
 }
 .processing-copy li {
@@ -1416,7 +1416,7 @@ button.declutter-piece:hover {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #d6d9d2;
+  background: #d8d5d3;
 }
 .processing-copy li.active,
 .processing-copy li.done {
@@ -1431,7 +1431,7 @@ button.declutter-piece:hover {
 }
 @keyframes pulse {
   50% {
-    box-shadow: 0 0 0 5px rgba(62, 85, 240, 0.12);
+    box-shadow: 0 0 0 5px rgba(113, 87, 215, 0.12);
   }
 }
 .generated-fields {
@@ -1444,7 +1444,7 @@ button.declutter-piece:hover {
   gap: 5px;
   color: var(--ink-soft);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .generated-fields textarea {
   min-height: 70px;
@@ -1464,7 +1464,7 @@ button.declutter-piece:hover {
 .tag-row span {
   padding: 5px 9px;
   border-radius: 999px;
-  color: #344294;
+  color: #4f4187;
   background: var(--blue-soft);
   font-size: 0.75rem;
 }
@@ -1473,10 +1473,10 @@ button.declutter-piece:hover {
   gap: 10px;
   margin-top: 18px;
   padding: 12px 14px;
-  border: 1px solid #cfd5ff;
+  border: 1px solid #ddd6f8;
   border-radius: 12px;
   background: var(--blue-soft);
-  color: #344294;
+  color: #4f4187;
   font-size: 0.8rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -1534,8 +1534,8 @@ button.declutter-piece:hover {
     background 0.2s ease;
 }
 .extraction-review > label.selected {
-  border-color: #aeb7fb;
-  background: #f6f7ff;
+  border-color: #c4b9f0;
+  background: #f9f7fe;
 }
 .extracted-thumb {
   display: grid;
@@ -1550,7 +1550,7 @@ button.declutter-piece:hover {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 5px 6px rgba(20, 20, 20, 0.1));
+  filter: drop-shadow(0 5px 6px rgba(22, 20, 18, 0.1));
 }
 .extraction-review label > span:last-child {
   min-width: 0;
@@ -1585,7 +1585,7 @@ button.declutter-piece:hover {
   color: var(--ink-soft);
   background: transparent;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .view-switch button.active {
   color: #fff;
@@ -1635,12 +1635,12 @@ button.declutter-piece:hover {
   gap: 5px;
   min-height: 34px;
   padding: 0 10px;
-  border: 1px solid rgba(69, 81, 154, 0.16);
+  border: 1px solid rgba(93, 81, 142, 0.16);
   border-radius: 9px;
-  color: #39468c;
+  color: #514580;
   background: rgba(255, 255, 255, 0.68);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .canvas-header button svg {
   width: 14px;
@@ -1658,9 +1658,9 @@ button.declutter-piece:hover {
   min-height: 0;
   display: grid;
   place-items: center;
-  border: 1px dashed rgba(67, 79, 153, 0.22);
+  border: 1px dashed rgba(91, 79, 141, 0.22);
   border-radius: 13px;
-  color: #6570ae;
+  color: #7a6fa4;
   background: rgba(255, 255, 255, 0.2);
   transition:
     background 0.2s ease,
@@ -1669,11 +1669,11 @@ button.declutter-piece:hover {
 }
 .outfit-slot:hover,
 .outfit-slot.active {
-  border-color: #7180d5;
+  border-color: #8d7fc7;
   background: rgba(255, 255, 255, 0.5);
 }
 .outfit-slot.active {
-  box-shadow: inset 0 0 0 1px #7180d5;
+  box-shadow: inset 0 0 0 1px #8d7fc7;
 }
 .outfit-slot.filled {
   border-style: solid;
@@ -1683,25 +1683,25 @@ button.declutter-piece:hover {
   width: 58%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 12px 12px rgba(33, 45, 127, 0.16));
+  filter: drop-shadow(0 12px 12px rgba(60, 46, 114, 0.16));
 }
 .slot-label {
   position: absolute;
   left: 10px;
   top: 8px;
-  color: #4b589d;
+  color: #625692;
   font-size: 0.75rem;
   line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  font-weight: 750;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
 }
 .empty-slot {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .empty-slot svg {
   width: 14px;
@@ -1715,7 +1715,7 @@ button.declutter-piece:hover {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  color: #4b589d;
+  color: #625692;
   background: rgba(255, 255, 255, 0.85);
 }
 .remove-slot svg {
@@ -1752,7 +1752,7 @@ button.declutter-piece:hover {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 10px 10px rgba(20, 20, 20, 0.1));
+  filter: drop-shadow(0 10px 10px rgba(22, 20, 18, 0.1));
   transition: transform 0.25s ease;
 }
 .look-collage:hover img {
@@ -1769,9 +1769,9 @@ button.declutter-piece:hover {
   height: 34px;
   border: 0;
   border-radius: 50%;
-  color: #555951;
+  color: #5b554f;
   background: #fff;
-  box-shadow: 0 7px 16px rgba(20, 20, 20, 0.08);
+  box-shadow: 0 7px 16px rgba(22, 20, 18, 0.08);
 }
 .look-heart svg {
   width: 16px;
@@ -1790,9 +1790,9 @@ button.declutter-piece:hover {
   color: var(--blue);
   font-size: 0.75rem;
   line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
 }
 .look-card h2 {
   margin: 0;
@@ -1822,7 +1822,7 @@ button.declutter-piece:hover {
   font-size: clamp(2.4rem, 5vw, 4.6rem);
   line-height: 0.95;
   letter-spacing: -0.04em;
-  font-weight: 650;
+  font-weight: 600;
 }
 .calendar-intro p {
   margin: 12px 0 0;
@@ -1854,7 +1854,7 @@ button.declutter-piece:hover {
   border: 1px solid var(--border);
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 24px 60px rgba(37, 43, 32, 0.07);
+  box-shadow: 0 24px 60px rgba(41, 38, 34, 0.07);
 }
 .month-panel {
   padding: 28px;
@@ -1885,9 +1885,9 @@ button.declutter-piece:hover {
   place-items: center;
   color: var(--ink-soft);
   font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
 }
 .calendar-grid > button {
   position: relative;
@@ -1900,12 +1900,12 @@ button.declutter-piece:hover {
   border: 1px solid transparent;
   border-radius: 11px;
   color: var(--foreground);
-  background: #f2f3ef;
+  background: #f5f1ed;
   text-align: left;
   font-size: 0.8rem;
 }
 .calendar-grid > button:hover {
-  border-color: #cdd1c8;
+  border-color: #d0ccc9;
 }
 .calendar-grid > button.selected {
   color: #fff;
@@ -1921,22 +1921,22 @@ button.declutter-piece:hover {
   width: 58%;
   height: 68%;
   object-fit: contain;
-  filter: drop-shadow(0 5px 6px rgba(20, 20, 20, 0.12));
+  filter: drop-shadow(0 5px 6px rgba(22, 20, 18, 0.12));
 }
 .day-panel {
   display: flex;
   flex-direction: column;
   padding: 28px 24px;
   border-left: 1px solid var(--border);
-  background: #eff1ec;
+  background: #f3eeea;
 }
 .day-panel > p {
   margin: 0 0 5px;
   color: var(--blue);
   font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
 }
 .day-panel > h2 {
   margin: 0 0 18px;
@@ -1958,7 +1958,7 @@ button.declutter-piece:hover {
   height: 100%;
   max-height: 110px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 9px rgba(20, 20, 20, 0.1));
+  filter: drop-shadow(0 8px 9px rgba(22, 20, 18, 0.1));
 }
 .day-panel > span {
   margin: 12px 0;
@@ -1971,7 +1971,7 @@ button.declutter-piece:hover {
   place-content: center;
   justify-items: center;
   gap: 10px;
-  border: 1px dashed #c8ccc3;
+  border: 1px dashed #cbc8c4;
   border-radius: 14px;
   color: var(--ink-soft);
   text-align: center;
@@ -1989,7 +1989,7 @@ button.declutter-piece:hover {
 .plan-control label {
   color: var(--ink-soft);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .plan-control select {
   width: 100%;
@@ -2064,7 +2064,7 @@ button.declutter-piece:hover {
     padding: 7px 10px max(7px, env(safe-area-inset-bottom));
     border-top: 1px solid var(--border);
     border-right: 0;
-    background: rgba(246, 247, 243, 0.97);
+    background: rgba(248, 245, 242, 0.97);
     backdrop-filter: blur(14px);
   }
   .rail-tabs {
@@ -2326,7 +2326,7 @@ button.declutter-piece:hover {
 }
 .calendar-grid > button.today:not(.selected) > span {
   color: var(--blue);
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .empty-state .empty-action svg {
@@ -2412,7 +2412,7 @@ button.declutter-piece:hover {
   gap: 5px;
   color: var(--ink-soft);
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .edit-row {
   display: grid;
@@ -2434,16 +2434,23 @@ button.declutter-piece:hover {
 }
 
 /* ---- Design pass: references Kevin shared on 2026-10-05 ---- */
-/* Anton (SIL Open Font License), self-hosted so it works offline and behind Cloudflare Access. */
+/* Instrument Serif (SIL Open Font License), self-hosted so it works offline and behind Cloudflare Access. */
 @font-face {
-  font-family: "Anton";
+  font-family: "Instrument Serif";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/anton-latin.woff2") format("woff2");
+  src: url("/fonts/instrument-serif-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/instrument-serif-latin-italic.woff2") format("woff2");
 }
 :root {
-  --font-display: "Anton", "Oswald", "Arial Narrow", Impact, sans-serif;
+  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
 }
 .display-title,
 .section-heading h1,
@@ -2452,8 +2459,15 @@ button.declutter-piece:hover {
 .insights-intro h1 {
   font-family: var(--font-display);
   font-weight: 400;
-  letter-spacing: -0.01em;
-  line-height: 1;
+  letter-spacing: -0.015em;
+  line-height: 0.98;
+}
+.display-title em,
+.section-heading h1 em,
+.outfit-intro h1 em,
+.calendar-intro h1 em,
+.insights-intro h1 em {
+  font-style: italic;
 }
 
 /* Outfit of the day */
@@ -2461,7 +2475,7 @@ button.declutter-piece:hover {
   margin-bottom: 40px;
   padding: 18px 18px 22px;
   border-radius: 28px;
-  background: linear-gradient(180deg, #eef0ff 0%, #f7f8ff 100%);
+  background: linear-gradient(180deg, #f3f0fd 0%, #f9f8fe 100%);
   text-align: center;
 }
 .week-strip {
@@ -2485,7 +2499,7 @@ button.declutter-piece:hover {
 .week-strip li button {
   width: 44px;
   height: 44px;
-  border: 1.5px solid #cfd3ef;
+  border: 1.5px solid #d8d3eb;
   border-radius: 50%;
   color: var(--foreground);
   background: #fff;
@@ -2495,7 +2509,7 @@ button.declutter-piece:hover {
   color: var(--ink-soft);
 }
 .week-strip li button.planned {
-  border-color: #8b97f3;
+  border-color: #a99ae4;
 }
 .week-strip li button.active {
   border-color: var(--blue);
@@ -2508,7 +2522,7 @@ button.declutter-piece:hover {
 }
 .week-strip li span.today {
   color: var(--foreground);
-  font-weight: 700;
+  font-weight: 600;
 }
 .week-arrow {
   display: grid;
@@ -2546,7 +2560,7 @@ button.declutter-piece:hover {
   border-radius: 999px;
   color: var(--foreground);
   background: #fff;
-  font-weight: 650;
+  font-weight: 600;
 }
 .ootd-weather svg,
 .ootd-weather-ask svg {
@@ -2620,7 +2634,7 @@ button.declutter-piece:hover {
   color: var(--foreground);
   background: #fff;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .ootd-actions button.primary {
   color: #fff;
@@ -2635,10 +2649,10 @@ button.declutter-piece:hover {
 
 /* Outfit builder: cutouts stacked on a soft grid, with + and × markers */
 .outfit-canvas {
-  background-color: #eceef3;
+  background-color: #eeedf2;
   background-image:
-    linear-gradient(rgba(120, 128, 160, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 128, 160, 0.09) 1px, transparent 1px);
+    linear-gradient(rgba(148, 140, 132, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 140, 132, 0.09) 1px, transparent 1px);
   background-size: 44px 44px;
 }
 .outfit-canvas::before {
@@ -2658,7 +2672,7 @@ button.declutter-piece:hover {
 .empty-slot {
   flex-direction: column;
   gap: 6px;
-  color: #545869;
+  color: #655e58;
   font-size: 0.75rem;
 }
 .empty-slot svg {
@@ -2667,17 +2681,17 @@ button.declutter-piece:hover {
   padding: 6px;
   border-radius: 50%;
   color: #fff;
-  background: #2a2c33;
+  background: #332f2a;
 }
 .outfit-slot.active .empty-slot svg {
-  box-shadow: 0 0 0 4px rgba(62, 85, 240, 0.25);
+  box-shadow: 0 0 0 4px rgba(113, 87, 215, 0.25);
   background: var(--blue);
 }
 .outfit-slot.active.filled .slot-select img {
-  filter: drop-shadow(0 0 0 transparent) drop-shadow(0 12px 14px rgba(62, 85, 240, 0.28));
+  filter: drop-shadow(0 0 0 transparent) drop-shadow(0 12px 14px rgba(113, 87, 215, 0.28));
 }
 .outfit-slot img {
-  filter: drop-shadow(0 14px 14px rgba(30, 32, 45, 0.18));
+  filter: drop-shadow(0 14px 14px rgba(34, 32, 43, 0.18));
 }
 .remove-slot {
   left: 50%;
@@ -2686,7 +2700,7 @@ button.declutter-piece:hover {
   width: 24px;
   height: 24px;
   color: #fff;
-  background: rgba(42, 44, 51, 0.85);
+  background: rgba(51, 47, 42, 0.85);
   transform: translateX(-50%);
 }
 .look-notes button.primary {
@@ -2700,7 +2714,7 @@ button.declutter-piece:hover {
   gap: 12px;
   padding: 18px 16px max(16px, env(safe-area-inset-bottom));
   border-radius: 24px 24px 0 0;
-  background: #f1f2f5;
+  background: #f7f3ef;
 }
 .picker-sheet h2 {
   text-align: center;
@@ -2735,7 +2749,7 @@ button.declutter-piece:hover {
   flex: none;
   object-fit: contain;
   border-radius: 12px;
-  background: #f4f5f7;
+  background: #f8f6f3;
 }
 .picker-sheet li span {
   display: grid;
@@ -2757,8 +2771,8 @@ button.declutter-piece:hover {
   border: 0;
   border-radius: 999px;
   color: #fff;
-  background: #2a2c33;
-  font-weight: 650;
+  background: #332f2a;
+  font-weight: 600;
 }
 
 /* Floating "Add clothes" pill, phones only */
@@ -2777,7 +2791,7 @@ button.declutter-piece:hover {
 .styling-status h3 {
   margin: 12px 0 0;
   font-size: 1.65rem;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
@@ -2803,7 +2817,7 @@ button.declutter-piece:hover {
   box-shadow:
     inset 0 3px 4px rgba(255, 255, 255, 0.7),
     inset 0 -4px 6px rgba(0, 0, 0, 0.08),
-    0 6px 14px rgba(22, 24, 21, 0.1);
+    0 6px 14px rgba(25, 22, 20, 0.1);
   animation: styling-bob 1.4s ease-in-out infinite;
 }
 .styling-icons span:nth-child(1) {
@@ -2816,8 +2830,8 @@ button.declutter-piece:hover {
   animation-delay: 0.15s;
 }
 .styling-icons span:nth-child(3) {
-  color: #2f5f93;
-  background: #cfe2f6;
+  color: #3d4285;
+  background: #d4d6f1;
   animation-delay: 0.3s;
 }
 .styling-icons span:nth-child(4) {
@@ -2891,7 +2905,7 @@ button.declutter-piece:hover {
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.82);
-    box-shadow: 0 14px 34px rgba(20, 22, 30, 0.14);
+    box-shadow: 0 14px 34px rgba(23, 21, 29, 0.14);
     backdrop-filter: blur(18px) saturate(1.4);
   }
   .rail-tabs button {
@@ -2915,9 +2929,9 @@ button.declutter-piece:hover {
     border-radius: 999px;
     color: #fff;
     background: var(--foreground);
-    box-shadow: 0 14px 30px rgba(20, 22, 30, 0.28);
+    box-shadow: 0 14px 30px rgba(23, 21, 29, 0.28);
     font-size: 0.95rem;
-    font-weight: 650;
+    font-weight: 600;
     transform: translateX(-50%);
   }
   .fab-add svg {
@@ -3018,50 +3032,50 @@ textarea:focus-visible {
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --background: #121411;
-    --foreground: #ecede8;
-    --card: #1b1d1a;
-    --card-foreground: #ecede8;
-    --popover: #1f221e;
-    --popover-foreground: #ecede8;
-    --primary: #ecede8;
-    --primary-foreground: #161815;
-    --secondary: #262924;
-    --secondary-foreground: #ecede8;
-    --muted: #262924;
-    --muted-foreground: #a6aaa0;
-    --accent: #252b55;
-    --accent-foreground: #ccd3ff;
+    --background: #141211;
+    --foreground: #f1ebe4;
+    --card: #1e1c19;
+    --card-foreground: #f1ebe4;
+    --popover: #23201d;
+    --popover-foreground: #f1ebe4;
+    --primary: #f1ebe4;
+    --primary-foreground: #191614;
+    --secondary: #2a2723;
+    --secondary-foreground: #f1ebe4;
+    --muted: #2a2723;
+    --muted-foreground: #aba59f;
+    --accent: #332c4e;
+    --accent-foreground: #dad3f8;
     --destructive: #f0645a;
-    --border: #2e312b;
-    --input: #3b3f37;
-    --ring: #8593ff;
+    --border: #322e2a;
+    --input: #403b36;
+    --ring: #a896ee;
     /* Dark enough under white text for AA (5.2:1). */
-    --blue: #4b5ee8;
-    --blue-soft: #1d2242;
-    --ink-soft: #a6aaa0;
+    --blue: #7861d2;
+    --blue-soft: #28223d;
+    --ink-soft: #aba59f;
     /* Light blue for text on dark surfaces, where --blue is too dim. */
-    --blue-text: #9eaaff;
+    --blue-text: #baacf1;
     /* Garment tiles: a lifted surface with a soft pool of light so dark pieces stay legible. */
-    --garment-tile: radial-gradient(circle at 50% 46%, #3b3f37 0%, #2a2d27 55%, #232620 100%);
+    --garment-tile: radial-gradient(circle at 50% 46%, #403b36 0%, #2e2a26 55%, #262320 100%);
     --garment-shadow: drop-shadow(0 0 1px rgba(255, 255, 255, 0.28)) drop-shadow(0 12px 14px rgba(0, 0, 0, 0.45));
   }
   ::selection {
-    background: #3a4699;
+    background: #55478c;
     color: #fff;
   }
   ::-webkit-scrollbar-thumb {
-    background: #3b3f37;
+    background: #403b36;
   }
 
   /* Chrome */
   .topbar {
-    background: rgba(18, 20, 17, 0.92);
+    background: rgba(20, 18, 17, 0.92);
   }
   .rail-tabs button[data-state="active"],
   .view-switch button.active,
   .look-notes button.primary {
-    color: #161815 !important;
+    color: #191614 !important;
     box-shadow: none !important;
   }
   /* A full light day cell glares on a dark calendar, so the selected day uses the accent instead. */
@@ -3098,7 +3112,7 @@ textarea:focus-visible {
   .detail-panel,
   .piece-sheet,
   .day-panel {
-    background: #181a16;
+    background: #1a1816;
   }
   .styling-workspace,
   .calendar-workspace {
@@ -3113,7 +3127,7 @@ textarea:focus-visible {
     background: var(--secondary);
   }
   .palette i {
-    box-shadow: 0 0 0 1px #464a41;
+    box-shadow: 0 0 0 1px #4c463f;
   }
 
   /* Inputs and controls */
@@ -3159,8 +3173,8 @@ textarea:focus-visible {
   }
   .heart-button,
   .look-heart {
-    color: #c9ccc4;
-    background: rgba(24, 26, 22, 0.85);
+    color: #ccc8c4;
+    background: rgba(26, 24, 22, 0.85);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
   .heart-button.active,
@@ -3170,33 +3184,33 @@ textarea:focus-visible {
 
   /* Outfit canvas */
   .outfit-canvas::before {
-    background: radial-gradient(circle at 50% 36%, rgba(150, 162, 255, 0.2), rgba(150, 162, 255, 0) 45%);
+    background: radial-gradient(circle at 50% 36%, rgba(180, 165, 240, 0.2), rgba(180, 165, 240, 0) 45%);
   }
   .canvas-header,
   .canvas-empty h2 {
-    color: #d6dbff;
+    color: #e2dcf9;
   }
   .canvas-header p,
   .canvas-empty {
-    color: #9da5d8;
+    color: #aea5d0;
   }
   .canvas-header button {
-    border-color: rgba(160, 170, 255, 0.22);
-    color: #d6dbff;
-    background: rgba(20, 24, 48, 0.6);
+    border-color: rgba(187, 173, 242, 0.22);
+    color: #e2dcf9;
+    background: rgba(28, 24, 44, 0.6);
   }
   .outfit-slot {
-    border-color: rgba(160, 170, 255, 0.26);
-    color: #aab2e6;
+    border-color: rgba(187, 173, 242, 0.26);
+    color: #bbb2de;
     background: rgba(255, 255, 255, 0.03);
   }
   .outfit-slot:hover,
   .outfit-slot.active {
-    border-color: #8593ff;
+    border-color: #a896ee;
     background: rgba(255, 255, 255, 0.07);
   }
   .outfit-slot.active {
-    box-shadow: inset 0 0 0 1px #8593ff;
+    box-shadow: inset 0 0 0 1px #a896ee;
   }
   .outfit-slot.filled {
     background: rgba(255, 255, 255, 0.05);
@@ -3206,12 +3220,12 @@ textarea:focus-visible {
     filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.3)) drop-shadow(0 18px 18px rgba(0, 0, 0, 0.45));
   }
   .slot-label {
-    color: #bcc3f2;
+    color: #cbc4ea;
   }
   .remove-slot,
   .look-piece button {
-    color: #d6dbff;
-    background: rgba(29, 34, 66, 0.9);
+    color: #e2dcf9;
+    background: rgba(40, 34, 61, 0.9);
   }
   .canvas-floor {
     background: rgba(0, 0, 0, 0.45);
@@ -3219,13 +3233,13 @@ textarea:focus-visible {
 
   /* Calendar */
   .calendar-grid > button {
-    background: #22251f;
+    background: #25221f;
   }
   .calendar-grid > button:hover {
-    border-color: #4a4e45;
+    border-color: #504a43;
   }
   .day-empty {
-    border-color: #3b3f37;
+    border-color: #403b36;
   }
   .remove-plan {
     color: #f2a59c;
@@ -3233,31 +3247,31 @@ textarea:focus-visible {
 
   /* Import dialog */
   .drop-zone {
-    border-color: #3f4886;
-    color: #aab2e6;
-    background: #181c36;
+    border-color: #53497c;
+    color: #bbb2de;
+    background: #211c32;
   }
   .drop-zone:hover {
     background: var(--blue-soft);
   }
   .drop-zone strong {
-    color: #e0e4ff;
+    color: #e9e4fb;
   }
   .processing-photo {
-    background: #1f221d;
+    background: #22201d;
   }
   .processing-copy .import-steps {
-    color: #a3a79d;
+    color: #a9a29b;
   }
   .processing-copy li span {
-    background: #3b3f37;
+    background: #403b36;
   }
   .tag-row span,
   .import-message {
-    color: #ccd3ff;
+    color: #dad3f8;
   }
   .import-message {
-    border-color: #333c7a;
+    border-color: #473d70;
   }
   .import-message.error {
     border-color: #6b2c25;
@@ -3269,12 +3283,12 @@ textarea:focus-visible {
   }
   .extraction-review > label.selected {
     border-color: var(--blue);
-    background: #1c2140;
+    background: #26213b;
   }
 }
 @media (prefers-color-scheme: dark) and (max-width: 760px) {
   .rail {
-    background: rgba(18, 20, 17, 0.97);
+    background: rgba(20, 18, 17, 0.97);
   }
   .piece-rail {
     background: var(--card);
@@ -3310,14 +3324,14 @@ textarea:focus-visible {
   .fab-add,
   .item-card.picked .pick-mark {
     border-color: var(--foreground);
-    color: #161815;
+    color: #191614;
     background: var(--foreground);
   }
   .pill-select.active svg {
-    color: #161815;
+    color: #191614;
   }
   .pick-mark {
-    background: rgba(27, 29, 26, 0.9);
+    background: rgba(30, 28, 25, 0.9);
   }
   .item-card.picked .item-image {
     box-shadow: inset 0 0 0 2px var(--foreground);
@@ -3331,7 +3345,7 @@ textarea:focus-visible {
     color: var(--foreground);
   }
   .ootd {
-    background: linear-gradient(180deg, #1d2242 0%, #181a26 100%);
+    background: linear-gradient(180deg, #28223d 0%, #1c1a24 100%);
   }
   .ootd-collage {
     background: rgba(255, 255, 255, 0.04);
@@ -3346,7 +3360,7 @@ textarea:focus-visible {
     background: rgba(255, 255, 255, 0.06);
   }
   .outfit-canvas {
-    background-color: #1c1e24;
+    background-color: #23201d;
     background-image:
       linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
@@ -3367,17 +3381,17 @@ textarea:focus-visible {
   }
   .empty-slot svg,
   .remove-slot {
-    color: #161815;
+    color: #191614;
     background: var(--foreground);
   }
   .picker-sheet {
-    background: #181a16;
+    background: #1a1816;
   }
   .picker-sheet li button.active {
     box-shadow: inset 0 0 0 2px var(--foreground);
   }
   .picker-done {
-    color: #161815;
+    color: #191614;
     background: var(--foreground);
   }
   .rail {
@@ -3400,7 +3414,7 @@ textarea:focus-visible {
 }
 @media (prefers-color-scheme: dark) and (max-width: 760px) {
   .rail {
-    background: rgba(27, 29, 26, 0.85);
+    background: rgba(30, 28, 25, 0.85);
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
   }
 }
@@ -3427,7 +3441,7 @@ textarea:focus-visible {
   color: var(--foreground);
   background: var(--card);
   font-size: 0.84rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: grab;
 }
 .plan-looks > button.active {
@@ -3446,7 +3460,7 @@ textarea:focus-visible {
   object-fit: contain;
   border: 2px solid var(--card);
   border-radius: 50%;
-  background: #f1f2ee;
+  background: #f4f0eb;
 }
 .plan-look-thumbs img + img {
   margin-left: -14px;
@@ -3529,8 +3543,8 @@ textarea:focus-visible {
 }
 .week-day small {
   font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .week-day strong {
   font-size: 1.1rem;
@@ -3583,7 +3597,7 @@ textarea:focus-visible {
   gap: 5px;
   color: var(--ink-soft);
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .packing-summary,
 .packing-note {
@@ -3602,8 +3616,8 @@ textarea:focus-visible {
   margin: 0 0 6px;
   color: var(--ink-soft);
   font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .packing-groups ul {
   display: grid;
@@ -3700,8 +3714,8 @@ textarea:focus-visible {
   border-radius: 16px;
   background-color: #fff;
   background-image:
-    linear-gradient(45deg, #eceee9 25%, transparent 25%), linear-gradient(-45deg, #eceee9 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #eceee9 75%), linear-gradient(-45deg, transparent 75%, #eceee9 75%);
+    linear-gradient(45deg, #f1ece6 25%, transparent 25%), linear-gradient(-45deg, #f1ece6 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f1ece6 75%), linear-gradient(-45deg, transparent 75%, #f1ece6 75%);
   background-position:
     0 0,
     0 12px,
@@ -3818,10 +3832,10 @@ textarea:focus-visible {
 }
 @media (prefers-color-scheme: dark) {
   .cutout-stage {
-    background-color: #2a2d27;
+    background-color: #2e2a26;
     background-image:
-      linear-gradient(45deg, #343831 25%, transparent 25%), linear-gradient(-45deg, #343831 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #343831 75%), linear-gradient(-45deg, transparent 75%, #343831 75%);
+      linear-gradient(45deg, #393430 25%, transparent 25%), linear-gradient(-45deg, #393430 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #393430 75%), linear-gradient(-45deg, transparent 75%, #393430 75%);
   }
 }
 
@@ -3998,7 +4012,7 @@ textarea:focus-visible {
   aspect-ratio: 3 / 4;
   overflow: hidden;
   border-radius: 12px;
-  background: #f1f2ee;
+  background: #f4f0eb;
 }
 .journal-photo img {
   width: 100%;
@@ -4042,7 +4056,7 @@ textarea:focus-visible {
   border: 0;
   border-radius: 999px;
   color: #fff;
-  background: rgba(20, 21, 19, 0.62);
+  background: rgba(22, 20, 18, 0.62);
   backdrop-filter: blur(8px);
   font-size: 0.8rem;
 }
@@ -4080,7 +4094,7 @@ textarea:focus-visible {
   padding: 6px;
   border: 0;
   border-radius: 12px;
-  background: #f1f2ee;
+  background: #f4f0eb;
 }
 .journal-piece img {
   width: 100%;
@@ -4177,7 +4191,7 @@ textarea:focus-visible {
   border: 2px solid transparent;
   border-radius: 12px;
   color: inherit;
-  background: #f1f2ee;
+  background: #f4f0eb;
   font-size: 0.75rem;
 }
 .journal-picker-grid button.picked {
@@ -4451,7 +4465,7 @@ textarea:focus-visible {
 .filter-sheet h2 {
   margin: 0 0 6px;
   font-size: 1.2rem;
-  font-weight: 750;
+  font-weight: 600;
 }
 .filter-sheet-body {
   display: grid;
@@ -4467,7 +4481,7 @@ textarea:focus-visible {
 .filter-group legend {
   margin-bottom: 8px;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .filter-group > div {
   display: flex;
@@ -4518,7 +4532,7 @@ textarea:focus-visible {
   border: 0;
   border-radius: 999px;
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .filter-clear {
   color: var(--foreground);
@@ -4615,7 +4629,7 @@ textarea:focus-visible {
     border-radius: 999px;
     color: var(--foreground);
     background: transparent;
-    font-weight: 650;
+    font-weight: 600;
   }
   .filter-button svg {
     width: 17px;
@@ -4738,9 +4752,9 @@ textarea:focus-visible {
 .insight-next p.insight-eyebrow {
   color: var(--accent-foreground);
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .insight-next button {
   min-height: 44px;
@@ -4757,7 +4771,7 @@ textarea:focus-visible {
   width: 36px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(62, 85, 240, 0.18);
+  background: rgba(113, 87, 215, 0.18);
 }
 .insight-meter i.done {
   background: var(--blue);
@@ -4766,7 +4780,7 @@ textarea:focus-visible {
   margin-left: 6px;
   color: var(--muted-foreground);
   font-size: 0.85rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 .insight-hint span {
   line-height: 1.4;
@@ -4808,7 +4822,7 @@ textarea:focus-visible {
     color: var(--blue-text);
   }
   .insight-meter i {
-    background: rgba(158, 170, 255, 0.2);
+    background: rgba(186, 172, 241, 0.2);
   }
 }
 
@@ -4842,7 +4856,7 @@ textarea:focus-visible {
   overflow: hidden;
   margin: 0;
   font-size: 1.05rem;
-  font-weight: 650;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4922,7 +4936,7 @@ textarea:focus-visible {
   border: 1px solid var(--border);
   border-radius: 20px;
   background: var(--card);
-  box-shadow: 0 18px 40px rgba(20, 22, 30, 0.22);
+  box-shadow: 0 18px 40px rgba(23, 21, 29, 0.22);
   transform: translateX(-50%);
 }
 .plan-confirm p {
@@ -4973,7 +4987,7 @@ textarea:focus-visible {
 .journal-note-field > span {
   color: var(--muted-foreground);
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Very narrow screens and 200% zoom on phones: the week strip still fits. */
@@ -5031,7 +5045,7 @@ textarea:focus-visible {
 .swap-card h2 {
   margin: 0;
   font-size: 0.92rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .swap-card p {
   margin: 2px 0 0;
@@ -5069,7 +5083,7 @@ textarea:focus-visible {
   height: 14px;
 }
 .category-list button b {
-  font-weight: 650;
+  font-weight: 600;
   opacity: 0.6;
 }
 .item-card.is-stored .item-image img {
@@ -5214,4 +5228,391 @@ textarea:focus-visible {
   margin-right: 2px;
   color: #e0475b;
   vertical-align: -2px;
+}
+
+/* ---- Soft editorial pass (2026-10-06): warm cream, serif headings, softer shapes ---- */
+:root {
+  --background: #f7f3ee;
+  --foreground: #1c1917;
+  --card: #fffdfa;
+  --popover: #fffdfa;
+  --secondary: #f0eae2;
+  --muted: #f0eae2;
+  --muted-foreground: #6b6259;
+  --ink-soft: #6b6259;
+  --border: #e9e2d9;
+  --input: #ddd5cb;
+  --radius: 1rem;
+  /* Soft iris: the one accent, used for active choices. White text on it is AA (5.4:1). */
+  --blue: #6750d0;
+  --ring: #6750d0;
+  --blue-soft: #efeafb;
+  --accent: #efeafb;
+  --accent-foreground: #4a3798;
+  /* Pale warm plate behind cutouts, like a garment on linen. */
+  --plate: #f1ebe3;
+  --soft-shadow: 0 1px 2px rgba(60, 45, 30, 0.04), 0 10px 30px rgba(60, 45, 30, 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #161412;
+    --foreground: #f3eee8;
+    --card: #1f1c19;
+    --popover: #24201d;
+    --secondary: #2b2723;
+    --muted: #2b2723;
+    --muted-foreground: #b3aa9f;
+    --ink-soft: #b3aa9f;
+    --border: #332e29;
+    --input: #423c36;
+    --blue: #6a55d6;
+    --ring: #a796ee;
+    --blue-soft: #29233d;
+    --blue-text: #c4b8f6;
+    --accent: #2f2848;
+    --accent-foreground: #dcd3fa;
+    --plate: #26221e;
+    --soft-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+}
+::selection {
+  background: #e3dbf9;
+  color: #2e2160;
+}
+
+/* Wordmark instead of an app-icon tile */
+.topbar {
+  border-bottom-color: transparent;
+  background: color-mix(in srgb, var(--background), transparent 8%);
+}
+.brand-word {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+/* Big headings: a serif reads larger than Anton did at the same size */
+.section-heading h1,
+.outfit-intro h1,
+.calendar-intro h1,
+.insights-intro h1 {
+  font-size: clamp(2.9rem, 5.6vw, 5rem);
+}
+@media (max-width: 760px) {
+  .section-heading h1,
+  .outfit-intro h1,
+  .calendar-intro h1,
+  .insights-intro h1 {
+    font-size: 3.1rem;
+  }
+}
+.ootd .display-title {
+  font-size: clamp(2.9rem, 6.5vw, 3.9rem);
+}
+
+/* Garment plates: warm, rounder, no hard white */
+.item-image {
+  border-radius: 24px;
+  background: var(--plate);
+}
+.item-card.selected .item-image {
+  box-shadow:
+    inset 0 0 0 2px var(--foreground),
+    var(--soft-shadow);
+}
+/* Name first, then "Outerwear · Blue" in one quiet line */
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  padding-top: 10px;
+}
+.item-meta h2 {
+  order: -1;
+  flex-basis: 100%;
+  font-size: 0.95rem;
+  font-weight: 550;
+}
+.item-meta p {
+  margin: 2px 0 0;
+  line-height: 1.4;
+}
+.item-meta span::before {
+  content: "·";
+  margin-right: 6px;
+}
+.item-meta p,
+.detail-copy p,
+.look-card > div > span,
+.day-panel > p {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+@media (prefers-color-scheme: dark) {
+  .item-meta p,
+  .detail-copy p,
+  .look-card > div > span,
+  .day-panel > p {
+    color: var(--ink-soft);
+  }
+  .item-image,
+  .detail-image,
+  .look-collage,
+  .day-look {
+    background: var(--plate);
+  }
+}
+.heart-button,
+.look-heart {
+  background: color-mix(in srgb, var(--card), transparent 15%);
+  box-shadow: none;
+}
+
+/* Controls: pills everywhere, ink for the chosen one */
+.category-list button,
+.pill-select select,
+.filter-button,
+.select-toggle,
+.search-wrap input,
+.add-button,
+.outfit-button,
+.view-switch,
+.view-switch button,
+.empty-action {
+  border-radius: 999px !important;
+}
+.category-list button,
+.filter-button,
+.pill-select select {
+  border-color: var(--border);
+  background: var(--card);
+}
+.search-wrap input {
+  border-color: var(--border);
+  background: var(--card);
+}
+
+/* Outfit of the day: a soft lilac-to-cream card */
+.ootd {
+  border-radius: 32px;
+  background: linear-gradient(180deg, #efe9fa 0%, #f8f3ee 100%);
+}
+.week-strip li button {
+  border: 1px solid #e0d8ee;
+  background: var(--card);
+  font-weight: 500;
+}
+.week-strip li button.planned {
+  border-color: #b9aae9;
+}
+.ootd-date {
+  color: var(--ink-soft);
+}
+.ootd-collage {
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--card), transparent 30%);
+}
+.ootd-collage span {
+  border-radius: 20px;
+  background: var(--card);
+}
+.ootd-actions button {
+  font-weight: 600;
+}
+.weather-emoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+@media (prefers-color-scheme: dark) {
+  .ootd {
+    background: linear-gradient(180deg, #27213a 0%, #1f1c19 100%);
+  }
+  .ootd-collage span {
+    background: var(--plate);
+  }
+}
+
+/* Builder canvas: warm linen instead of a blue-gray drafting grid */
+.outfit-canvas {
+  background-color: #f1ebe3;
+  background-image:
+    linear-gradient(rgba(120, 95, 70, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 95, 70, 0.06) 1px, transparent 1px);
+}
+.canvas-header,
+.canvas-header h2 {
+  color: var(--foreground);
+}
+.canvas-header button {
+  border-color: var(--border);
+  border-radius: 999px;
+  color: var(--foreground);
+  background: var(--card);
+}
+@media (prefers-color-scheme: dark) {
+  .outfit-canvas {
+    background-color: #1f1c19;
+    background-image:
+      linear-gradient(rgba(255, 240, 220, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 240, 220, 0.04) 1px, transparent 1px);
+  }
+  .canvas-header,
+  .canvas-header h2,
+  .canvas-empty h2 {
+    color: var(--foreground);
+  }
+  .canvas-header p,
+  .canvas-empty {
+    color: var(--ink-soft);
+  }
+  .canvas-header button {
+    border-color: var(--border);
+    color: var(--foreground);
+    background: var(--secondary);
+  }
+}
+
+/* Cards and panels: tone and a whisper of shadow, no hard rules */
+.insight-card,
+.look-card,
+.styling-workspace,
+.calendar-workspace {
+  border-radius: 26px;
+}
+
+/* Emoji in empty states, used in place of line icons */
+.empty-emoji {
+  margin-bottom: 12px;
+  font-size: 2.6rem;
+  line-height: 1;
+}
+.closet-greeting {
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.insight-eyebrow {
+  letter-spacing: 0 !important;
+}
+.insight-totals strong {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.detail-actions button,
+.wear-actions button,
+.look-actions button {
+  border-radius: 999px;
+}
+.insight-progress h2 > span {
+  font-size: 1.2em;
+}
+
+/* Calmer chrome: a quiet nav, a lighter Add button, less bold text */
+.rail-tabs button {
+  font-weight: 500 !important;
+}
+.rail-tabs button svg {
+  stroke-width: 1.6;
+}
+.rail-tabs button[data-state="active"] {
+  color: var(--foreground) !important;
+  background: var(--secondary) !important;
+  box-shadow: none !important;
+}
+@media (max-width: 760px) {
+  .rail {
+    height: 60px;
+    border-color: color-mix(in srgb, var(--border), transparent 30%);
+    background: color-mix(in srgb, var(--card), transparent 12%);
+    box-shadow: 0 8px 28px rgba(60, 45, 30, 0.1);
+  }
+  .rail-tabs button {
+    height: 48px !important;
+    gap: 3px !important;
+    font-size: 0.75rem !important;
+  }
+  .rail-tabs button svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+  .fab-add {
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + 70px);
+    height: 46px;
+    padding: 0 8px 0 20px;
+    gap: 10px;
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--card), transparent 6%);
+    box-shadow: 0 8px 24px rgba(60, 45, 30, 0.12);
+    backdrop-filter: blur(14px);
+    font-weight: 500;
+  }
+  .fab-add svg {
+    width: 30px;
+    height: 30px;
+    padding: 7px;
+    border-radius: 50%;
+    color: var(--background);
+    background: var(--foreground);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .rail-tabs button[data-state="active"] {
+    color: var(--foreground) !important;
+    background: var(--secondary) !important;
+  }
+}
+@media (prefers-color-scheme: dark) and (max-width: 760px) {
+  .rail {
+    background: color-mix(in srgb, var(--card), transparent 8%);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  }
+  .fab-add {
+    border-color: var(--border);
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--card), transparent 6%);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+@media (max-width: 760px) and (max-height: 560px) {
+  .fab-add {
+    width: 46px;
+    padding: 0;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .week-strip li button {
+    border-color: rgba(255, 245, 235, 0.14);
+    background: rgba(255, 245, 235, 0.06);
+  }
+  .week-strip li button.planned {
+    border-color: #8a7bd6;
+  }
+  .week-strip li button.active {
+    border-color: var(--blue);
+    background: var(--blue);
+  }
+}
+
+/* Outfit of the day is the hero of the closet tab, so the page title steps back */
+.closet-title h1 {
+  font-size: clamp(2.3rem, 3.4vw, 3rem);
+}
+@media (max-width: 760px) {
+  .closet-title h1 {
+    font-size: 2.2rem;
+  }
+  .closet-greeting {
+    margin-bottom: 2px;
+    font-size: 0.9rem;
+  }
 }

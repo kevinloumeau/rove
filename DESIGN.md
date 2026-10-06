@@ -1,14 +1,14 @@
 ---
 name: Rove
-description: A clean, tactile garment archive for everyday wardrobe decisions.
+description: A soft, editorial wardrobe: warm cream, serif headings, one quiet iris accent.
 colors:
-  electric-blue: "#3e55f0"
-  blue-work-surface: "#e9ecff"
-  wardrobe-paper: "#f6f7f3"
-  garment-white: "#ffffff"
-  carbon-ink: "#161815"
-  quiet-ink: "#5d6159"
-  rail-line: "#dfe2db"
+  soft-iris: "#6750d0"
+  lilac-surface: "#efeafb"
+  cream-paper: "#f7f3ee"
+  garment-plate: "#f1ebe3"
+  espresso-ink: "#1c1917"
+  quiet-ink: "#6b6259"
+  rail-line: "#e9e2d9"
 typography:
   display:
     fontFamily: "Avenir Next, Avenir, Helvetica Neue, Helvetica, Arial, sans-serif"
@@ -53,6 +53,8 @@ components:
     rounded: "{rounded.pill}"
     height: "36px"
 ---
+
+> **2026-10-06 soft editorial pass:** Kevin asked for softer, less techy, more fashion-forward minimalism with a little personality. Display type is now Instrument Serif (italic on one accent word per heading), the palette is warm cream and espresso ink with a soft iris accent, controls are pills, item labels are sentence case, and a few emojis appear (greeting, weather, empty states, insights). Keep emojis to those spots. Sections below predate this pass where they mention electric blue, Avenir display or uppercase labels; the CSS block "Soft editorial pass" in app/globals.css is the source of truth.
 
 # Design System: Rove
 

@@ -15,6 +15,23 @@ export function weatherLabel(code: number) {
   return "Mixed";
 }
 
+const WEATHER_EMOJI: Record<string, string> = {
+  Clear: "☀️",
+  "Partly cloudy": "⛅️",
+  Cloudy: "☁️",
+  Fog: "🌫️",
+  Drizzle: "🌦️",
+  Rain: "🌧️",
+  Snow: "❄️",
+  Storms: "⛈️",
+  Mixed: "🌤️",
+};
+
+/** A small weather emoji for the forecast chip. */
+export function weatherEmoji(code: number) {
+  return WEATHER_EMOJI[weatherLabel(code)];
+}
+
 /** One line of dressing advice. Temperatures are in the unit the forecast was fetched in. */
 export function weatherHint(day: DayWeather, fahrenheit: boolean) {
   const cold = fahrenheit ? 50 : 10;

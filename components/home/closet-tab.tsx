@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   Check,
   ArrowUpDown,
   ChevronDown,
   SlidersHorizontal,
-  Grid2X2,
   Heart,
   Package,
   Plus,
-  ScanSearch,
   Search,
   Shirt,
   Sparkles,
@@ -31,9 +29,18 @@ import { PieceDetails } from "@/components/home/piece-details";
 import { ClosetFilterSheet } from "@/components/closet-filters";
 import { activeFilterCount, primaryCategories, sortOptions } from "@/lib/closet-filters";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { greeting } from "@/lib/greeting";
 import { type HomeState } from "@/hooks/use-home";
 
+const noSubscribe = () => () => {};
+
 export function ClosetTab({ home }: { home: HomeState }) {
+  // Client-only: the server doesn't know the person's local hour.
+  const hello = useSyncExternalStore(
+    noSubscribe,
+    () => greeting(new Date().getHours()),
+    () => "",
+  );
   const {
     items,
     closetStatus,
@@ -119,9 +126,20 @@ export function ClosetTab({ home }: { home: HomeState }) {
   return (
     <TabsContent value="closet" className="closet-view">
       <section className="closet-main">
+        {!storedView && hello && <p className="closet-greeting">{hello}</p>}
         <div className="section-heading">
           <div className="closet-title">
-            <h1>{storedView ? "Packed away" : "Your closet"}</h1>
+            <h1>
+              {storedView ? (
+                <>
+                  Packed <em>away</em>
+                </>
+              ) : (
+                <>
+                  Your <em>closet</em>
+                </>
+              )}
+            </h1>
             <p>
               {storedView
                 ? "Stored for the off season. Bring pieces back any time."
@@ -335,7 +353,9 @@ export function ClosetTab({ home }: { home: HomeState }) {
           </div>
         ) : storedView ? (
           <div className="empty-state">
-            <Package />
+            <span className="empty-emoji" aria-hidden>
+              📦
+            </span>
             <h2>Nothing packed away</h2>
             <p>Pieces you store for the off season wait here until you bring them back.</p>
             <Button className="empty-action" variant="outline" onClick={() => setActiveCategory("All")}>
@@ -344,13 +364,17 @@ export function ClosetTab({ home }: { home: HomeState }) {
           </div>
         ) : items.length ? (
           <div className="empty-state">
-            <Grid2X2 />
+            <span className="empty-emoji" aria-hidden>
+              🔍
+            </span>
             <h2>No pieces found</h2>
             <p>Try another search, category or filter.</p>
           </div>
         ) : (
           <div className="empty-state">
-            <ScanSearch />
+            <span className="empty-emoji" aria-hidden>
+              🧺
+            </span>
             <h2>Your closet is empty</h2>
             <p>Add a photo of a piece or a full outfit and Rove will cut out each garment.</p>
             <Button className="empty-action" onClick={() => setDialogOpen(true)}>
