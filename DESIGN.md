@@ -7,7 +7,7 @@ colors:
   wardrobe-paper: "#f6f7f3"
   garment-white: "#ffffff"
   carbon-ink: "#161815"
-  quiet-ink: "#676b63"
+  quiet-ink: "#5d6159"
   rail-line: "#dfe2db"
 typography:
   display:
@@ -82,7 +82,7 @@ The palette combines cool wardrobe paper, carbon ink, and one concentrated elect
 - **Wardrobe Paper** (#f6f7f3): application background.
 - **Garment White** (#ffffff): product plates, dialogs, and working panels.
 - **Carbon Ink** (#161815): headings, active navigation, and primary actions.
-- **Quiet Ink** (#676b63): supporting copy and metadata.
+- **Quiet Ink** (#5d6159): supporting copy and metadata.
 - **Rail Line** (#dfe2db): dividers and structural borders.
 
 **The One Signal Rule.** Electric blue marks active choice or assisted work; it does not decorate passive content.

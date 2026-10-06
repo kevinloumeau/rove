@@ -14,7 +14,7 @@
   --secondary: #eef0eb;
   --secondary-foreground: #161815;
   --muted: #eef0eb;
-  --muted-foreground: #676b63;
+  --muted-foreground: #5d6159;
   --accent: #e4e8ff;
   --accent-foreground: #2437ab;
   --destructive: #bb2b2b;
@@ -24,7 +24,7 @@
   --radius: 0.8rem;
   --blue: #3e55f0;
   --blue-soft: #e9ecff;
-  --ink-soft: #676b63;
+  --ink-soft: #5d6159;
 }
 @theme inline {
   --color-background: var(--background);
@@ -179,7 +179,7 @@ button {
   flex-direction: column;
   gap: 5px !important;
   border-radius: 13px !important;
-  font-size: 0.74rem !important;
+  font-size: 0.8rem !important;
 }
 .rail-tabs button svg {
   width: 20px !important;
@@ -197,7 +197,7 @@ button {
   display: grid;
   gap: 8px;
   color: var(--ink-soft);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   line-height: 1.35;
 }
 .rail-note svg {
@@ -321,7 +321,7 @@ button {
   border-radius: 999px;
   color: var(--foreground);
   background: #fff;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
 }
 .pill-select.active select {
   border-color: var(--foreground);
@@ -342,7 +342,7 @@ button {
   border: 0;
   color: var(--ink-soft);
   background: transparent;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -353,7 +353,7 @@ button {
   border-radius: 999px;
   color: var(--foreground);
   background: #e9ebe6;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   font-weight: 650;
 }
 .select-toggle.active {
@@ -409,7 +409,7 @@ button {
 .bulk-bar > span {
   margin-right: 8px;
   white-space: nowrap;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
 }
 .bulk-bar button,
 .bulk-bar select {
@@ -423,7 +423,7 @@ button {
   color: #fff;
   background: rgba(255, 255, 255, 0.1);
   white-space: nowrap;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .bulk-bar select {
   appearance: none;
@@ -453,7 +453,7 @@ button {
   border-radius: 11px;
   color: var(--foreground);
   background: #fff;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
 }
 .sort-control svg {
   pointer-events: none;
@@ -531,7 +531,7 @@ button {
 .detail-copy p {
   margin: 0 0 4px;
   color: var(--blue);
-  font-size: 0.67rem;
+  font-size: 0.75rem;
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -548,7 +548,7 @@ button {
 }
 .item-meta span {
   color: var(--ink-soft);
-  font-size: 0.77rem;
+  font-size: 0.8rem;
 }
 .detail-panel {
   border-left: 1px solid var(--border);
@@ -595,7 +595,7 @@ button {
   justify-content: space-between;
   padding: 12px 0;
   border-bottom: 1px solid #d3d7cf;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .detail-sticky dt {
   color: var(--ink-soft);
@@ -617,7 +617,7 @@ button {
   border-radius: 999px;
   color: var(--ink-soft);
   background: #fff;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   text-transform: capitalize;
 }
 .piece-sheet {
@@ -629,7 +629,7 @@ button {
 .detail-notes {
   margin: -8px 0 20px;
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   line-height: 1.55;
   white-space: pre-line;
 }
@@ -641,7 +641,7 @@ button {
 }
 .wear-actions button {
   min-height: 40px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .wear-actions button[aria-pressed="true"] {
   color: var(--accent-foreground);
@@ -655,7 +655,7 @@ button {
 .detail-last-worn {
   margin: 0 0 14px;
   color: var(--ink-soft);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
 }
 .item-card.in-laundry .item-image img {
   opacity: 0.45;
@@ -671,7 +671,7 @@ button {
   border-radius: 999px;
   color: var(--accent-foreground);
   background: var(--accent);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 .laundry-badge svg {
@@ -689,7 +689,7 @@ button {
   border-radius: 11px;
   color: var(--accent-foreground);
   background: var(--accent);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   line-height: 1.4;
 }
 .look-warning svg {
@@ -756,7 +756,7 @@ button {
 .insight-empty,
 .insight-more {
   color: var(--ink-soft);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .insight-empty,
 .insight-more {
@@ -808,14 +808,14 @@ button {
 }
 .insight-pieces small {
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
 }
 .insight-bars li {
   display: grid;
   grid-template-columns: 92px 1fr 28px;
   align-items: center;
   gap: 10px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .insight-bars i {
   height: 8px;
@@ -831,7 +831,7 @@ button {
   grid-template-columns: 18px 1fr auto;
   align-items: center;
   gap: 10px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .insight-colors i {
   width: 18px;
@@ -871,7 +871,7 @@ button {
   border-radius: 999px;
   background: transparent;
   color: inherit;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 .declutter-chips button b {
   color: var(--ink-soft);
@@ -940,7 +940,7 @@ button.declutter-piece:hover {
 }
 .declutter-piece small {
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
 }
 .declutter-actions {
   display: flex;
@@ -952,7 +952,7 @@ button.declutter-piece:hover {
   gap: 5px;
   padding: 0 10px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 .declutter-actions button svg {
   width: 14px;
@@ -967,7 +967,7 @@ button.declutter-piece:hover {
   border: 0;
   background: transparent;
   color: var(--ink-soft);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -1066,7 +1066,7 @@ button.declutter-piece:hover {
 }
 .piece-rail h2 {
   margin: 0 0 15px 6px;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   text-transform: uppercase;
   letter-spacing: 0.09em;
 }
@@ -1086,7 +1086,7 @@ button.declutter-piece:hover {
   color: var(--foreground);
   background: transparent;
   text-align: left;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
 }
 .piece-rail button:hover {
   background: var(--secondary);
@@ -1121,12 +1121,12 @@ button.declutter-piece:hover {
   display: flex;
   justify-content: space-between;
   color: #303a7f;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 .canvas-header p {
   margin: 0;
-  color: #6971a9;
+  color: #4b538b;
   font-weight: 500;
 }
 .look-stack {
@@ -1187,7 +1187,7 @@ button.declutter-piece:hover {
   display: grid;
   place-content: center;
   justify-items: center;
-  color: #737aac;
+  color: #4f578e;
   text-align: center;
 }
 .canvas-empty svg {
@@ -1211,7 +1211,7 @@ button.declutter-piece:hover {
 .look-notes > p {
   margin: 0 0 40px;
   color: var(--ink-soft);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -1223,7 +1223,7 @@ button.declutter-piece:hover {
 }
 .look-notes > span {
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   line-height: 1.55;
 }
 .palette {
@@ -1256,7 +1256,7 @@ button.declutter-piece:hover {
   border: 1px solid var(--border);
   border-radius: 11px;
   background: #fff;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   font-weight: 650;
 }
 .look-notes button svg {
@@ -1346,7 +1346,7 @@ button.declutter-piece:hover {
   border-radius: 7px;
   color: #fff;
   background: var(--blue);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   line-height: 1;
   font-weight: 700;
   box-shadow: 0 5px 12px rgba(37, 49, 125, 0.18);
@@ -1401,7 +1401,7 @@ button.declutter-piece:hover {
   padding: 0;
   margin: 0;
   list-style: none;
-  color: #999d95;
+  color: #62665e;
   font-size: 0.82rem;
 }
 .processing-copy li {
@@ -1440,7 +1440,7 @@ button.declutter-piece:hover {
   display: grid;
   gap: 5px;
   color: var(--ink-soft);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 .generated-fields textarea {
@@ -1450,7 +1450,7 @@ button.declutter-piece:hover {
   border: 1px solid var(--input);
   border-radius: 9px;
   color: var(--foreground);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   line-height: 1.4;
 }
 .tag-row {
@@ -1463,7 +1463,7 @@ button.declutter-piece:hover {
   border-radius: 999px;
   color: #344294;
   background: var(--blue-soft);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 .import-message {
   display: grid;
@@ -1474,7 +1474,7 @@ button.declutter-piece:hover {
   border-radius: 12px;
   background: var(--blue-soft);
   color: #344294;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -1557,13 +1557,13 @@ button.declutter-piece:hover {
 .extraction-review strong {
   overflow: hidden;
   color: var(--foreground);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .extraction-review small {
   color: var(--ink-soft);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 .view-switch {
   display: flex;
@@ -1581,7 +1581,7 @@ button.declutter-piece:hover {
   border-radius: 8px;
   color: var(--ink-soft);
   background: transparent;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 650;
 }
 .view-switch button.active {
@@ -1597,7 +1597,7 @@ button.declutter-piece:hover {
   border-radius: 999px;
   color: inherit;
   background: color-mix(in srgb, currentColor, transparent 86%);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
 }
 .rail-heading {
   display: flex;
@@ -1610,13 +1610,13 @@ button.declutter-piece:hover {
 }
 .rail-heading > span {
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }
 .rail-empty {
   margin: 8px 6px;
   color: var(--ink-soft);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   line-height: 1.5;
 }
 .outfit-canvas {
@@ -1636,7 +1636,7 @@ button.declutter-piece:hover {
   border-radius: 9px;
   color: #39468c;
   background: rgba(255, 255, 255, 0.68);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 .canvas-header button svg {
@@ -1687,7 +1687,7 @@ button.declutter-piece:hover {
   left: 10px;
   top: 8px;
   color: #4b589d;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -1697,7 +1697,7 @@ button.declutter-piece:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 650;
 }
 .empty-slot svg {
@@ -1785,7 +1785,7 @@ button.declutter-piece:hover {
 .look-card > div > span {
   grid-column: 1/-1;
   color: var(--blue);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1800,7 +1800,7 @@ button.declutter-piece:hover {
   border: 0;
   color: var(--ink-soft);
   background: transparent;
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -1837,7 +1837,7 @@ button.declutter-piece:hover {
   border-radius: 999px;
   color: var(--ink-soft);
   background: transparent;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   white-space: nowrap;
 }
 .occasion-list button.active {
@@ -1869,7 +1869,7 @@ button.declutter-piece:hover {
 }
 .month-heading span {
   color: var(--ink-soft);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
 }
 .calendar-grid {
   display: grid;
@@ -1881,7 +1881,7 @@ button.declutter-piece:hover {
   display: grid;
   place-items: center;
   color: var(--ink-soft);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
@@ -1899,7 +1899,7 @@ button.declutter-piece:hover {
   color: var(--foreground);
   background: #f2f3ef;
   text-align: left;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
 }
 .calendar-grid > button:hover {
   border-color: #cdd1c8;
@@ -1930,7 +1930,7 @@ button.declutter-piece:hover {
 .day-panel > p {
   margin: 0 0 5px;
   color: var(--blue);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
@@ -1960,7 +1960,7 @@ button.declutter-piece:hover {
 .day-panel > span {
   margin: 12px 0;
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 .day-empty {
   min-height: 210px;
@@ -1972,7 +1972,7 @@ button.declutter-piece:hover {
   border-radius: 14px;
   color: var(--ink-soft);
   text-align: center;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .day-empty svg {
   width: 26px;
@@ -1985,7 +1985,7 @@ button.declutter-piece:hover {
 }
 .plan-control label {
   color: var(--ink-soft);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 .plan-control select {
@@ -1995,7 +1995,7 @@ button.declutter-piece:hover {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
 }
 .plan-control button {
   min-height: 41px;
@@ -2004,7 +2004,7 @@ button.declutter-piece:hover {
   border: 0;
   color: #8a3d34;
   background: transparent;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -2072,7 +2072,7 @@ button.declutter-piece:hover {
     height: 53px !important;
     flex-direction: column;
     gap: 2px !important;
-    font-size: 0.68rem !important;
+    font-size: 0.75rem !important;
   }
   .rail-tabs button svg {
     width: 18px !important;
@@ -2225,7 +2225,7 @@ button.declutter-piece:hover {
   .calendar-grid > button {
     padding: 5px;
     border-radius: 8px;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
   .calendar-grid > button img {
     width: 67%;
@@ -2373,7 +2373,7 @@ button.declutter-piece:hover {
   border-radius: 8px;
   color: var(--ink-soft);
   background: transparent;
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   cursor: pointer;
 }
 .look-actions button:first-child {
@@ -2408,7 +2408,7 @@ button.declutter-piece:hover {
   display: grid;
   gap: 5px;
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 650;
 }
 .edit-row {
@@ -2533,7 +2533,7 @@ button.declutter-piece:hover {
   gap: 4px;
   margin: -8px 0 18px;
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
 }
 .ootd-weather span {
   display: inline-flex;
@@ -2559,7 +2559,7 @@ button.declutter-piece:hover {
   border-radius: 999px;
   color: var(--ink-soft);
   background: rgba(255, 255, 255, 0.7);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .ootd-collage {
   display: grid;
@@ -2655,8 +2655,8 @@ button.declutter-piece:hover {
 .empty-slot {
   flex-direction: column;
   gap: 6px;
-  color: #6b6f80;
-  font-size: 0.68rem;
+  color: #545869;
+  font-size: 0.75rem;
 }
 .empty-slot svg {
   width: 26px;
@@ -2744,7 +2744,7 @@ button.declutter-piece:hover {
 }
 .picker-sheet li small {
   color: var(--ink-soft);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
 }
 .picker-sheet li svg {
   width: 18px;
@@ -2970,7 +2970,7 @@ button.declutter-piece:hover {
 .rail-export {
   width: fit-content;
   color: var(--ink-soft);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -3033,7 +3033,8 @@ textarea:focus-visible {
     --border: #2e312b;
     --input: #3b3f37;
     --ring: #8593ff;
-    --blue: #5568f5;
+    /* Dark enough under white text for AA (5.2:1). */
+    --blue: #4b5ee8;
     --blue-soft: #1d2242;
     --ink-soft: #a6aaa0;
     /* Light blue for text on dark surfaces, where --blue is too dim. */
@@ -3243,7 +3244,7 @@ textarea:focus-visible {
     background: #1f221d;
   }
   .processing-copy .import-steps {
-    color: #80847b;
+    color: #a3a79d;
   }
   .processing-copy li span {
     background: #3b3f37;
@@ -3422,7 +3423,7 @@ textarea:focus-visible {
   border-radius: 999px;
   color: var(--foreground);
   background: var(--card);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   font-weight: 650;
   cursor: grab;
 }
@@ -3451,7 +3452,7 @@ textarea:focus-visible {
   flex: none;
   margin: 0 0 0 4px;
   color: var(--ink-soft);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
 }
 .calendar-grid > button.drop-target,
 .week-list button.drop-target {
@@ -3524,7 +3525,7 @@ textarea:focus-visible {
   background: var(--blue);
 }
 .week-day small {
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -3551,7 +3552,7 @@ textarea:focus-visible {
   white-space: nowrap;
 }
 .week-look small {
-  font-size: 0.74rem;
+  font-size: 0.8rem;
 }
 .pack-button {
   width: 100%;
@@ -3578,14 +3579,14 @@ textarea:focus-visible {
   display: grid;
   gap: 5px;
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 650;
 }
 .packing-summary,
 .packing-note {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
 }
 .packing-summary strong {
   color: var(--foreground);
@@ -3597,7 +3598,7 @@ textarea:focus-visible {
 .packing-groups h3 {
   margin: 0 0 6px;
   color: var(--ink-soft);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -3632,7 +3633,7 @@ textarea:focus-visible {
 }
 .packing-groups small {
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
 }
 .packing-groups li.packed strong {
   color: var(--ink-soft);
@@ -3641,7 +3642,7 @@ textarea:focus-visible {
 .packing-unplanned p {
   margin: 0 0 6px;
   color: var(--ink-soft);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
 }
 .packing-unplanned div {
   display: flex;
@@ -3721,7 +3722,7 @@ textarea:focus-visible {
 .cutout-status {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
 }
 .cutout-stage .cutout-status {
   position: absolute;
@@ -3745,7 +3746,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 8px;
   color: var(--ink-soft);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
 }
 .brush-size input {
   width: 110px;
@@ -3756,7 +3757,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 8px;
   color: var(--ink-soft);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
 }
 .batch-import ul {
   display: grid;
@@ -3781,14 +3782,14 @@ textarea:focus-visible {
 }
 .batch-import strong {
   overflow: hidden;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .batch-import small {
   overflow: hidden;
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3837,7 +3838,7 @@ textarea:focus-visible {
 }
 .studio-compare figcaption {
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   text-align: center;
 }
 .studio-frame {
@@ -3933,7 +3934,7 @@ textarea:focus-visible {
 .journal-hint {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
 }
 .journal-summary {
   display: flex;
@@ -3962,7 +3963,7 @@ textarea:focus-visible {
 }
 .journal-summary span {
   color: var(--ink-soft);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .journal-add-day {
   display: flex;
@@ -4013,7 +4014,7 @@ textarea:focus-visible {
   border-radius: 12px;
   color: var(--ink-soft);
   background: transparent;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   text-align: center;
 }
 .journal-photo-empty svg {
@@ -4040,7 +4041,7 @@ textarea:focus-visible {
   color: #fff;
   background: rgba(20, 21, 19, 0.62);
   backdrop-filter: blur(8px);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
 }
 .journal-photo-actions svg {
   width: 14px;
@@ -4174,7 +4175,7 @@ textarea:focus-visible {
   border-radius: 12px;
   color: inherit;
   background: #f1f2ee;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 .journal-picker-grid button.picked {
   border-color: var(--blue);
@@ -4258,11 +4259,11 @@ textarea:focus-visible {
 .gap-list small,
 .wish-main small {
   color: var(--ink-soft);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
 }
 .gap-list button {
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 .wish-form input,
 .wish-form button {
@@ -4271,7 +4272,7 @@ textarea:focus-visible {
 }
 .wish-total {
   color: var(--ink-soft);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 .wish-form {
@@ -4421,7 +4422,14 @@ textarea:focus-visible {
   min-height: 44px;
   padding: 6px 8px;
   font-size: 0.84rem;
-  white-space: normal;
+}
+@media (min-width: 1101px) {
+  .closet-view {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+.ootd-actions button {
+  white-space: nowrap;
 }
 .fab-add {
   transition:
@@ -4566,6 +4574,12 @@ textarea:focus-visible {
   .closet-main > .ootd:not(.ootd-compact) {
     padding-top: 18px;
   }
+  .ootd-actions {
+    gap: 6px;
+  }
+  .ootd-actions button:not(.ootd-collapse) {
+    padding: 0 14px;
+  }
   .phone-filter-row {
     display: flex;
     align-items: center;
@@ -4612,7 +4626,7 @@ textarea:focus-visible {
     border-radius: 999px;
     color: #fff;
     background: var(--blue);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
   }
   /* Room for the floating Add button and the bottom navigation under the last row. */
   .workspace {
@@ -4636,5 +4650,59 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .fab-add {
     transition: none;
+  }
+}
+
+/* Touch targets (design review): frequently used controls get a 44px hit area on touch screens. */
+@media (pointer: coarse) {
+  .category-list button,
+  .occasion-list button,
+  .view-switch button,
+  .pill-select select,
+  .select-toggle,
+  .detail-actions button,
+  .wear-actions button,
+  .remove-plan,
+  .clear-filters,
+  .ootd-weather-ask {
+    min-height: 44px;
+  }
+  .ootd-actions button {
+    height: 44px;
+  }
+  .ootd-actions .ootd-collapse {
+    width: 44px;
+  }
+  /* The hearts keep their small circle; an invisible ring widens the hit area to 44px. */
+  .heart-button::after,
+  .look-heart::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+  }
+  .month-nav button {
+    width: 44px;
+    height: 44px;
+  }
+  .look-card > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .look-actions {
+    flex-wrap: wrap;
+  }
+  .look-actions button {
+    min-width: 44px;
+    height: 44px;
+  }
+}
+@media (pointer: coarse) and (max-width: 760px) {
+  .week-strip li button {
+    width: 40px;
+    height: 40px;
+  }
+  .week-arrow {
+    width: 24px;
+    height: 44px;
   }
 }
