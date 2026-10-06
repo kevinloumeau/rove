@@ -61,7 +61,17 @@ export function CalendarTab({ home }: { home: HomeState }) {
     <TabsContent value="calendar" className="calendar-view">
       <section className="calendar-intro">
         <div>
-          <h1>{calendarMode === "plan" ? <>Plan your <em>month</em></> : <>Outfit <em>journal</em></>}</h1>
+          <h1>
+            {calendarMode === "plan" ? (
+              <>
+                Plan your <em>month</em>
+              </>
+            ) : (
+              <>
+                Outfit <em>journal</em>
+              </>
+            )}
+          </h1>
           <p>
             {calendarMode === "plan" ? (
               <>

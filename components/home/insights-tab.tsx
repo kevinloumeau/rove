@@ -30,7 +30,9 @@ export function InsightsTab({ home }: { home: HomeState }) {
   return (
     <TabsContent value="insights" className="insights-view">
       <section className="insights-intro">
-        <h1>Closet <em>insights</em></h1>
+        <h1>
+          Closet <em>insights</em>
+        </h1>
         <p>What you reach for, what earns its place, and what to try next.</p>
       </section>
       <InsightsNextStep
