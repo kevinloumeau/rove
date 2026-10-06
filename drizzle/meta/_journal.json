@@ -57,6 +57,13 @@
       "when": 1791242891837,
       "tag": "0007_wishlist",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1791254298585,
+      "tag": "0008_seasonal_swap",
+      "breakpoints": true
     }
   ]
 }

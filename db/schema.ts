@@ -45,6 +45,8 @@ export const wardrobeItems = sqliteTable(
     archivedAt: integer("archived_at"),
     /** When the wearer last chose "Keep" in the declutter review, so it isn't suggested again right away. */
     keptAt: integer("kept_at"),
+    /** When the piece was packed away for the off season. Stored pieces stay out of the closet grid and outfit ideas. */
+    storedAt: integer("stored_at"),
     createdAt: integer("created_at").notNull(),
   },
   (table) => [

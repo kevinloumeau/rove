@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, HandHeart, Pencil, Plus, Scissors, Trash2, WashingMachine } from "lucide-react";
+import { Check, HandHeart, Package, Pencil, Plus, Scissors, Trash2, WashingMachine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,6 +26,7 @@ export function PieceDetails({ home }: { home: HomeState }) {
     unlogWearToday,
     deletePieces,
     pile,
+    toggleStored,
   } = home;
   if (!selected) return null;
   return (
@@ -151,6 +152,9 @@ export function PieceDetails({ home }: { home: HomeState }) {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <Button variant="outline" aria-pressed={Boolean(selected.storedAt)} onClick={() => toggleStored([selected])}>
+          <Package /> {selected.storedAt ? "Bring back" : "Pack away"}
+        </Button>
         <Button
           variant="outline"
           className="danger"

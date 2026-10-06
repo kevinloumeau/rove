@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       .prepare(
         `
       SELECT i.id, i.import_id, i.name, i.category, i.color, i.season, i.description, i.image_key, i.thumb_key,
-        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.kept_at, i.created_at,
+        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.kept_at, i.stored_at, i.created_at,
         COUNT(w.id) AS wear_count, MAX(w.worn_on) AS last_worn
       FROM wardrobe_items i
       LEFT JOIN wardrobe_wears w ON w.item_id = i.id AND w.user_id = i.user_id
@@ -90,6 +90,13 @@ export async function PATCH(request: Request) {
         return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
       columns.push("in_laundry = ?");
       values.push(payload.inLaundry ? 1 : 0);
+    }
+    if (payload.stored !== undefined) {
+      // Seasonal swap: packed-away pieces stay in looks and stats but leave the closet grid and outfit ideas.
+      if (typeof payload.stored !== "boolean")
+        return Response.json({ error: "Choose a valid closet item." }, { status: 400 });
+      columns.push("stored_at = ?");
+      values.push(payload.stored ? Date.now() : null);
     }
     if (payload.kept !== undefined) {
       // "Keep" in the declutter review restarts that piece's idle clock.

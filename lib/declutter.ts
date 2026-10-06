@@ -25,6 +25,8 @@ export type DeclutterPiece = {
   /** ISO date the wearer last chose to keep it from this review. */
   keptAt?: string | null;
   inLaundry?: boolean;
+  /** Packed away for the off season, so not wearing it is expected. */
+  storedAt?: string | null;
 };
 
 /** The ISO date `months` before `today`, clamped to the end of shorter months. */
@@ -45,11 +47,14 @@ export function lastSignal(piece: DeclutterPiece) {
   return dates.length ? dates.sort().at(-1)! : null;
 }
 
-/** Pieces with no wear, keep or add inside the last `months`, longest-idle first. Pieces in the wash are skipped. */
+/**
+ * Pieces with no wear, keep or add inside the last `months`, longest-idle first. Pieces in the wash or packed
+ * away for the season are skipped.
+ */
 export function declutterCandidates<T extends DeclutterPiece>(pieces: T[], today: string, months: number) {
   const cutoff = monthsBefore(today, months);
   return pieces
-    .filter((piece) => !piece.inLaundry)
+    .filter((piece) => !piece.inLaundry && !piece.storedAt)
     .map((piece) => ({ piece, since: lastSignal(piece) }))
     .filter((entry): entry is { piece: T; since: string } => entry.since !== null && entry.since < cutoff)
     .sort((a, b) => a.since.localeCompare(b.since) || a.piece.name.localeCompare(b.piece.name))

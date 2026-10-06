@@ -36,13 +36,19 @@ function solidPng(size: number, [r, g, b]: [number, number, number]) {
   ]);
 }
 
-export type SeedPiece = { name: string; category: string; color: string; rgb: [number, number, number] };
+export type SeedPiece = {
+  name: string;
+  category: string;
+  color: string;
+  rgb: [number, number, number];
+  season?: string;
+};
 
 // Adds pieces through the same two API calls the upload dialog makes.
 export async function seedPieces(request: APIRequestContext, pieces: SeedPiece[]) {
   const multipart: Record<string, { name: string; mimeType: string; buffer: Buffer } | string> = {
     image: { name: "seed.png", mimeType: "image/png", buffer: solidPng(48, [240, 240, 240]) },
-    manifest: JSON.stringify(pieces.map(({ name, category, color }) => ({ name, category, color }))),
+    manifest: JSON.stringify(pieces.map(({ name, category, color, season }) => ({ name, category, color, season }))),
   };
   pieces.forEach((piece, index) => {
     multipart[`cutout-${index}`] = {

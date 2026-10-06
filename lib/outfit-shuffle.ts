@@ -6,6 +6,8 @@ export type ShufflePiece = {
   color: string;
   season?: string;
   inLaundry?: boolean;
+  /** Packed away for the off season. */
+  storedAt?: string | null;
   lastWorn?: string | null;
 };
 
@@ -76,7 +78,7 @@ export function scoreLook(pieces: ShufflePiece[], today: string) {
 const OPTIONAL_LAYER_SEASONS = new Set(["spring", "fall", "winter"]);
 
 /**
- * Builds a look from what's clean: a top (or dress), a bottom unless it's a dress, plus a layer
+ * Builds a look from what's clean and not packed away: a top (or dress), a bottom unless it's a dress, plus a layer
  * in cooler seasons, shoes and one extra when the closet has them. Tries a few dozen combinations
  * and returns one of the best-scoring, so repeated shuffles still vary.
  */
@@ -85,7 +87,7 @@ export function suggestLook<T extends ShufflePiece>(
   options: { today: string; current?: Array<number | string>; random?: () => number },
 ): T[] {
   const random = options.random ?? Math.random;
-  const clean = pieces.filter((piece) => !piece.inLaundry);
+  const clean = pieces.filter((piece) => !piece.inLaundry && !piece.storedAt);
   const of = (...categories: string[]) => clean.filter((piece) => categories.includes(piece.category));
   const pick = <P>(list: P[]) => list[Math.floor(random() * list.length)];
   const season = seasonOf(new Date(`${options.today}T00:00:00`));

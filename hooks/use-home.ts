@@ -63,6 +63,7 @@ export function useHome() {
   const [calendarView, setCalendarView] = useState<"auto" | "month" | "week">("auto");
   const [calendarMode, setCalendarMode] = useState<"plan" | "journal">("plan");
   const [packingOpen, setPackingOpen] = useState(false);
+  const [swapOpen, setSwapOpen] = useState(false);
   const [dropDate, setDropDate] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -287,8 +288,11 @@ export function useHome() {
   const visibleItems = useMemo(() => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
     let next = items.filter((item) => {
+      // Packed-away pieces show under the Stored chip, or when searched for by name.
+      if (activeCategory === "Stored" ? !item.storedAt : item.storedAt && !words.length) return false;
       if (
         activeCategory !== "All" &&
+        activeCategory !== "Stored" &&
         item.category !== activeCategory &&
         !(activeCategory === "Favorites" && item.favorite)
       )
@@ -307,7 +311,8 @@ export function useHome() {
   }, [activeCategory, colorFilter, items, query, seasonFilter, sort]);
   const filtersActive = colorFilter !== "All colors" || seasonFilter !== "All seasons";
   const selected = items.find((item) => selectedId !== null && sameId(item.id, selectedId)) ?? items[0];
-  const railItems = items.filter((item) => slotFor(item.category) === activeSlot);
+  const storedCount = items.filter((item) => item.storedAt).length;
+  const railItems = items.filter((item) => !item.storedAt && slotFor(item.category) === activeSlot);
   const outfitItems = outfit
     .map((id) => items.find((item) => sameId(item.id, id)))
     .filter((item): item is WardrobeItem => Boolean(item));
@@ -350,6 +355,62 @@ export function useHome() {
       updateItem(item.id, { inLaundry: !inLaundry });
       toast.error(errorMessage(error, "That change could not be saved."));
     });
+  }
+  /** Packs pieces away for the season (or brings them back), 200 at a time to fit the API. */
+  function setStored(pieces: WardrobeItem[], stored: boolean) {
+    const changing = pieces.filter((piece) => Boolean(piece.storedAt) !== stored);
+    if (!changing.length) return Promise.resolve();
+    const before = new Map(changing.map((piece) => [String(piece.id), piece.storedAt ?? null]));
+    setItems((current) =>
+      current.map((item) => (before.has(String(item.id)) ? { ...item, storedAt: stored ? todayIso : null } : item)),
+    );
+    const ids = [...before.keys()];
+    const chunks = Array.from({ length: Math.ceil(ids.length / 200) }, (_, index) =>
+      ids.slice(index * 200, index * 200 + 200),
+    );
+    return Promise.all(chunks.map((chunk) => sendJson("/api/wardrobe", "PATCH", { ids: chunk, stored }))).catch(
+      (error: unknown) => {
+        setItems((current) =>
+          current.map((item) =>
+            before.has(String(item.id)) ? { ...item, storedAt: before.get(String(item.id)) } : item,
+          ),
+        );
+        throw error;
+      },
+    );
+  }
+  /** Applies a seasonal swap, with an undo. */
+  function swapSeasonal(packAway: WardrobeItem[], bringBack: WardrobeItem[]) {
+    setSwapOpen(false);
+    const undo = () => {
+      Promise.all([setStored(packAway, false), setStored(bringBack, true)]).catch((error: unknown) =>
+        toast.error(errorMessage(error, "That swap could not be undone.")),
+      );
+    };
+    const parts = [
+      packAway.length ? `Packed away ${packAway.length}` : "",
+      bringBack.length ? `brought back ${bringBack.length}` : "",
+    ].filter(Boolean);
+    Promise.all([setStored(packAway, true), setStored(bringBack, false)])
+      .then(() => {
+        const label = parts.join(", ");
+        toast.success(`${label.charAt(0).toUpperCase()}${label.slice(1)}`, {
+          action: { label: "Undo", onClick: undo },
+        });
+      })
+      .catch((error: unknown) => toast.error(errorMessage(error, "That swap could not be saved.")));
+  }
+  function toggleStored(pieces: WardrobeItem[]) {
+    const stored = !pieces.every((piece) => piece.storedAt);
+    setStored(pieces, stored)
+      .then(() =>
+        toast.success(
+          pieces.length === 1
+            ? `${stored ? "Packed away" : "Brought back"} ${pieces[0].name}`
+            : `${stored ? "Packed away" : "Brought back"} ${pieces.length} pieces`,
+        ),
+      )
+      .catch((error: unknown) => toast.error(errorMessage(error, "That change could not be saved.")));
   }
   /** Logs today's wear for each piece; pieces already logged today are left alone. */
   function logWear(pieces: WardrobeItem[]) {
@@ -862,6 +923,8 @@ export function useHome() {
     setCalendarMode,
     packingOpen,
     setPackingOpen,
+    swapOpen,
+    setSwapOpen,
     dropDate,
     setDropDate,
     preview,
@@ -931,6 +994,9 @@ export function useHome() {
     updateItem,
     toggleFavorite,
     toggleLaundry,
+    storedCount,
+    swapSeasonal,
+    toggleStored,
     logWear,
     unlogWearToday,
     savePieceEdits,

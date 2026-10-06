@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Grid2X2,
   Heart,
+  Package,
   Plus,
   ScanSearch,
   Search,
@@ -19,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { TabsContent } from "@/components/ui/tabs";
 import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
+import { SeasonalSwapCard, SeasonalSwapDialog } from "@/components/seasonal-swap";
 import { isLetGoReason, letGoLabels, letGoReasons } from "@/lib/declutter";
 import { pieceCategories, seasons } from "@/lib/wardrobe-types";
 import { categories, sameId, isNarrow } from "@/lib/home-utils";
@@ -69,7 +71,13 @@ export function ClosetTab({ home }: { home: HomeState }) {
     bulkUpdate,
     shuffleLook,
     loadLook,
+    storedCount,
+    swapOpen,
+    setSwapOpen,
+    swapSeasonal,
+    toggleStored,
   } = home;
+  const storedView = activeCategory === "Stored";
   return (
     <TabsContent value="closet" className="closet-view">
       <section className="closet-main">
@@ -94,10 +102,15 @@ export function ClosetTab({ home }: { home: HomeState }) {
             }}
           />
         )}
+        {items.length > 0 && <SeasonalSwapCard items={items} todayIso={todayIso} onReview={() => setSwapOpen(true)} />}
         <div className="section-heading">
           <div>
-            <h1>Your closet</h1>
-            <p>Everything you own, ready to wear again.</p>
+            <h1>{storedView ? "Packed away" : "Your closet"}</h1>
+            <p>
+              {storedView
+                ? "Stored for the off season. Bring pieces back any time."
+                : "Everything you own, ready to wear again."}
+            </p>
           </div>
           <div className="search-wrap">
             <Search />
@@ -120,6 +133,14 @@ export function ClosetTab({ home }: { home: HomeState }) {
                 {category}
               </button>
             ))}
+            {(storedCount > 0 || storedView) && (
+              <button
+                className={`stored-chip ${storedView ? "active" : ""}`}
+                onClick={() => setActiveCategory("Stored")}
+              >
+                <Package aria-hidden /> Stored <b>{storedCount}</b>
+              </button>
+            )}
           </div>
           <div className="filter-tools">
             <label className={`pill-select ${colorFilter !== "All colors" ? "active" : ""}`}>
@@ -182,7 +203,7 @@ export function ClosetTab({ home }: { home: HomeState }) {
             {visibleItems.map((item) => (
               <article
                 key={item.id}
-                className={`item-card ${!selecting && selected && sameId(selected.id, item.id) ? "selected" : ""} ${item.inLaundry ? "in-laundry" : ""} ${selecting && picked.includes(String(item.id)) ? "picked" : ""}`}
+                className={`item-card ${!selecting && selected && sameId(selected.id, item.id) ? "selected" : ""} ${item.inLaundry ? "in-laundry" : ""} ${item.storedAt && !storedView ? "is-stored" : ""} ${selecting && picked.includes(String(item.id)) ? "picked" : ""}`}
                 draggable={!selecting}
                 onDragStart={(event) => event.dataTransfer.setData("text/plain", String(item.id))}
                 onClick={() => {
@@ -214,11 +235,15 @@ export function ClosetTab({ home }: { home: HomeState }) {
                 )}
                 <div className="item-image">
                   <img src={item.thumb ?? item.image} alt={item.name} />
-                  {item.inLaundry && (
+                  {item.inLaundry ? (
                     <span className="laundry-badge">
                       <WashingMachine /> In the wash
                     </span>
-                  )}
+                  ) : item.storedAt && !storedView ? (
+                    <span className="laundry-badge">
+                      <Package /> Packed away
+                    </span>
+                  ) : null}
                 </div>
                 <div className="item-meta">
                   <p>{item.category}</p>
@@ -238,6 +263,15 @@ export function ClosetTab({ home }: { home: HomeState }) {
             <X />
             <h2>Your closet could not be loaded</h2>
             <p>{closetError}</p>
+          </div>
+        ) : storedView ? (
+          <div className="empty-state">
+            <Package />
+            <h2>Nothing packed away</h2>
+            <p>Pieces you store for the off season wait here until you bring them back.</p>
+            <Button className="empty-action" variant="outline" onClick={() => setActiveCategory("All")}>
+              Back to your closet
+            </Button>
           </div>
         ) : items.length ? (
           <div className="empty-state">
@@ -280,6 +314,16 @@ export function ClosetTab({ home }: { home: HomeState }) {
               }
             >
               <WashingMachine /> <span className="bulk-label">Wash</span>
+            </button>
+            <button
+              aria-label={storedView ? "Bring back" : "Pack away"}
+              disabled={!picked.length}
+              onClick={() => {
+                toggleStored(items.filter((item) => picked.includes(String(item.id))));
+                endSelecting();
+              }}
+            >
+              <Package /> <span className="bulk-label">{storedView ? "Bring back" : "Store"}</span>
             </button>
             <label className="bulk-select">
               <span className="sr-only">Move to category</span>
@@ -342,6 +386,13 @@ export function ClosetTab({ home }: { home: HomeState }) {
           </div>
         )}
       </aside>
+      <SeasonalSwapDialog
+        open={swapOpen}
+        onOpenChange={setSwapOpen}
+        items={items}
+        todayIso={todayIso}
+        onSwap={swapSeasonal}
+      />
       <Sheet open={detailSheetOpen && Boolean(selected)} onOpenChange={setDetailSheetOpen}>
         <SheetContent side="bottom" className="piece-sheet">
           <SheetTitle className="sr-only">{selected?.name ?? "Piece details"}</SheetTitle>

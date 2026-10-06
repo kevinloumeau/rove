@@ -63,6 +63,7 @@ export function toWardrobeItem(row: Record<string, unknown>) {
     lastWorn: typeof row.last_worn === "string" ? row.last_worn : null,
     addedAt: dayOf(row.created_at),
     keptAt: dayOf(row.kept_at),
+    storedAt: dayOf(row.stored_at),
     archiveReason: String(row.archive_reason ?? ""),
     archivedAt: dayOf(row.archived_at),
   };

@@ -64,3 +64,14 @@ test("groups the let-go pile by reason", () => {
   assert.equal(isLetGoReason("sell"), true);
   assert.equal(isLetGoReason("burn"), false);
 });
+
+test("skips pieces packed away for the season", () => {
+  const pieces = [
+    { id: 1, name: "Old tee", addedAt: "2024-01-01" },
+    { id: 2, name: "Stored shorts", addedAt: "2024-01-01", storedAt: "2026-09-30" },
+  ];
+  assert.deepEqual(
+    declutterCandidates(pieces, "2026-10-06", 12).map((piece) => piece.name),
+    ["Old tee"],
+  );
+});

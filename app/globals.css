@@ -4280,3 +4280,93 @@ textarea:focus-visible {
     order: 2;
   }
 }
+
+/* Seasonal swap */
+.swap-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: -24px 0 28px;
+  padding: 14px 14px 14px 18px;
+  border-radius: 22px;
+  background: var(--secondary);
+}
+.swap-card > svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--ink-soft);
+}
+.swap-card > div {
+  flex: 1;
+  min-width: 0;
+}
+.swap-card h2 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+.swap-card p {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.swap-card [data-slot="button"] {
+  flex: none;
+  border-radius: 999px;
+}
+.swap-dismiss {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+}
+.swap-dismiss:hover {
+  color: var(--foreground);
+  background: var(--background);
+}
+.swap-dismiss svg {
+  width: 16px;
+  height: 16px;
+}
+.category-list button.stored-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.category-list button svg {
+  width: 14px;
+  height: 14px;
+}
+.category-list button b {
+  font-weight: 650;
+  opacity: 0.6;
+}
+.item-card.is-stored .item-image img {
+  opacity: 0.55;
+}
+.swap-dialog .packing-groups li.skipped strong {
+  color: var(--ink-soft);
+}
+.swap-dialog .packing-groups li.skipped img {
+  opacity: 0.45;
+}
+.swap-confirm {
+  width: 100%;
+}
+@media (max-width: 760px) {
+  .swap-card {
+    flex-wrap: wrap;
+    margin-top: -12px;
+  }
+  .swap-card > div {
+    flex-basis: calc(100% - 80px);
+  }
+  .swap-card [data-slot="button"] {
+    order: 4;
+    margin-left: 36px;
+  }
+}
