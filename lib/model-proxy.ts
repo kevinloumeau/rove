@@ -1,7 +1,7 @@
 /** Same-origin path the browser loads its models from (see lib/local-wardrobe.ts). */
 export const MODEL_PROXY_PREFIX = "/hf/";
 /** Finds and cuts out each garment. */
-export const CLOTHING_MODEL = "Xenova/segformer_b0_clothes";
+export const CLOTHING_MODEL = "Xenova/segformer_b2_clothes";
 /** Names each cutout's type, fabric and pattern (CLIP zero-shot classification). */
 export const STYLE_MODEL = "Xenova/clip-vit-base-patch32";
 const MODELS = [CLOTHING_MODEL, STYLE_MODEL];
