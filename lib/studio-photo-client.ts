@@ -1,6 +1,7 @@
 "use client";
 
 import { removeSpecks } from "./cutout-refine";
+import { makeThumbnail } from "./photo-resize";
 import { STUDIO_INPUT_SIDE, alphaBounds, keyOutBackdrop } from "./studio-photo";
 
 function loadImage(src: string) {
@@ -87,5 +88,45 @@ export async function studioCutout(photo: Blob) {
     return toBlob(output, "image/png");
   } finally {
     URL.revokeObjectURL(url);
+  }
+}
+
+/** Asks Workers AI for a studio photo of a saved piece and returns it as a transparent cutout. */
+export async function makeStudioCutout(item: { id: string | number; image: string }) {
+  const form = new FormData();
+  form.set("id", String(item.id));
+  form.set("image", new File([await studioInput(item.image)], "piece.jpg", { type: "image/jpeg" }));
+  const response = await fetch("/api/wardrobe/studio", { method: "POST", body: form });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new StudioError(payload.error || "The studio photo could not be made. Try again.", response.status);
+  }
+  return studioCutout(await response.blob());
+}
+
+/** Saves a studio cutout as the piece's photo, with a fresh thumbnail. */
+export async function saveStudioCutout(id: string | number, cutout: Blob) {
+  const form = new FormData();
+  form.set("id", String(id));
+  form.set("image", new File([cutout], "studio.png", { type: "image/png" }));
+  const thumb = await makeThumbnail(cutout);
+  if (thumb) form.set("thumb", new File([thumb], "thumb.webp", { type: "image/webp" }));
+  const response = await fetch("/api/wardrobe/image", { method: "POST", body: form });
+  const payload = (await response.json().catch(() => ({}))) as {
+    image?: string;
+    thumb?: string | null;
+    error?: string;
+  };
+  if (!response.ok || !payload.image) throw new Error(payload.error || "That photo could not be saved.");
+  return { image: payload.image, thumb: payload.thumb ?? undefined };
+}
+
+/** A failed studio request, keeping the HTTP status so callers can tell "used up" from "try again". */
+export class StudioError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
   }
 }

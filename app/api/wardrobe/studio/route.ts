@@ -4,6 +4,7 @@ import {
   STUDIO_OUTPUT_SIDE,
   base64ImageType,
   studioErrorMessage,
+  studioErrorStatus,
   studioPrompt,
 } from "@/lib/studio-photo";
 import { apiError, getWardrobeBindings, requireApiUser } from "@/lib/wardrobe-backend";
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
       .first<{ name: string; category: string; color: string }>();
     if (!item) return Response.json({ error: "That closet item was not found." }, { status: 404 });
     if (!env.AI)
-      return Response.json({ error: "Studio photos only work once Rove is deployed to Cloudflare." }, { status: 503 });
+      return Response.json({ error: "Studio photos only work once Rove is deployed to Cloudflare." }, { status: 501 });
 
     const input = new FormData();
     input.append("prompt", studioPrompt(item.name, item.category, item.color));
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       });
     } catch (error) {
       console.error("Studio photo failed", error);
-      return Response.json({ error: studioErrorMessage(error) }, { status: 502 });
+      return Response.json({ error: studioErrorMessage(error) }, { status: studioErrorStatus(error) });
     }
     const type = result.image ? base64ImageType(result.image) : null;
     if (!result.image || !type) return Response.json({ error: studioErrorMessage(null) }, { status: 502 });

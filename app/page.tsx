@@ -73,6 +73,8 @@ export default function Home() {
     setBatch,
     skipDuplicates,
     setSkipDuplicates,
+    autoStudio,
+    setAutoStudio,
 
     fixingItem,
     setFixingItem,
@@ -134,6 +136,8 @@ export default function Home() {
             setBatch,
             skipDuplicates,
             setSkipDuplicates,
+            autoStudio,
+            setAutoStudio,
             cancelBatch,
           }}
         />

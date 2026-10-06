@@ -52,6 +52,8 @@ type UploadDialogProps = {
   setBatch: (value: BatchEntry[] | null) => void;
   skipDuplicates: boolean;
   setSkipDuplicates: (value: boolean) => void;
+  autoStudio: boolean;
+  setAutoStudio: (value: boolean) => void;
   cancelBatch: () => void;
 };
 
@@ -87,6 +89,8 @@ export function UploadDialog({
   setBatch,
   skipDuplicates,
   setSkipDuplicates,
+  autoStudio,
+  setAutoStudio,
   cancelBatch,
 }: UploadDialogProps) {
   const step = importStepFor(importNotice);
@@ -210,6 +214,10 @@ export function UploadDialog({
             <label className="skip-duplicates">
               <Checkbox checked={skipDuplicates} onCheckedChange={(value) => setSkipDuplicates(value === true)} />
               When adding several photos, skip ones already in my closet
+            </label>
+            <label className="skip-duplicates">
+              <Checkbox checked={autoStudio} onCheckedChange={(value) => setAutoStudio(value === true)} />
+              Make a studio photo of each new piece
             </label>
           </>
         ) : (

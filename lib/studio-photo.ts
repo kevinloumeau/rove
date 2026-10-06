@@ -61,6 +61,17 @@ export function studioErrorMessage(error: unknown) {
   return "The studio photo could not be made. Try again.";
 }
 
+/**
+ * HTTP status for a Workers AI failure: 429 when today's free photos are used up, 503 when the
+ * studio is busy, 502 otherwise. Automatic studio photos stop early on the first two.
+ */
+export function studioErrorStatus(error: unknown) {
+  const text = error instanceof Error ? error.message : String(error);
+  if (/4006|daily free allocation|neurons/i.test(text)) return 429;
+  if (/3040|capacity|429|rate/i.test(text)) return 503;
+  return 502;
+}
+
 type Rgb = [number, number, number];
 
 function colorDistance(rgba: Uint8ClampedArray, offset: number, color: Rgb) {

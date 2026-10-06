@@ -13,6 +13,7 @@ import {
   ScanSearch,
   Search,
   Shirt,
+  Sparkles,
   Trash2,
   WashingMachine,
   X,
@@ -83,6 +84,7 @@ export function ClosetTab({ home }: { home: HomeState }) {
     toggleStored,
     lovedLook,
     setOutfit,
+    studioPending,
   } = home;
   const storedView = activeCategory === "Stored";
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -298,7 +300,11 @@ export function ClosetTab({ home }: { home: HomeState }) {
                     loading={index < 6 ? "eager" : "lazy"}
                     decoding="async"
                   />
-                  {item.inLaundry ? (
+                  {studioPending.includes(String(item.id)) ? (
+                    <span className="laundry-badge studio-badge">
+                      <Sparkles /> Styling…
+                    </span>
+                  ) : item.inLaundry ? (
                     <span className="laundry-badge">
                       <WashingMachine /> In the wash
                     </span>
