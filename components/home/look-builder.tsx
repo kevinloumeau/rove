@@ -1,6 +1,19 @@
 "use client";
 
-import { Check, Heart, MoreHorizontal, Plus, RotateCcw, Share2, Shuffle, WashingMachine, X } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  MoreHorizontal,
+  Plus,
+  RotateCcw,
+  Share2,
+  Shuffle,
+  WashingMachine,
+  X,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +25,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/
 import { colorSwatch } from "@/lib/local-wardrobe";
 import { slotDefs, slotFor, sameId, isNarrow } from "@/lib/home-utils";
 import { type HomeState } from "@/hooks/use-home";
+import { type WardrobeItem } from "@/lib/wardrobe-types";
 
 const slotNoun: Record<string, string> = {
   Outerwear: "a layer",
@@ -22,8 +36,137 @@ const slotNoun: Record<string, string> = {
 };
 
 /**
- * The look builder: the outfit as a vertical stack of cutouts on a soft backdrop. Tap a piece (or a + between
- * pieces) to choose from a bottom sheet on phones, or from the side panel on wider screens.
+ * One filled row of the stack: the chosen piece in the middle with the slot's other pieces peeking in at the
+ * sides. Swiping (or the arrows on wider screens) swaps in whichever piece settles in the middle.
+ */
+function SlotCarousel({
+  slot,
+  pieces,
+  current,
+  active,
+  onSelect,
+  onOpen,
+  onRemove,
+}: {
+  slot: { label: string; category: string };
+  pieces: WardrobeItem[];
+  current: WardrobeItem;
+  active: boolean;
+  onSelect: (id: number | string) => void;
+  onOpen: () => void;
+  onRemove: () => void;
+}) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const programmatic = useRef(false);
+  const index = pieces.findIndex((piece) => sameId(piece.id, current.id));
+
+  const offsetFor = (row: HTMLDivElement, i: number) => {
+    const child = row.children[i] as HTMLElement | undefined;
+    return child ? child.offsetLeft - (row.clientWidth - child.clientWidth) / 2 : null;
+  };
+  const scrollToPiece = (i: number) => {
+    const row = rowRef.current;
+    const left = row && offsetFor(row, Math.max(0, Math.min(pieces.length - 1, i)));
+    if (row && left !== null) row.scrollTo({ left, behavior: "smooth" });
+  };
+
+  // Keep the chosen piece centred when it changes from elsewhere (shuffle, the picker, loading a look).
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const left = row && offsetFor(row, index);
+    if (!row || left === null || Math.abs(row.scrollLeft - left) < 2) return;
+    programmatic.current = true;
+    row.scrollTo({ left, behavior: "instant" });
+    const frame = requestAnimationFrame(() => (programmatic.current = false));
+    return () => cancelAnimationFrame(frame);
+  }, [index, pieces.length]);
+
+  // When a swipe settles, wear whichever piece ended up in the middle.
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => {
+      if (programmatic.current) return;
+      const middle = row.scrollLeft + row.clientWidth / 2;
+      let best = -1;
+      let distance = Infinity;
+      Array.from(row.children).forEach((child, i) => {
+        const element = child as HTMLElement;
+        const gap = Math.abs(element.offsetLeft + element.clientWidth / 2 - middle);
+        if (gap < distance) {
+          distance = gap;
+          best = i;
+        }
+      });
+      const piece = pieces[best];
+      if (piece && !sameId(piece.id, current.id)) onSelect(piece.id);
+    };
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(settle, 140);
+    };
+    row.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      row.removeEventListener("scroll", onScroll);
+      clearTimeout(timer);
+    };
+  }, [pieces, current.id, onSelect]);
+
+  const noun = slot.label.toLowerCase();
+  return (
+    <div className="lb-slot filled" data-slot={slot.category}>
+      <div className="lb-carousel" ref={rowRef}>
+        {pieces.map((piece, i) => {
+          const on = i === index;
+          return (
+            <div key={piece.id} className={`lb-piece ${on ? "on" : ""}`}>
+              <button
+                className="lb-piece-select"
+                aria-label={on ? `${slot.label}: ${piece.name}` : `Wear ${piece.name} instead`}
+                aria-current={on && active ? "true" : undefined}
+                tabIndex={on ? 0 : -1}
+                onClick={() => (on ? onOpen() : scrollToPiece(i))}
+              >
+                <img src={piece.thumb ?? piece.image} alt="" loading={on ? "eager" : "lazy"} decoding="async" />
+              </button>
+              {on && (
+                <button className="lb-remove" aria-label={`Remove ${piece.name}`} onClick={onRemove}>
+                  <X aria-hidden />
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {pieces.length > 1 && (
+        <>
+          <button
+            className="lb-step prev"
+            aria-label={`Previous ${noun}`}
+            disabled={index <= 0}
+            onClick={() => scrollToPiece(index - 1)}
+          >
+            <ChevronLeft aria-hidden />
+          </button>
+          <button
+            className="lb-step next"
+            aria-label={`Next ${noun}`}
+            disabled={index >= pieces.length - 1}
+            onClick={() => scrollToPiece(index + 1)}
+          >
+            <ChevronRight aria-hidden />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The look builder: the outfit as a vertical stack of cutouts on a soft backdrop. Swipe a piece to try the
+ * others from that slot; tap it (or a + between pieces) to choose from a bottom sheet on phones, or from the
+ * side panel on wider screens.
  */
 export function LookBuilder({ home }: { home: HomeState }) {
   const {
@@ -161,22 +304,20 @@ export function LookBuilder({ home }: { home: HomeState }) {
                   </button>
                 </div>
               );
+            const pieces = items.filter(
+              (piece) => slotFor(piece.category) === slot.category && (!piece.storedAt || sameId(piece.id, item.id)),
+            );
             return (
-              <div key={slot.category} className="lb-slot filled" data-slot={slot.category}>
-                <div className="lb-piece">
-                  <button
-                    className="lb-piece-select"
-                    aria-label={`${slot.label}: ${item.name}`}
-                    aria-current={current}
-                    onClick={() => chooseSlot(slot.category)}
-                  >
-                    <img src={item.thumb ?? item.image} alt="" decoding="async" />
-                  </button>
-                  <button className="lb-remove" aria-label={`Remove ${item.name}`} onClick={() => removePiece(item.id)}>
-                    <X aria-hidden />
-                  </button>
-                </div>
-              </div>
+              <SlotCarousel
+                key={slot.category}
+                slot={slot}
+                pieces={pieces}
+                current={item}
+                active={Boolean(current)}
+                onSelect={addToOutfit}
+                onOpen={() => chooseSlot(slot.category)}
+                onRemove={() => removePiece(item.id)}
+              />
             );
           })}
         </div>
