@@ -188,10 +188,13 @@ export function DeclutterReview({
   pile,
   onKeep,
   onOpenPiece,
+  showReview,
 }: {
   items: WardrobeItem[];
   today: string;
   pile: Pile;
+  /** Ask about idle pieces only once there is wear history behind the question. */
+  showReview: boolean;
   onKeep: (piece: WardrobeItem) => void;
   onOpenPiece: (piece: WardrobeItem) => void;
 }) {
@@ -211,163 +214,170 @@ export function DeclutterReview({
         ? `Kept ${shortDate(piece.keptAt)}, not worn since`
         : `Never worn${piece.addedAt ? ` · added ${shortDate(piece.addedAt)}` : ""}`;
 
+  const pileCount = pile.archived?.length ?? 0;
+  if (!showReview && !pileCount) return null;
+
   return (
     <div className="declutter">
-      <section className="insight-card declutter-card" aria-labelledby="declutter-title">
-        <header className="declutter-head">
-          <h2 id="declutter-title">
-            <HandHeart /> Ready to let go?
-          </h2>
-          <div className="declutter-chips" role="group" aria-label="Not worn in">
-            {idleChoices.map((choice) => (
-              <button
-                key={choice}
-                className={choice === months ? "active" : undefined}
-                aria-pressed={choice === months}
-                onClick={() => setMonths(choice)}
-              >
-                {choice === 12 ? "1 year" : `${choice} months`}
-              </button>
-            ))}
-          </div>
-        </header>
-        {candidates.length ? (
-          <>
-            <p className="insight-empty">
-              {candidates.length} {candidates.length === 1 ? "piece hasn't" : "pieces haven't"} been worn in{" "}
-              {months === 12 ? "a year" : `${months} months`}. Keep what you love, and pass on the rest.
-            </p>
-            <ul className="declutter-list">
-              {shown.map((piece) => (
-                <li key={piece.id}>
-                  <button className="declutter-piece" onClick={() => onOpenPiece(piece)}>
-                    <img src={piece.thumb ?? piece.image} alt="" />
-                    <span>
-                      <strong>{piece.name}</strong>
-                      <small>{idleDetail(piece)}</small>
-                    </span>
-                  </button>
-                  <div className="declutter-actions">
-                    <Button size="sm" variant="ghost" onClick={() => onKeep(piece)}>
-                      <Heart /> Keep
-                    </Button>
-                    {letGoReasons.map((reason) => {
-                      const Icon = reasonIcons[reason];
-                      return (
-                        <Button key={reason} size="sm" variant="outline" onClick={() => pile.letGo([piece], reason)}>
-                          <Icon /> {letGoLabels[reason]}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </li>
+      {showReview && (
+        <section className="insight-card declutter-card" aria-labelledby="declutter-title">
+          <header className="declutter-head">
+            <h2 id="declutter-title">
+              <HandHeart /> Ready to let go?
+            </h2>
+            <div className="declutter-chips" role="group" aria-label="Not worn in">
+              {idleChoices.map((choice) => (
+                <button
+                  key={choice}
+                  className={choice === months ? "active" : undefined}
+                  aria-pressed={choice === months}
+                  onClick={() => setMonths(choice)}
+                >
+                  {choice === 12 ? "1 year" : `${choice} months`}
+                </button>
               ))}
-            </ul>
-            {candidates.length > SHOWN && (
-              <button className="declutter-more" onClick={() => setShowAll((value) => !value)}>
-                {showAll ? "Show fewer" : `Show all ${candidates.length}`}
-              </button>
-            )}
-          </>
-        ) : (
-          <p className="insight-empty">
-            Nothing to let go of. Pieces show up here once they&apos;ve gone{" "}
-            {months === 12 ? "a year" : `${months} months`} without a wear.
-          </p>
-        )}
-      </section>
-      <section className="insight-card declutter-card" aria-labelledby="pile-title">
-        <header className="declutter-head">
-          <h2 id="pile-title">
-            <Archive /> Let-go pile
-          </h2>
-          <div className="declutter-chips" role="group" aria-label="Pile">
-            {letGoReasons.map((reason) => (
-              <button
-                key={reason}
-                className={reason === pileView ? "active" : undefined}
-                aria-pressed={reason === pileView}
-                onClick={() => setPileView(reason)}
-              >
-                {letGoLabels[reason]} <b>{groups[reason].length}</b>
-              </button>
-            ))}
-          </div>
-        </header>
-        {pile.archived === null ? (
-          <p className="insight-empty">Loading…</p>
-        ) : pileItems.length ? (
-          <>
-            {pileView === "sell" && sellTotal > 0 && (
-              <p className="insight-empty">You paid {formatMoney(sellTotal)} for these.</p>
-            )}
-            <ul className="declutter-list">
-              {pileItems.map((piece) => (
-                <li key={piece.id}>
-                  <div className="declutter-piece">
-                    <img src={piece.thumb ?? piece.image} alt="" />
-                    <span>
-                      <strong>{piece.name}</strong>
-                      <small>
-                        {[
-                          piece.brand,
-                          piece.size,
-                          piece.price ? `Paid ${formatMoney(piece.price)}` : "",
-                          piece.archivedAt ? `Moved ${shortDate(piece.archivedAt)}` : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </small>
-                    </span>
-                  </div>
-                  <div className="declutter-actions">
-                    {letGoReasons
-                      .filter((reason) => reason !== pileView)
-                      .map((reason) => {
+            </div>
+          </header>
+          {candidates.length ? (
+            <>
+              <p className="insight-empty">
+                {candidates.length} {candidates.length === 1 ? "piece hasn't" : "pieces haven't"} been worn in{" "}
+                {months === 12 ? "a year" : `${months} months`}. Keep what you love, and pass on the rest.
+              </p>
+              <ul className="declutter-list">
+                {shown.map((piece) => (
+                  <li key={piece.id}>
+                    <button className="declutter-piece" onClick={() => onOpenPiece(piece)}>
+                      <img src={piece.thumb ?? piece.image} alt="" />
+                      <span>
+                        <strong>{piece.name}</strong>
+                        <small>{idleDetail(piece)}</small>
+                      </span>
+                    </button>
+                    <div className="declutter-actions">
+                      <Button size="sm" variant="ghost" onClick={() => onKeep(piece)}>
+                        <Heart /> Keep
+                      </Button>
+                      {letGoReasons.map((reason) => {
                         const Icon = reasonIcons[reason];
                         return (
-                          <Button
-                            key={reason}
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => pile.changeReason(piece, reason)}
-                          >
+                          <Button key={reason} size="sm" variant="outline" onClick={() => pile.letGo([piece], reason)}>
                             <Icon /> {letGoLabels[reason]}
                           </Button>
                         );
                       })}
-                    <Button size="sm" variant="outline" onClick={() => pile.restore([piece])}>
-                      <RotateCcw /> Restore
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="danger"
-                      aria-label={`Delete ${piece.name} for good`}
-                      onClick={() => pile.deleteForever([piece])}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </li>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {candidates.length > SHOWN && (
+                <button className="declutter-more" onClick={() => setShowAll((value) => !value)}>
+                  {showAll ? "Show fewer" : `Show all ${candidates.length}`}
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="insight-empty">
+              Nothing to let go of. Pieces show up here once they&apos;ve gone{" "}
+              {months === 12 ? "a year" : `${months} months`} without a wear.
+            </p>
+          )}
+        </section>
+      )}
+      {pileCount > 0 && (
+        <section className="insight-card declutter-card" aria-labelledby="pile-title">
+          <header className="declutter-head">
+            <h2 id="pile-title">
+              <Archive /> Let-go pile
+            </h2>
+            <div className="declutter-chips" role="group" aria-label="Pile">
+              {letGoReasons.map((reason) => (
+                <button
+                  key={reason}
+                  className={reason === pileView ? "active" : undefined}
+                  aria-pressed={reason === pileView}
+                  onClick={() => setPileView(reason)}
+                >
+                  {letGoLabels[reason]} <b>{groups[reason].length}</b>
+                </button>
               ))}
-            </ul>
-            {pileView !== "archive" && pileItems.length > 1 && (
-              <button className="declutter-more" onClick={() => pile.deleteForever(pileItems)}>
-                {pileView === "donate" ? "Donated them all? Clear this pile" : "Sold them all? Clear this pile"}
-              </button>
-            )}
-          </>
-        ) : (
-          <p className="insight-empty">
-            {pileView === "donate"
-              ? "Nothing waiting to be donated."
-              : pileView === "sell"
-                ? "Nothing waiting to be sold."
-                : "Archived pieces leave your closet but keep their photos and wear history."}
-          </p>
-        )}
-      </section>
+            </div>
+          </header>
+          {pile.archived === null ? (
+            <p className="insight-empty">Loading…</p>
+          ) : pileItems.length ? (
+            <>
+              {pileView === "sell" && sellTotal > 0 && (
+                <p className="insight-empty">You paid {formatMoney(sellTotal)} for these.</p>
+              )}
+              <ul className="declutter-list">
+                {pileItems.map((piece) => (
+                  <li key={piece.id}>
+                    <div className="declutter-piece">
+                      <img src={piece.thumb ?? piece.image} alt="" />
+                      <span>
+                        <strong>{piece.name}</strong>
+                        <small>
+                          {[
+                            piece.brand,
+                            piece.size,
+                            piece.price ? `Paid ${formatMoney(piece.price)}` : "",
+                            piece.archivedAt ? `Moved ${shortDate(piece.archivedAt)}` : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </small>
+                      </span>
+                    </div>
+                    <div className="declutter-actions">
+                      {letGoReasons
+                        .filter((reason) => reason !== pileView)
+                        .map((reason) => {
+                          const Icon = reasonIcons[reason];
+                          return (
+                            <Button
+                              key={reason}
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => pile.changeReason(piece, reason)}
+                            >
+                              <Icon /> {letGoLabels[reason]}
+                            </Button>
+                          );
+                        })}
+                      <Button size="sm" variant="outline" onClick={() => pile.restore([piece])}>
+                        <RotateCcw /> Restore
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="danger"
+                        aria-label={`Delete ${piece.name} for good`}
+                        onClick={() => pile.deleteForever([piece])}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {pileView !== "archive" && pileItems.length > 1 && (
+                <button className="declutter-more" onClick={() => pile.deleteForever(pileItems)}>
+                  {pileView === "donate" ? "Donated them all? Clear this pile" : "Sold them all? Clear this pile"}
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="insight-empty">
+              {pileView === "donate"
+                ? "Nothing waiting to be donated."
+                : pileView === "sell"
+                  ? "Nothing waiting to be sold."
+                  : "Archived pieces leave your closet but keep their photos and wear history."}
+            </p>
+          )}
+        </section>
+      )}
     </div>
   );
 }
