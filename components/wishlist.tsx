@@ -29,7 +29,18 @@ function failure(error: unknown, fallback: string) {
 const emptyDraft = { name: "", category: "Tops", link: "", price: "", note: "" };
 
 /** Suggestions for what the closet is missing, and a wishlist of pieces to buy. Lives on the Insights tab. */
-export function Wishlist({ items, looks, today }: { items: WardrobeItem[]; looks: SavedLook[]; today: string }) {
+export function Wishlist({
+  items,
+  looks,
+  today,
+  showGaps,
+}: {
+  items: WardrobeItem[];
+  looks: SavedLook[];
+  today: string;
+  /** Shopping suggestions wait until there is some wear history; the wishlist itself is always there. */
+  showGaps: boolean;
+}) {
   const [list, setList] = useState<WishlistItem[] | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
@@ -155,34 +166,36 @@ export function Wishlist({ items, looks, today }: { items: WardrobeItem[]; looks
 
   return (
     <div className="declutter wishlist">
-      <section className="insight-card" aria-labelledby="gaps-title">
-        <h2 id="gaps-title">
-          <Lightbulb /> What your closet is missing
-        </h2>
-        {list === null && !loadError ? (
-          <p className="insight-empty">Looking through your closet…</p>
-        ) : gaps.length ? (
-          <ul className="gap-list">
-            {gaps.map((gap) => (
-              <li key={gap.id}>
-                <div>
-                  <strong>{gap.title}</strong>
-                  <small>{gap.detail}</small>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => addGap(gap)}>
-                  <Plus /> {gap.suggestion.name}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="insight-empty">
-            {items.length < 3
-              ? "Add a few more pieces and Rove will point out what's missing."
-              : "Nothing obvious is missing for this season. Nice closet."}
-          </p>
-        )}
-      </section>
+      {showGaps && (
+        <section className="insight-card" aria-labelledby="gaps-title">
+          <h2 id="gaps-title">
+            <Lightbulb /> What your closet is missing
+          </h2>
+          {list === null && !loadError ? (
+            <p className="insight-empty">Looking through your closet…</p>
+          ) : gaps.length ? (
+            <ul className="gap-list">
+              {gaps.map((gap) => (
+                <li key={gap.id}>
+                  <div>
+                    <strong>{gap.title}</strong>
+                    <small>{gap.detail}</small>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => addGap(gap)}>
+                    <Plus /> {gap.suggestion.name}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="insight-empty">
+              {items.length < 3
+                ? "Add a few more pieces and Rove will point out what's missing."
+                : "Nothing obvious is missing for this season. Nice closet."}
+            </p>
+          )}
+        </section>
+      )}
       <section className="insight-card" aria-labelledby="wishlist-title">
         <header className="declutter-head">
           <h2 id="wishlist-title">
@@ -230,7 +243,11 @@ export function Wishlist({ items, looks, today }: { items: WardrobeItem[]; looks
         ) : wanted.length ? (
           <ul className="declutter-list wish-list">{wanted.map(row)}</ul>
         ) : list ? (
-          <p className="insight-empty">Nothing on your wishlist yet. Add a piece above, or take a suggestion.</p>
+          <p className="insight-empty">
+            {showGaps
+              ? "Nothing on your wishlist yet. Add a piece above, or take a suggestion."
+              : "Nothing on your wishlist yet."}
+          </p>
         ) : null}
         {bought.length > 0 && (
           <>
