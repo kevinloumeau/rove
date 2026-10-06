@@ -4685,6 +4685,12 @@ textarea:focus-visible {
     width: 44px;
     height: 44px;
   }
+  .look-card > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .look-actions {
+    flex-wrap: wrap;
+  }
   .look-actions button {
     min-width: 44px;
     height: 44px;
