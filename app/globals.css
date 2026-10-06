@@ -4972,3 +4972,35 @@ textarea:focus-visible {
   font-size: 0.8rem;
   font-weight: 650;
 }
+
+/* Very narrow screens and 200% zoom on phones: the week strip still fits. */
+@media (max-width: 360px) {
+  .week-strip ol {
+    gap: 2px;
+  }
+  .week-strip li button {
+    width: 34px;
+    height: 34px;
+  }
+  .week-arrow {
+    width: 22px;
+  }
+}
+/* Short screens (landscape phones, 200% zoom): the Add button shrinks to a round corner button. */
+@media (max-width: 760px) and (max-height: 560px) {
+  .fab-add {
+    left: auto;
+    right: 16px;
+    justify-content: center;
+    width: 50px;
+    padding: 0;
+    font-size: 0;
+    transform: none;
+  }
+  .fab-add.tucked {
+    transform: translateY(24px);
+  }
+  .fab-add svg {
+    width: 22px;
+  }
+}

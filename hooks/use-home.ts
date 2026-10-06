@@ -346,13 +346,20 @@ export function useHome() {
       toast.error(errorMessage(error, "That favorite could not be saved."));
     });
   }
-  function toggleLaundry(item: WardrobeItem) {
+  function toggleLaundry(item: WardrobeItem, undoable = true) {
     const inLaundry = !item.inLaundry;
     updateItem(item.id, { inLaundry });
-    sendJson("/api/wardrobe", "PATCH", { id: item.id, inLaundry }).catch((error: unknown) => {
-      updateItem(item.id, { inLaundry: !inLaundry });
-      toast.error(errorMessage(error, "That change could not be saved."));
-    });
+    sendJson("/api/wardrobe", "PATCH", { id: item.id, inLaundry })
+      .then(() => {
+        if (!undoable) return;
+        toast(inLaundry ? `${item.name} is in the wash` : `${item.name} is out of the wash`, {
+          action: { label: "Undo", onClick: () => toggleLaundry({ ...item, inLaundry }, false) },
+        });
+      })
+      .catch((error: unknown) => {
+        updateItem(item.id, { inLaundry: !inLaundry });
+        toast.error(errorMessage(error, "That change could not be saved."));
+      });
   }
   /** Logs today's wear for each piece; pieces already logged today are left alone. */
   function logWear(pieces: WardrobeItem[]) {
@@ -364,11 +371,29 @@ export function useHome() {
     const before = new Map(fresh.map((piece) => [String(piece.id), piece]));
     for (const piece of fresh) updateItem(piece.id, { wearCount: (piece.wearCount ?? 0) + 1, lastWorn: todayIso });
     sendJson("/api/wears", "POST", { itemIds: fresh.map((piece) => String(piece.id)), date: todayIso })
-      .then(() => toast.success(fresh.length === 1 ? `Logged ${fresh[0].name}` : `Logged ${fresh.length} pieces`))
+      .then(() =>
+        toast.success(fresh.length === 1 ? `Logged ${fresh[0].name}` : `Logged ${fresh.length} pieces`, {
+          action: { label: "Undo", onClick: () => undoWear([...before.values()]) },
+        }),
+      )
       .catch((error: unknown) => {
         for (const [, piece] of before) updateItem(piece.id, { wearCount: piece.wearCount, lastWorn: piece.lastWorn });
         toast.error(errorMessage(error, "That wear could not be logged."));
       });
+  }
+  /** Takes back today's wear for pieces just logged, restoring their counts. */
+  function undoWear(pieces: WardrobeItem[]) {
+    for (const piece of pieces) updateItem(piece.id, { wearCount: piece.wearCount, lastWorn: piece.lastWorn });
+    Promise.all(
+      pieces.map((piece) =>
+        sendJson(`/api/wears?itemId=${encodeURIComponent(String(piece.id))}&date=${todayIso}`, "DELETE").then(
+          (payload) => {
+            const result = payload as { wearCount?: number; lastWorn?: string | null };
+            updateItem(piece.id, { wearCount: result.wearCount ?? 0, lastWorn: result.lastWorn ?? null });
+          },
+        ),
+      ),
+    ).catch((error: unknown) => toast.error(errorMessage(error, "That wear could not be removed.")));
   }
   function unlogWearToday(item: WardrobeItem) {
     const previous = { wearCount: item.wearCount, lastWorn: item.lastWorn };
@@ -483,7 +508,27 @@ export function useHome() {
     );
     setItems((current) => current.map((item) => (ids.includes(String(item.id)) ? { ...item, ...changes } : item)));
     sendJson("/api/wardrobe", "PATCH", { ids, ...changes })
-      .then(() => toast.success(`Updated ${ids.length} ${ids.length === 1 ? "piece" : "pieces"}`))
+      .then(() =>
+        toast.success(`Updated ${ids.length} ${ids.length === 1 ? "piece" : "pieces"}`, {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              const keys = Object.keys(changes) as Array<keyof typeof changes>;
+              // Each piece goes back to its own earlier value, so pieces that already matched stay as they were.
+              const restore = [...before.values()].map((item) => ({
+                id: String(item.id),
+                ...Object.fromEntries(
+                  keys.map((key) => [key, key === "favorite" || key === "inLaundry" ? Boolean(item[key]) : item[key]]),
+                ),
+              }));
+              setItems((current) => current.map((item) => before.get(String(item.id)) ?? item));
+              Promise.all(restore.map((entry) => sendJson("/api/wardrobe", "PATCH", entry))).catch((error: unknown) =>
+                toast.error(errorMessage(error, "Those changes could not be undone.")),
+              );
+            },
+          },
+        }),
+      )
       .catch((error: unknown) => {
         setItems((current) => current.map((item) => before.get(String(item.id)) ?? item));
         toast.error(errorMessage(error, "Those changes could not be saved."));
