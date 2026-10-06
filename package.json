@@ -11,6 +11,7 @@
     "preview": "wrangler dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1",
     "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",
     "deploy:preview": "CLOUDFLARE_ENV=preview vinext build && wrangler d1 migrations apply DB --remote --env preview && wrangler deploy",
+    "db:migrate:preview": "wrangler d1 migrations apply DB --remote --env preview",
     "db:migrate:local": "wrangler d1 migrations apply DB --local --persist-to .wrangler/state",
     "db:generate": "drizzle-kit generate",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",

@@ -22,6 +22,23 @@
     "ACCESS_TEAM_DOMAIN": "blue-mouse-2b9e.cloudflareaccess.com",
     "ACCESS_AUD": "658e4e82f9c19bc7c427cd93edcc527c9366a3c88bcbf63422544c635ee703ce",
   },
+  // Worker Previews: every branch build runs `wrangler preview`, which never inherits the settings above.
+  // Point previews at the preview database and bucket, so a branch can't touch the real closet.
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "rove-preview",
+        "database_id": "d650197a-30f4-4bb2-ac84-9821240087b8",
+        "migrations_dir": "drizzle",
+      },
+    ],
+    "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "rove-closet-preview" }],
+    "vars": {
+      "ACCESS_TEAM_DOMAIN": "blue-mouse-2b9e.cloudflareaccess.com",
+      "ACCESS_AUD": "658e4e82f9c19bc7c427cd93edcc527c9366a3c88bcbf63422544c635ee703ce",
+    },
+  },
   "env": {
     // A separate Worker (rove-preview) with its own database and bucket, so trying a branch never
     // touches the real closet. Deploy with `npm run deploy:preview`; see README.
