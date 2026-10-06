@@ -678,6 +678,9 @@ button {
   width: 13px;
   height: 13px;
 }
+.studio-badge svg {
+  animation: styling-bob 1s ease-in-out infinite;
+}
 .item-image {
   position: relative;
 }

@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { alphaBounds, base64ImageType, keyOutBackdrop, studioErrorMessage, studioPrompt } from "../lib/studio-photo.ts";
+import {
+  alphaBounds,
+  base64ImageType,
+  keyOutBackdrop,
+  studioErrorMessage,
+  studioErrorStatus,
+  studioPrompt,
+} from "../lib/studio-photo.ts";
 
 /** A white studio photo with a navy square, which holds a white logo, and a soft gray shadow. */
 function studioShot(size = 40) {
@@ -61,4 +68,10 @@ test("studioErrorMessage explains the daily free limit", () => {
   );
   assert.match(studioErrorMessage(new Error("3040: Capacity temporarily exceeded")), /busy/);
   assert.match(studioErrorMessage(null), /could not be made/);
+});
+
+test("studioErrorStatus separates used up and busy from other failures", () => {
+  assert.equal(studioErrorStatus(new Error("AiError: 4006: you have used up your daily free allocation")), 429);
+  assert.equal(studioErrorStatus(new Error("AiError: 3040: Capacity temporarily exceeded")), 503);
+  assert.equal(studioErrorStatus(new Error("AiError: 5000: something else")), 502);
 });

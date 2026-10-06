@@ -9,6 +9,7 @@ import { lovedAgain, pairScores, type Feeling, type RatedDay } from "@/lib/look-
 import { suggestLook } from "@/lib/outfit-shuffle";
 import { makeThumbnail, photoHash, shrinkPhoto } from "@/lib/photo-resize";
 import { renderLookImage, shareLookImage } from "@/lib/share-look";
+import { StudioError, makeStudioCutout, saveStudioCutout } from "@/lib/studio-photo-client";
 import { type SavedLook, type WardrobeItem } from "@/lib/wardrobe-types";
 import {
   categories,
@@ -29,6 +30,17 @@ import {
   LOOK_DRAG_TYPE,
   isNarrow,
 } from "@/lib/home-utils";
+
+/** Remembers whether new pieces get a studio photo automatically. */
+const AUTO_STUDIO_KEY = "rove-auto-studio";
+function storedAutoStudio() {
+  try {
+    return localStorage.getItem(AUTO_STUDIO_KEY) !== "0";
+  } catch {
+    // On the server, or with storage blocked, automatic studio photos stay on.
+    return true;
+  }
+}
 
 export function useHome() {
   const [items, setItems] = useState<WardrobeItem[]>([]);
@@ -85,6 +97,10 @@ export function useHome() {
   const batchCancelled = useRef(false);
   const [fixingItem, setFixingItem] = useState<WardrobeItem | null>(null);
   const [studioItem, setStudioItem] = useState<WardrobeItem | null>(null);
+  const [autoStudio, setAutoStudioState] = useState(storedAutoStudio);
+  const [studioPending, setStudioPending] = useState<string[]>([]);
+  const studioQueue = useRef<Array<Pick<WardrobeItem, "id" | "image">>>([]);
+  const studioRunning = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
   const [editingLook, setEditingLook] = useState<SavedLook | null>(null);
@@ -820,6 +836,51 @@ export function useHome() {
     setSelectedDate(monthKey(next) === todayIso.slice(0, 7) ? todayIso : isoDate(next));
   }
 
+  function setAutoStudio(value: boolean) {
+    setAutoStudioState(value);
+    try {
+      localStorage.setItem(AUTO_STUDIO_KEY, value ? "1" : "0");
+    } catch {
+      // Not remembered, but still applies to this visit.
+    }
+  }
+  /** New pieces get a studio photo in the background, one at a time; each keeps its cutout if that fails. */
+  function queueStudioPhotos(pieces: WardrobeItem[]) {
+    if (!autoStudio || !pieces.length) return;
+    studioQueue.current.push(...pieces.map(({ id, image }) => ({ id, image })));
+    setStudioPending((current) => [...current, ...pieces.map((piece) => String(piece.id))]);
+    if (!studioRunning.current) void runStudioQueue();
+  }
+  async function runStudioQueue() {
+    studioRunning.current = true;
+    let made = 0;
+    try {
+      while (studioQueue.current.length) {
+        const piece = studioQueue.current.shift()!;
+        try {
+          updateItem(piece.id, await saveStudioCutout(piece.id, await makeStudioCutout(piece)));
+          made += 1;
+        } catch (error) {
+          // Used up for today (429), not deployed (501) or busy (503): the rest would fail too.
+          if (error instanceof StudioError && [429, 501, 503].includes(error.status)) {
+            studioQueue.current = [];
+            setStudioPending([]);
+            if (error.status !== 501)
+              toast(error.message, {
+                description: "New pieces keep their regular cutout. Use Studio photo on a piece to redo it later.",
+              });
+            break;
+          }
+        } finally {
+          setStudioPending((current) => current.filter((id) => id !== String(piece.id)));
+        }
+      }
+    } finally {
+      studioRunning.current = false;
+    }
+    if (made) toast.success(made === 1 ? "Studio photo ready" : `${made} studio photos ready`);
+  }
+
   async function handleFile(picked?: File) {
     if (!picked) return;
     if (fileRef.current) fileRef.current.value = "";
@@ -855,7 +916,9 @@ export function useHome() {
       setUploadMode(payload.items.length > 1 ? "look" : "single");
       setImportNotice(
         payload.cleanedCount === payload.items.length
-          ? "Processed privately on this device—no paid API used."
+          ? autoStudio
+            ? "Cut out on this device. Rove makes a studio photo once you add it."
+            : "Processed privately on this device—no paid API used."
           : "Processed on this device. Rove kept the original photo for any piece that could not be cleanly separated.",
       );
       setProcessed(true);
@@ -905,6 +968,7 @@ export function useHome() {
           result.items.map((item) => String(item.id)),
         );
         setItems((current) => [...result.items, ...current]);
+        queueStudioPhotos(result.items);
         added += result.items.length;
         update(index, {
           status: "added",
@@ -933,6 +997,7 @@ export function useHome() {
       if (!response.ok) throw new Error(payload.error || "Those pieces could not be added.");
       const additions = detectedItems.filter((item) => itemIds.includes(String(item.id)));
       setItems((current) => [...additions, ...current]);
+      queueStudioPhotos(additions);
       setSelectedId(additions[0].id);
       setDialogOpen(false);
       setPreview(null);
@@ -1048,6 +1113,9 @@ export function useHome() {
     setFixingItem,
     studioItem,
     setStudioItem,
+    autoStudio,
+    setAutoStudio,
+    studioPending,
     fileRef,
     editingItem,
     setEditingItem,

@@ -11,8 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { makeThumbnail } from "@/lib/photo-resize";
-import { studioCutout, studioInput } from "@/lib/studio-photo-client";
+import { makeStudioCutout, saveStudioCutout } from "@/lib/studio-photo-client";
 import type { WardrobeItem } from "@/lib/wardrobe-types";
 
 /** Redraws a piece as a clean product shot, shows it beside the current cutout, and saves it on request. */
@@ -57,15 +56,7 @@ function Studio({
       setStatus("working");
       setMessage(null);
       try {
-        const form = new FormData();
-        form.set("id", String(item.id));
-        form.set("image", new File([await studioInput(item.image)], "piece.jpg", { type: "image/jpeg" }));
-        const response = await fetch("/api/wardrobe/studio", { method: "POST", body: form });
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => ({}))) as { error?: string };
-          throw new Error(payload.error || "The studio photo could not be made. Try again.");
-        }
-        const cutout = await studioCutout(await response.blob());
+        const cutout = await makeStudioCutout({ id: item.id, image: item.image });
         if (cancelled) return;
         if (resultUrl.current) URL.revokeObjectURL(resultUrl.current);
         resultUrl.current = URL.createObjectURL(cutout);
@@ -94,19 +85,8 @@ function Studio({
     if (!result) return;
     setStatus("saving");
     try {
-      const form = new FormData();
-      form.set("id", String(item.id));
-      form.set("image", new File([result.blob], "studio.png", { type: "image/png" }));
-      const thumb = await makeThumbnail(result.blob);
-      if (thumb) form.set("thumb", new File([thumb], "thumb.webp", { type: "image/webp" }));
-      const response = await fetch("/api/wardrobe/image", { method: "POST", body: form });
-      const payload = (await response.json().catch(() => ({}))) as {
-        image?: string;
-        thumb?: string | null;
-        error?: string;
-      };
-      if (!response.ok || !payload.image) throw new Error(payload.error || "That photo could not be saved.");
-      onSaved(item.id, payload.image, payload.thumb ?? undefined);
+      const saved = await saveStudioCutout(item.id, result.blob);
+      onSaved(item.id, saved.image, saved.thumb);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "That photo could not be saved.");
       setStatus("ready");
