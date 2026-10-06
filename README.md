@@ -36,7 +36,7 @@ You only need to do this once.
 1. **Create the storage.** In the Cloudflare dashboard, create a D1 database named `rove` and an R2 bucket named `rove-closet`. Or run `npx wrangler d1 create rove` and `npx wrangler r2 bucket create rove-closet`. Put the D1 database ID in `database_id` in `wrangler.jsonc`.
 2. **Connect the repo.** Go to Workers & Pages > Create > Import a repository and pick this repo. Use these settings:
    - Build command: `npm run build`
-   - Deploy command: `npm run deploy` (it applies pending D1 migrations, then runs `wrangler deploy`)
+   - Deploy command: `npm run deploy` (it applies pending D1 migrations, then runs `wrangler deploy`; on any branch but `main` it targets the preview Worker, see below)
 
    After this, every push to `main` deploys.
 
@@ -48,11 +48,14 @@ Until step 3 is done, the deployed app loads but its API answers "Sign-in is not
 
 Branch previews run on a separate Worker, `rove-preview`, with its own D1 database (`rove-preview`) and R2 bucket (`rove-closet-preview`). Nothing you do on a preview touches your real closet. The `preview` environment in `wrangler.jsonc` sets this up.
 
-To turn it on once:
+The build and deploy scripts pick the target from the branch. Workers Builds tells them which branch it is building (`WORKERS_CI_BRANCH`): `main` builds and deploys `rove`, and every other branch builds and deploys `rove-preview` instead, migrating only the preview database. So a branch build can never reach the real closet, whatever its deploy command is. To use a production branch other than `main`, set the build variable `PRODUCTION_BRANCH`.
 
-1. In Workers & Pages, open the `rove` Worker, go to Settings > Builds, and turn off non-production branch builds. Otherwise those builds upload versions that use the real database.
-2. Create a second Worker from this repo (Create > Import a repository), named `rove-preview`. Set its build command to `npm run build`, its deploy command to `npm run deploy:preview`, and its production branch to the branch you want to try. Turn on non-production branch builds with the deploy command `npm run deploy:preview` too.
-3. Add `rove-preview.<your-subdomain>.workers.dev` to the same Cloudflare Access application as the main app, so sign-in works there.
+To try branches on `rove-preview`:
+
+1. In Workers & Pages, open the `rove` Worker, go to Settings > Builds, turn on non-production branch builds and set their deploy command to `npm run deploy`. The first branch build creates the `rove-preview` Worker.
+2. Add `rove-preview.<your-subdomain>.workers.dev` to the same Cloudflare Access application as the main app, so sign-in works there.
+
+To deploy a preview by hand, run `npm run deploy:preview`.
 
 ## Restoring the database
 

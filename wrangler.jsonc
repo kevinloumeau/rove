@@ -24,7 +24,7 @@
   },
   "env": {
     // A separate Worker (rove-preview) with its own database and bucket, so trying a branch never
-    // touches the real closet. Deploy with `npm run deploy:preview`; see README.
+    // touches the real closet. Branch builds target it automatically (scripts/deploy-target.ts); see README.
     "preview": {
       "d1_databases": [
         {
