@@ -13,12 +13,12 @@ async function openTab(page: Page, name: string) {
 async function pickForSlot(page: Page, slot: string, piece: string) {
   await page.getByRole("button", { name: `Choose ${slot}` }).click();
   // Phones pick from a bottom sheet; wider screens pick from the side rail.
-  const sheet = page.locator(".picker-sheet");
+  const sheet = page.locator(".lb-sheet");
   if (await sheet.isVisible().catch(() => false)) {
     await sheet.getByRole("button", { name: piece }).click();
     await expect(sheet).toBeHidden();
   } else {
-    await page.locator(".piece-rail").getByRole("button", { name: piece }).click();
+    await page.locator(".lb-panel").getByRole("button", { name: piece }).click();
   }
 }
 
@@ -48,6 +48,10 @@ test("build a look, save it, and plan it for a day", async ({ page, request }) =
   await pickForSlot(page, "top", top);
   await pickForSlot(page, "bottom", bottom);
   await expect(page.getByRole("button", { name: `Top: ${top}` })).toBeVisible();
+  await expect(page.getByRole("button", { name: `Bottom: ${bottom}` })).toBeVisible();
+  // The × on a piece takes it off the stack and leaves a + in its place.
+  await page.getByRole("button", { name: `Remove ${bottom}` }).click();
+  await pickForSlot(page, "bottom", bottom);
   await expect(page.getByRole("button", { name: `Bottom: ${bottom}` })).toBeVisible();
   await page.getByRole("button", { name: "Save this look" }).click();
   await expect.poll(lookCount).toBe(before + 1);
