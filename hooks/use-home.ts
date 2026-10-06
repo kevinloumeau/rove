@@ -60,6 +60,8 @@ export function useHome() {
   const [occasionFilter, setOccasionFilter] = useState("All");
   const [plans, setPlans] = useState<Record<string, string>>({});
   const [planLookId, setPlanLookId] = useState("");
+  /** A look picked to place on the calendar by tapping a day, shown with a sticky Plan bar. */
+  const [armedLookId, setArmedLookId] = useState<string | null>(null);
   const [repeatWeeks, setRepeatWeeks] = useState(0);
   const [calendarView, setCalendarView] = useState<"auto" | "month" | "week">("auto");
   const [calendarMode, setCalendarMode] = useState<"plan" | "journal">("plan");
@@ -372,13 +374,20 @@ export function useHome() {
       toast.error(errorMessage(error, "That favorite could not be saved."));
     });
   }
-  function toggleLaundry(item: WardrobeItem) {
+  function toggleLaundry(item: WardrobeItem, undoable = true) {
     const inLaundry = !item.inLaundry;
     updateItem(item.id, { inLaundry });
-    sendJson("/api/wardrobe", "PATCH", { id: item.id, inLaundry }).catch((error: unknown) => {
-      updateItem(item.id, { inLaundry: !inLaundry });
-      toast.error(errorMessage(error, "That change could not be saved."));
-    });
+    sendJson("/api/wardrobe", "PATCH", { id: item.id, inLaundry })
+      .then(() => {
+        if (!undoable) return;
+        toast(inLaundry ? `${item.name} is in the wash` : `${item.name} is out of the wash`, {
+          action: { label: "Undo", onClick: () => toggleLaundry({ ...item, inLaundry }, false) },
+        });
+      })
+      .catch((error: unknown) => {
+        updateItem(item.id, { inLaundry: !inLaundry });
+        toast.error(errorMessage(error, "That change could not be saved."));
+      });
   }
   /** Packs pieces away for the season (or brings them back), 200 at a time to fit the API. */
   function setStored(pieces: WardrobeItem[], stored: boolean) {
@@ -446,11 +455,29 @@ export function useHome() {
     const before = new Map(fresh.map((piece) => [String(piece.id), piece]));
     for (const piece of fresh) updateItem(piece.id, { wearCount: (piece.wearCount ?? 0) + 1, lastWorn: todayIso });
     sendJson("/api/wears", "POST", { itemIds: fresh.map((piece) => String(piece.id)), date: todayIso })
-      .then(() => toast.success(fresh.length === 1 ? `Logged ${fresh[0].name}` : `Logged ${fresh.length} pieces`))
+      .then(() =>
+        toast.success(fresh.length === 1 ? `Logged ${fresh[0].name}` : `Logged ${fresh.length} pieces`, {
+          action: { label: "Undo", onClick: () => undoWear([...before.values()]) },
+        }),
+      )
       .catch((error: unknown) => {
         for (const [, piece] of before) updateItem(piece.id, { wearCount: piece.wearCount, lastWorn: piece.lastWorn });
         toast.error(errorMessage(error, "That wear could not be logged."));
       });
+  }
+  /** Takes back today's wear for pieces just logged, restoring their counts. */
+  function undoWear(pieces: WardrobeItem[]) {
+    for (const piece of pieces) updateItem(piece.id, { wearCount: piece.wearCount, lastWorn: piece.lastWorn });
+    Promise.all(
+      pieces.map((piece) =>
+        sendJson(`/api/wears?itemId=${encodeURIComponent(String(piece.id))}&date=${todayIso}`, "DELETE").then(
+          (payload) => {
+            const result = payload as { wearCount?: number; lastWorn?: string | null };
+            updateItem(piece.id, { wearCount: result.wearCount ?? 0, lastWorn: result.lastWorn ?? null });
+          },
+        ),
+      ),
+    ).catch((error: unknown) => toast.error(errorMessage(error, "That wear could not be removed.")));
   }
   function unlogWearToday(item: WardrobeItem) {
     const previous = { wearCount: item.wearCount, lastWorn: item.lastWorn };
@@ -565,7 +592,27 @@ export function useHome() {
     );
     setItems((current) => current.map((item) => (ids.includes(String(item.id)) ? { ...item, ...changes } : item)));
     sendJson("/api/wardrobe", "PATCH", { ids, ...changes })
-      .then(() => toast.success(`Updated ${ids.length} ${ids.length === 1 ? "piece" : "pieces"}`))
+      .then(() =>
+        toast.success(`Updated ${ids.length} ${ids.length === 1 ? "piece" : "pieces"}`, {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              const keys = Object.keys(changes) as Array<keyof typeof changes>;
+              // Each piece goes back to its own earlier value, so pieces that already matched stay as they were.
+              const restore = [...before.values()].map((item) => ({
+                id: String(item.id),
+                ...Object.fromEntries(
+                  keys.map((key) => [key, key === "favorite" || key === "inLaundry" ? Boolean(item[key]) : item[key]]),
+                ),
+              }));
+              setItems((current) => current.map((item) => before.get(String(item.id)) ?? item));
+              Promise.all(restore.map((entry) => sendJson("/api/wardrobe", "PATCH", entry))).catch((error: unknown) =>
+                toast.error(errorMessage(error, "Those changes could not be undone.")),
+              );
+            },
+          },
+        }),
+      )
       .catch((error: unknown) => {
         setItems((current) => current.map((item) => before.get(String(item.id)) ?? item));
         toast.error(errorMessage(error, "Those changes could not be saved."));
@@ -700,8 +747,13 @@ export function useHome() {
     for (const date of dates) setPlan(date, outfitId);
     sendJson("/api/plans", "POST", { dates, outfitId })
       .then(() => {
-        if (successLabel) toast.success(successLabel);
-        else if (dates.length > 1) toast.success(`Planned ${dates.length} days`);
+        const name = savedLooks.find((look) => look.id === outfitId)?.name ?? "Look";
+        toast.success(
+          successLabel ??
+            (dates.length > 1
+              ? `Planned ${name} for ${dates.length} days`
+              : `Planned ${name} for ${new Date(`${dates[0]}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`),
+        );
       })
       .catch((error: unknown) => {
         for (const date of dates) setPlan(date, previous[date]);
@@ -744,6 +796,14 @@ export function useHome() {
       .map((id) => items.find((item) => sameId(item.id, id)))
       .filter((item): item is WardrobeItem => Boolean(item))
       .slice(0, count);
+  }
+  /** Opens the calendar with this look ready to place on a day. */
+  function startPlanningLook(look: SavedLook) {
+    setOccasionFilter("All");
+    setPlanLookId(look.id);
+    setArmedLookId(look.id);
+    setCalendarMode("plan");
+    setActiveTab("calendar");
   }
   function removePlan() {
     const date = selectedDate;
@@ -941,6 +1001,9 @@ export function useHome() {
     setPlans,
     planLookId,
     setPlanLookId,
+    armedLookId,
+    setArmedLookId,
+    startPlanningLook,
     repeatWeeks,
     setRepeatWeeks,
     calendarView,

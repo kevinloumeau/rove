@@ -33,7 +33,8 @@ export function PieceDetails({ home }: { home: HomeState }) {
   return (
     <>
       <div className="detail-image">
-        <img src={selected.image} alt={selected.name} />
+        {/* The 480px WebP thumbnail is sharp at this size; the full cutout stays for editing and sharing. */}
+        <img src={selected.thumb ?? selected.image} alt={selected.name} width={480} height={480} decoding="async" />
       </div>
       <div className="detail-copy">
         <p>{selected.category}</p>
