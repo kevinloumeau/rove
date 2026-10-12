@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Archive, CalendarDays, ChartColumn, Layers3, Plus, Sparkles } from "lucide-react";
+import { Archive, CalendarDays, ChartColumn, Layers3, Plus } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EditLookDialog, EditPieceDialog } from "@/components/closet-dialogs";
@@ -159,17 +159,6 @@ export default function Home() {
               <span>Insights</span>
             </TabsTrigger>
           </TabsList>
-          <div className="rail-note">
-            <Sparkles />
-            <p>
-              <strong>Smart closet</strong>
-              <br />
-              Build looks from clean, tagged pieces.
-            </p>
-            <a className="rail-export" href="/api/export" download>
-              Export backup
-            </a>
-          </div>
         </nav>
         <ClosetTab home={home} />
         <OutfitsTab home={home} />

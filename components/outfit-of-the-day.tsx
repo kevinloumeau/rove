@@ -14,16 +14,20 @@ import {
 } from "lucide-react";
 import { type DayWeather, forecastUrl, parseForecast, weatherEmoji, weatherHint, weatherLabel } from "@/lib/weather";
 import type { SavedLook, WardrobeItem } from "@/lib/wardrobe-types";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const COORDS_KEY = "rove-weather-coords";
 const COLLAPSED_KEY = "rove-ootd-collapsed";
 
-/** Whether the card starts folded. Read once per page load, so using the card folds it from the next visit on. */
+/**
+ * Whether the card was folded or unfolded on an earlier visit: "1", "0", or "" when never touched.
+ * Read once per page load, so using the card folds it from the next visit on.
+ */
 function storedCollapsed() {
   try {
-    return localStorage.getItem(COLLAPSED_KEY) === "1";
+    return localStorage.getItem(COLLAPSED_KEY) ?? "";
   } catch {
-    return false;
+    return "";
   }
 }
 function rememberCollapsed(collapsed: boolean) {
@@ -132,9 +136,9 @@ export function OutfitOfTheDay({
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date(`${todayIso}T00:00:00`)));
   const [day, setDay] = useState(todayIso);
   const weather = useForecast();
-  const startsCollapsed = useSyncExternalStore(noSubscribe, storedCollapsed, () => false);
+  const stored = useSyncExternalStore(noSubscribe, storedCollapsed, () => "");
+  const phone = useMediaQuery("(max-width: 760px)");
   const [collapsedChoice, setCollapsedChoice] = useState<boolean | null>(null);
-  const collapsed = collapsedChoice ?? startsCollapsed;
   const dayWeather = weather.days.find((entry) => entry.date === day);
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
@@ -180,6 +184,9 @@ export function OutfitOfTheDay({
     : (todayLook?.itemIds ?? [])
         .map((id) => items.find((item) => String(item.id) === String(id)))
         .filter((item): item is WardrobeItem => Boolean(item));
+
+  // On a phone an empty card would fill the first screen, so it starts folded until there's a look to show.
+  const collapsed = collapsedChoice ?? (stored ? stored === "1" : phone && !todayLook && !todayAgain);
 
   if (collapsed)
     return (

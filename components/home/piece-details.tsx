@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { costPerWear, formatMoney } from "@/lib/closet-stats";
+import { pieceNote } from "@/lib/piece-note";
 import { letGoLabels, letGoReasons } from "@/lib/declutter";
 import { type HomeState } from "@/hooks/use-home";
 
@@ -39,7 +40,9 @@ export function PieceDetails({ home }: { home: HomeState }) {
       <div className="detail-copy">
         <p>{selected.category}</p>
         <h2>{selected.name}</h2>
-        <span>{selected.description}</span>
+        {pieceNote(selected.name, selected.description) && (
+          <span>{pieceNote(selected.name, selected.description)}</span>
+        )}
       </div>
       <dl>
         <div>
