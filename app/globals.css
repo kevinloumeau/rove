@@ -5006,3 +5006,158 @@ textarea:focus-visible {
 .insights-backup a:hover {
   color: var(--foreground);
 }
+
+/* ==========================================================================
+   Calendar soft pass: serif day titles, a quiet empty state, pill choices
+   instead of selects, and a bottom sheet for planning a day on phones.
+   ========================================================================== */
+.calendar-occasions {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.calendar-occasions .pack-button {
+  flex: none;
+  width: auto;
+  margin: 0;
+  border-radius: 999px;
+}
+.day-panel > h2 {
+  margin: 2px 0 14px;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+.day-panel > p.day-empty,
+.plan-control .day-empty {
+  display: block;
+  min-height: 0;
+  margin: -6px 0 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  text-align: left;
+}
+.day-look-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 20px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+.day-look-meta [data-slot="button"] {
+  border-radius: 999px;
+}
+.plan-control {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+}
+.plan-control .plan-label {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.plan-pick,
+.plan-repeat {
+  display: flex;
+  gap: 8px;
+  margin: 0 -4px;
+  padding: 2px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.plan-pick button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 16px 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.plan-repeat button {
+  flex: none;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.85rem;
+}
+.plan-pick button[aria-checked="true"],
+.plan-repeat button[aria-checked="true"] {
+  border-color: var(--foreground);
+  box-shadow: inset 0 0 0 1px var(--foreground);
+}
+.plan-control > [data-slot="button"] {
+  margin-top: 10px;
+  min-height: 48px;
+  border-radius: 999px;
+}
+.plan-control .remove-plan {
+  justify-self: center;
+}
+.week-list .week-look > small {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+.week-list .week-day strong {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+.day-sheet {
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 24px 24px 0 0;
+  background: var(--background);
+}
+.day-sheet .day-panel {
+  display: block;
+  position: static;
+  margin: 0;
+  padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+  border: 0;
+  box-shadow: none;
+  background: none;
+}
+@media (max-width: 760px) {
+  .calendar-occasions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .calendar-occasions .pack-button {
+    align-self: flex-start;
+  }
+}
+@media (pointer: coarse) {
+  .plan-repeat button {
+    min-height: 44px;
+  }
+}
+.calendar-view .day-look {
+  border-radius: 20px;
+  background: var(--plate);
+}
+@media (min-width: 761px) {
+  .plan-pick,
+  .plan-repeat {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+}

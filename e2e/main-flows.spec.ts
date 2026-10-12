@@ -10,6 +10,15 @@ async function openTab(page: Page, name: string) {
   await page.getByRole("tab", { name }).click();
 }
 
+// Phones plan a day from a bottom sheet opened by tapping the day; wider screens show the day panel.
+async function openSelectedDay(page: Page) {
+  if ((page.viewportSize()?.width ?? 0) > 760) return;
+  await expect(async () => {
+    await page.locator('.week-list button[aria-current="true"]').click();
+    await expect(page.locator(".day-sheet")).toBeVisible({ timeout: 1000 });
+  }).toPass();
+}
+
 async function pickForSlot(page: Page, slot: string, piece: string) {
   await page.getByRole("button", { name: `Choose ${slot}` }).click();
   // Phones pick from a bottom sheet; wider screens pick from the side rail.
@@ -57,11 +66,14 @@ test("build a look, save it, and plan it for a day", async ({ page, request }) =
   await expect.poll(lookCount).toBe(before + 1);
 
   await openTab(page, "Calendar");
+  await openSelectedDay(page);
   await page.getByRole("button", { name: /^(Plan this look|Replace planned look)$/ }).click();
+  await openSelectedDay(page);
   await expect(page.getByRole("button", { name: "Open look" })).toBeVisible();
 
   // The plan survives a reload.
   await page.reload();
   await openTab(page, "Calendar");
+  await openSelectedDay(page);
   await expect(page.getByRole("button", { name: "Open look" })).toBeVisible();
 });
