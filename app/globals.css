@@ -5161,3 +5161,55 @@ textarea:focus-visible {
     overflow: visible;
   }
 }
+
+/* Added twice? (look-alike pieces on Insights) */
+.closet-doubles > p {
+  margin: -4px 0 12px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+.closet-doubles ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.closet-doubles li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--secondary);
+}
+.doubles-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.doubles-copy strong {
+  overflow: hidden;
+  font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.doubles-copy small {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+.doubles-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.doubles-actions [data-slot="button"] {
+  border-radius: 999px;
+}
+@media (max-width: 760px) {
+  .doubles-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

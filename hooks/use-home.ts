@@ -10,6 +10,7 @@ import { suggestLook } from "@/lib/outfit-shuffle";
 import { makeThumbnail, photoHash, shrinkPhoto } from "@/lib/photo-resize";
 import { renderLookImage, shareLookImage } from "@/lib/share-look";
 import { StudioError, makeStudioCutout, saveStudioCutout } from "@/lib/studio-photo-client";
+import { closetLookalikes } from "@/lib/lookalike-client";
 import { type SavedLook, type WardrobeItem } from "@/lib/wardrobe-types";
 import {
   categories,
@@ -93,6 +94,8 @@ export function useHome() {
   const [importNotice, setImportNotice] = useState<string | null>(null);
   const [isSavingImport, setIsSavingImport] = useState(false);
   const [duplicateMatches, setDuplicateMatches] = useState<DuplicateMatch[]>([]);
+  /** Closet pieces that look like the ones just detected, as a heads-up before adding. */
+  const [lookalikeMatches, setLookalikeMatches] = useState<WardrobeItem[]>([]);
   const [batch, setBatch] = useState<BatchEntry[] | null>(null);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const batchCancelled = useRef(false);
@@ -907,6 +910,7 @@ export function useHome() {
     setImportError(null);
     setImportNotice(null);
     setDuplicateMatches([]);
+    setLookalikeMatches([]);
     const hash = await photoHash(file);
     void findDuplicates(hash).then(setDuplicateMatches);
     try {
@@ -915,6 +919,7 @@ export function useHome() {
       setDetectedItems(payload.items);
       setSelectedExtractions(payload.items.map((item) => String(item.id)));
       setUploadMode(payload.items.length > 1 ? "look" : "single");
+      void closetLookalikes(payload.items, items).then(setLookalikeMatches);
       setImportNotice(
         payload.cleanedCount === payload.items.length
           ? autoStudio
@@ -1106,6 +1111,7 @@ export function useHome() {
     setIsSavingImport,
     duplicateMatches,
     setDuplicateMatches,
+    lookalikeMatches,
     batch,
     setBatch,
     skipDuplicates,
