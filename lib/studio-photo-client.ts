@@ -109,6 +109,7 @@ export async function saveStudioCutout(id: string | number, cutout: Blob) {
   const form = new FormData();
   form.set("id", String(id));
   form.set("image", new File([cutout], "studio.png", { type: "image/png" }));
+  form.set("studio", "1");
   const thumb = await makeThumbnail(cutout);
   if (thumb) form.set("thumb", new File([thumb], "thumb.webp", { type: "image/webp" }));
   const response = await fetch("/api/wardrobe/image", { method: "POST", body: form });
@@ -118,7 +119,7 @@ export async function saveStudioCutout(id: string | number, cutout: Blob) {
     error?: string;
   };
   if (!response.ok || !payload.image) throw new Error(payload.error || "That photo could not be saved.");
-  return { image: payload.image, thumb: payload.thumb ?? undefined };
+  return { image: payload.image, thumb: payload.thumb ?? undefined, studio: true };
 }
 
 /** A failed studio request, keeping the HTTP status so callers can tell "used up" from "try again". */

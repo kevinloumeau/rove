@@ -5,12 +5,13 @@ import { toast } from "sonner";
 import { type PieceChanges } from "@/components/closet-dialogs";
 import { useLetGoPile } from "@/components/declutter-review";
 import { modelDownloadIsMetered } from "@/lib/local-wardrobe";
-import { lovedAgain, pairScores, type Feeling, type RatedDay } from "@/lib/look-ratings";
+import { feelingLabels, lovedAgain, pairScores, type Feeling, type RatedDay } from "@/lib/look-ratings";
 import { suggestLook } from "@/lib/outfit-shuffle";
 import { makeThumbnail, photoHash, shrinkPhoto } from "@/lib/photo-resize";
 import { renderLookImage, shareLookImage } from "@/lib/share-look";
 import { StudioError, makeStudioCutout, saveStudioCutout } from "@/lib/studio-photo-client";
 import { closetLookalikes } from "@/lib/lookalike-client";
+import { useForecast } from "@/hooks/use-forecast";
 import { type SavedLook, type WardrobeItem } from "@/lib/wardrobe-types";
 import {
   categories,
@@ -103,6 +104,8 @@ export function useHome() {
   const [studioItem, setStudioItem] = useState<WardrobeItem | null>(null);
   const [autoStudio, setAutoStudioState] = useState(storedAutoStudio);
   const [studioPending, setStudioPending] = useState<string[]>([]);
+  /** Why automatic studio photos stopped this visit (429 used up, 501 unavailable, 503 busy), or null. */
+  const [studioStopped, setStudioStopped] = useState<number | null>(null);
   const studioQueue = useRef<Array<Pick<WardrobeItem, "id" | "image">>>([]);
   const studioRunning = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -110,6 +113,7 @@ export function useHome() {
   const [editingLook, setEditingLook] = useState<SavedLook | null>(null);
   const [canvasLookId, setCanvasLookId] = useState<string | null>(null);
   const [ratedDays, setRatedDays] = useState<RatedDay[]>([]);
+  const weather = useForecast();
 
   useEffect(() => {
     // Journal ratings, so outfit ideas lean toward combinations the wearer loved.
@@ -374,6 +378,16 @@ export function useHome() {
       ...current.filter((day) => day.date !== date),
       ...(feeling ? [{ date, feeling, itemIds }] : []),
     ]);
+  }
+  /** Saves how today's outfit felt from the evening check-in. */
+  function rateToday(feeling: Feeling, itemIds: string[]) {
+    rateDay(todayIso, feeling, itemIds);
+    sendJson("/api/journal", "PUT", { date: todayIso, feeling })
+      .then(() => toast.success(`Saved: ${feelingLabels[feeling]}`))
+      .catch((error: unknown) => {
+        rateDay(todayIso, "", itemIds);
+        toast.error(errorMessage(error, "That rating could not be saved."));
+      });
   }
   const selectedDateLabel = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, {
     month: "long",
@@ -689,7 +703,13 @@ export function useHome() {
   }
   function shuffleLook() {
     // Color- and season-aware, leans toward pairs rated well in the journal, skips the wash, and avoids repeating the look already on the canvas.
-    const look = suggestLook(items, { today: todayIso, current: outfit, pairs });
+    const today = weather.days.find((day) => day.date === todayIso);
+    const look = suggestLook(items, {
+      today: todayIso,
+      current: outfit,
+      pairs,
+      weather: today && { highC: weather.fahrenheit ? ((today.high - 32) * 5) / 9 : today.high, rain: today.rain },
+    });
     if (!look.length) {
       toast("Add a top or a dress to get outfit ideas.");
       return;
@@ -855,6 +875,20 @@ export function useHome() {
     setStudioPending((current) => [...current, ...pieces.map((piece) => String(piece.id))]);
     if (!studioRunning.current) void runStudioQueue();
   }
+  /**
+   * Pieces still on their plain on-device cutout, for the "make studio photos" catch-up. Only offered while
+   * automatic studio photos are on, so turning them off also quiets the catch-up.
+   */
+  const studioBacklog = useMemo(
+    () =>
+      autoStudio
+        ? items.filter((item) => !item.studio && !item.storedAt && !studioPending.includes(String(item.id)))
+        : [],
+    [autoStudio, items, studioPending],
+  );
+  function catchUpStudio() {
+    queueStudioPhotos(studioBacklog);
+  }
   async function runStudioQueue() {
     studioRunning.current = true;
     let made = 0;
@@ -869,6 +903,8 @@ export function useHome() {
           if (error instanceof StudioError && [429, 501, 503].includes(error.status)) {
             studioQueue.current = [];
             setStudioPending([]);
+            // The catch-up stays quiet for the rest of this visit: used up, unavailable or busy.
+            setStudioStopped(error.status);
             if (error.status !== 501)
               toast(error.message, {
                 description: "New pieces keep their regular cutout. Use Studio photo on a piece to redo it later.",
@@ -1123,6 +1159,9 @@ export function useHome() {
     autoStudio,
     setAutoStudio,
     studioPending,
+    studioBacklog,
+    catchUpStudio,
+    studioStopped,
     fileRef,
     editingItem,
     setEditingItem,
@@ -1163,6 +1202,9 @@ export function useHome() {
     storedCount,
     lovedLook,
     rateDay,
+    rateToday,
+    ratedDays,
+    weather,
     swapSeasonal,
     toggleStored,
     logWear,

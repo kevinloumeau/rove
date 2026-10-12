@@ -64,6 +64,7 @@ export function toWardrobeItem(row: Record<string, unknown>) {
     addedAt: dayOf(row.created_at),
     keptAt: dayOf(row.kept_at),
     storedAt: dayOf(row.stored_at),
+    studio: typeof row.studio_at === "number" && row.studio_at > 0,
     archiveReason: String(row.archive_reason ?? ""),
     archivedAt: dayOf(row.archived_at),
   };

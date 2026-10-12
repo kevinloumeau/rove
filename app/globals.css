@@ -5213,3 +5213,68 @@ textarea:focus-visible {
     justify-content: flex-end;
   }
 }
+
+/* Evening check-in: what did you wear today, then how it felt */
+.checkin-card {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  margin: 0 0 20px;
+  padding: 20px 20px 18px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #efe9f8 0%, var(--secondary) 100%);
+}
+.checkin-card h2 {
+  margin: 0;
+  padding-right: 36px;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+.checkin-card h2 em {
+  font-style: italic;
+}
+.checkin-card > p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+.checkin-dismiss {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+.checkin-thumbs {
+  display: flex;
+  margin-bottom: 4px;
+}
+.checkin-thumbs img {
+  width: 48px;
+  height: 48px;
+  margin-left: -10px;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  background: var(--plate);
+  object-fit: contain;
+}
+.checkin-thumbs img:first-child {
+  margin-left: 0;
+}
+.checkin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.checkin-actions [data-slot="button"] {
+  min-height: 44px;
+  border-radius: 999px;
+}
+@media (prefers-color-scheme: dark) {
+  .checkin-card {
+    background: linear-gradient(180deg, #27213a 0%, var(--secondary) 100%);
+  }
+}

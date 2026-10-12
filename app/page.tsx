@@ -198,7 +198,7 @@ export default function Home() {
         item={studioItem}
         onOpenChange={(open) => !open && setStudioItem(null)}
         onSaved={(id, image, thumb) => {
-          updateItem(id, { image, thumb });
+          updateItem(id, { image, thumb, studio: true });
           setStudioItem(null);
           toast.success("Studio photo saved");
         }}

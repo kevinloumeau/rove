@@ -38,3 +38,27 @@ test("make a studio photo, compare it, and keep it", async ({ page, request }) =
   await expect(page.getByText("Studio photo saved")).toBeVisible();
   await expect.poll(imageOf).not.toBe(before);
 });
+
+test("the catch-up makes studio photos for plain cutouts until the free ones run out", async ({ page, request }) => {
+  const studioCount = async () =>
+    ((await (await request.get("/api/wardrobe")).json()) as { items: Array<{ studio?: boolean }> }).items.filter(
+      (item) => item.studio,
+    ).length;
+  const before = await studioCount();
+  // One photo is made, then the day's free photos are used up.
+  let calls = 0;
+  await page.route("**/api/wardrobe/studio", async (route) => {
+    calls += 1;
+    if (calls === 1) await route.fulfill({ contentType: "image/png", body: studioShotPng(256, [67, 119, 76]) });
+    else await route.fulfill({ status: 429, json: { error: "Today's free studio photos are used up." } });
+  });
+  await page.goto("/");
+  const card = page.getByRole("region", { name: "Studio photos" });
+  await expect(card).toBeVisible();
+  await expect(async () => {
+    await card.getByRole("button", { name: "Make them" }).click({ timeout: 1000 });
+    await expect(card).toBeHidden({ timeout: 1000 });
+  }).toPass();
+  await expect(page.getByText("Today's free studio photos are used up.")).toBeVisible();
+  await expect.poll(studioCount).toBeGreaterThan(before);
+});
