@@ -19,6 +19,7 @@ import {
   isoDate,
   monthKey,
   sameId,
+  coversEachOther,
   type DuplicateMatch,
   type BatchEntry,
   findDuplicates,
@@ -251,7 +252,7 @@ export function useHome() {
       setOutfit((current) => [
         ...current.filter((pieceId) => {
           const piece = items.find((candidate) => sameId(candidate.id, pieceId));
-          return piece && slotFor(piece.category) !== slotCategory;
+          return piece && slotFor(piece.category) !== slotCategory && !coversEachOther(piece.category, item.category);
         }),
         item.id,
       ]);

@@ -110,9 +110,7 @@ export async function POST(request: Request) {
       const name = (garment.name || `${category} piece`).slice(0, 120);
       const color = (garment.color || "Multicolor").slice(0, 80);
       const season = (garment.season || "All season").slice(0, 80);
-      const description = (
-        garment.description || `${color} ${category.toLowerCase()} isolated locally from the uploaded photo.`
-      ).slice(0, 600);
+      const description = (garment.description || "").slice(0, 600);
       const tags = Array.isArray(garment.tags)
         ? garment.tags.filter((tag): tag is string => typeof tag === "string").slice(0, 8)
         : [];

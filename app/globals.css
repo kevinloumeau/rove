@@ -193,23 +193,6 @@ button {
 .rail-tabs button::after {
   display: none;
 }
-.rail-note {
-  display: grid;
-  gap: 8px;
-  color: var(--ink-soft);
-  font-size: 0.75rem;
-  line-height: 1.35;
-}
-.rail-note svg {
-  width: 17px;
-  color: var(--blue);
-}
-.rail-note p {
-  margin: 0;
-}
-.rail-note strong {
-  color: var(--foreground);
-}
 .closet-view {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
@@ -1836,9 +1819,6 @@ button.declutter-piece:hover {
     width: 18px !important;
     height: 18px !important;
   }
-  .rail-note {
-    display: none;
-  }
   .closet-main,
   .outfit-view,
   .calendar-view {
@@ -2515,17 +2495,6 @@ button.declutter-piece:hover {
    Kept as one appended block so the rules above stay untouched. Dark mode
    follows the OS setting; the layout also mirrors it onto <html class="dark">.
    ========================================================================== */
-
-.rail-export {
-  width: fit-content;
-  color: var(--ink-soft);
-  font-size: 0.75rem;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.rail-export:hover {
-  color: var(--foreground);
-}
 
 /* Focus: one clear ring for buttons, chips, cards, links and fields, in both themes. */
 :focus-visible {
@@ -4505,15 +4474,26 @@ textarea:focus-visible {
   width: 100%;
 }
 @media (max-width: 760px) {
+  /* Icon, copy and × on the first row; Review sits under the copy, clear of the floating Add clothes pill. */
   .swap-card {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+    gap: 4px 12px;
   }
-  .swap-card > div {
-    flex-basis: calc(100% - 80px);
+  .swap-card > svg {
+    margin-top: 2px;
   }
   .swap-card [data-slot="button"] {
-    order: 4;
-    margin-left: 36px;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    margin-top: 8px;
+  }
+  .swap-dismiss {
+    grid-column: 3;
+    grid-row: 1;
+    margin: -8px -6px 0 0;
   }
 }
 
@@ -4990,4 +4970,39 @@ textarea:focus-visible {
     margin-bottom: 2px;
     font-size: 0.9rem;
   }
+}
+
+/* Light pieces on light plates: a hairline edge keeps white and cream cutouts from melting into the linen. */
+@media not (prefers-color-scheme: dark) {
+  .item-image img {
+    filter: drop-shadow(0 0 0.6px rgba(60, 45, 30, 0.38)) drop-shadow(0 14px 16px rgba(22, 20, 18, 0.12));
+  }
+  .lb-piece-select img {
+    filter: drop-shadow(0 0 0.6px rgba(60, 45, 30, 0.38)) drop-shadow(0 8px 10px rgba(60, 45, 30, 0.14));
+  }
+  .detail-image img,
+  .look-collage img,
+  .day-look img,
+  .ootd-collage img,
+  .ootd-compact-thumbs img,
+  .lb-pieces img,
+  .plan-look-thumbs img,
+  .look-card img {
+    filter: drop-shadow(0 0 0.6px rgba(60, 45, 30, 0.38));
+  }
+}
+
+/* The closet backup lives at the end of Insights instead of the desktop rail. */
+.insights-backup {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+.insights-backup a {
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.insights-backup a:hover {
+  color: var(--foreground);
 }

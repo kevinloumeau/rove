@@ -83,6 +83,11 @@ export function InsightsTab({ home }: { home: HomeState }) {
             .length
         }
       />
+      <p className="insights-backup">
+        <a href="/api/export" download>
+          Download a backup of your closet
+        </a>
+      </p>
     </TabsContent>
   );
 }

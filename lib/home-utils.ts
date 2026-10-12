@@ -31,6 +31,11 @@ export function slotFor(category: string) {
   return category;
 }
 
+/** A dress stands in for a top and a bottom, so it never shares a look with a bottom. */
+export function coversEachOther(a: string, b: string) {
+  return (a === "Dresses" && b === "Bottoms") || (a === "Bottoms" && b === "Dresses");
+}
+
 export async function sendJson(url: string, method: string, body?: unknown) {
   const response = await fetchWithRetry(url, {
     method,

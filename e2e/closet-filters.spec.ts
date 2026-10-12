@@ -32,8 +32,12 @@ test("phone filter sheet narrows the closet and counts active filters", async ({
 test("the outfit card folds away and stays folded", async ({ page }) => {
   await page.goto("/");
   const fold = page.getByRole("button", { name: "Fold away outfit of the day" });
+  const unfold = page.getByRole("button", { name: /Outfit of the day/ });
+  // Phones start with the card folded while nothing is planned today, so open it first there.
+  await expect(fold.or(unfold).first()).toBeVisible();
   await expect(async () => {
-    await fold.click();
+    if (await unfold.isVisible()) await unfold.click();
+    await fold.click({ timeout: 1000 });
     await expect(page.getByRole("button", { name: /Outfit of the day/ })).toBeVisible({ timeout: 1000 });
   }).toPass();
   await page.reload();

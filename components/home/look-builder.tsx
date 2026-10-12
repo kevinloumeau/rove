@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { colorSwatch } from "@/lib/local-wardrobe";
-import { slotDefs, slotFor, sameId, isNarrow } from "@/lib/home-utils";
+import { slotDefs, slotFor, sameId, isNarrow, coversEachOther } from "@/lib/home-utils";
 import { type HomeState } from "@/hooks/use-home";
 import { type WardrobeItem } from "@/lib/wardrobe-types";
 
@@ -290,6 +290,9 @@ export function LookBuilder({ home }: { home: HomeState }) {
           {slotDefs.map((slot) => {
             const item = outfitItems.find((piece) => slotFor(piece.category) === slot.category);
             const current = activeSlot === slot.category ? "true" : undefined;
+            const dress = outfitItems.find((piece) => piece.category === "Dresses");
+            // A dress covers the bottom, so that slot steps aside until the dress comes off.
+            if (!item && dress && slot.category === "Bottoms") return null;
             if (!item)
               return (
                 <div key={slot.category} className="lb-slot empty" data-slot={slot.category}>
@@ -304,8 +307,13 @@ export function LookBuilder({ home }: { home: HomeState }) {
                   </button>
                 </div>
               );
+            const bottom = outfitItems.find((piece) => piece.category === "Bottoms");
+            // Swiping through tops never trades the chosen bottom for a dress; the picker still can.
             const pieces = items.filter(
-              (piece) => slotFor(piece.category) === slot.category && (!piece.storedAt || sameId(piece.id, item.id)),
+              (piece) =>
+                slotFor(piece.category) === slot.category &&
+                (!piece.storedAt || sameId(piece.id, item.id)) &&
+                !(bottom && coversEachOther(piece.category, bottom.category)),
             );
             return (
               <SlotCarousel

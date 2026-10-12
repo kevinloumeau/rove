@@ -279,7 +279,7 @@ export function ClosetTab({ home }: { home: HomeState }) {
             {visibleItems.map((item, index) => (
               <article
                 key={item.id}
-                className={`item-card ${!selecting && selected && sameId(selected.id, item.id) ? "selected" : ""} ${item.inLaundry ? "in-laundry" : ""} ${item.storedAt && !storedView ? "is-stored" : ""} ${selecting && picked.includes(String(item.id)) ? "picked" : ""}`}
+                className={`item-card ${showDetailPanel && !selecting && selected && sameId(selected.id, item.id) ? "selected" : ""} ${item.inLaundry ? "in-laundry" : ""} ${item.storedAt && !storedView ? "is-stored" : ""} ${selecting && picked.includes(String(item.id)) ? "picked" : ""}`}
                 draggable={!selecting}
                 onDragStart={(event) => event.dataTransfer.setData("text/plain", String(item.id))}
                 onClick={() => {
