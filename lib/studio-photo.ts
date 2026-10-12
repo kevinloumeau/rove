@@ -4,13 +4,16 @@
  * every other piece. These helpers are shared by the API route, the browser and the tests.
  */
 
-/** Cloudflare-hosted FLUX.2 [klein] 9B: image editing from a reference, about $0.017 a photo. */
-export const STUDIO_MODEL = "@cf/black-forest-labs/flux-2-klein-9b";
+/**
+ * Cloudflare-hosted FLUX.2 [klein] 4B: image editing from a reference in four steps. About 110
+ * neurons a photo, so roughly 90 fit in the free 10,000 a day (the 9B model fits about 7).
+ */
+export const STUDIO_MODEL = "@cf/black-forest-labs/flux-2-klein-4b";
 
 /** The model only accepts reference images smaller than 512×512. */
 export const STUDIO_INPUT_SIDE = 500;
 
-/** Size of the generated photo. One megapixel is the model's base price. */
+/** Size of the generated photo. The model is priced per 512×512 tile in and out. */
 export const STUDIO_OUTPUT_SIDE = 1024;
 
 const presentation: Record<string, string> = {

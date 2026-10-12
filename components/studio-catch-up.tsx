@@ -53,7 +53,7 @@ export function StudioCatchUp({
         <h2>{count} a plain cutout</h2>
         <p>
           Make studio photos for {backlog.length === 1 ? "it" : "them"}.
-          {backlog.length > 6 ? " About 6 are free each day; the rest wait for tomorrow." : ""}
+          {backlog.length > 80 ? " About 90 are free each day; the rest wait for tomorrow." : ""}
         </p>
       </div>
       <Button size="sm" onClick={onStart}>
