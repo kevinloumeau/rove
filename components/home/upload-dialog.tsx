@@ -43,6 +43,7 @@ type UploadDialogProps = {
   isSavingImport: boolean;
   duplicateMatches: DuplicateMatch[];
   setDuplicateMatches: (value: DuplicateMatch[]) => void;
+  lookalikeMatches: WardrobeItem[];
   fileRef: React.RefObject<HTMLInputElement | null>;
   cameraRef: React.RefObject<HTMLInputElement | null>;
   handleFile: (file?: File) => Promise<void>;
@@ -80,6 +81,7 @@ export function UploadDialog({
   isSavingImport,
   duplicateMatches,
   setDuplicateMatches,
+  lookalikeMatches,
   fileRef,
   cameraRef,
   handleFile,
@@ -198,7 +200,7 @@ export function UploadDialog({
               <ScanSearch />
             </span>
             <strong className="pointer-fine">Drop a clothing photo here, or click to browse</strong>
-            <strong className="pointer-coarse">Tap to choose a clothing photo</strong>
+            <strong className="pointer-coarse">Tap to choose clothing photos</strong>
             <span>One piece or a full look—we’ll sort it out. Pick several photos to add them all at once.</span>
           </button>
         ) : null}
@@ -315,6 +317,23 @@ export function UploadDialog({
                       .join(", ")}
                     {duplicateMatches.length > 3 ? ` and ${duplicateMatches.length - 3} more` : ""}. You can still add
                     it, or cancel.
+                  </p>
+                </div>
+              )}
+              {processed && !duplicateMatches.length && lookalikeMatches.length > 0 && (
+                <div className="import-message warning" role="status">
+                  <div className="duplicate-thumbs">
+                    {lookalikeMatches.slice(0, 3).map((match) => (
+                      <img key={match.id} src={match.thumb ?? match.image} alt="" />
+                    ))}
+                  </div>
+                  <p>
+                    This looks like{" "}
+                    {lookalikeMatches
+                      .slice(0, 3)
+                      .map((match) => match.name)
+                      .join(", ")}
+                    , already in your closet. Add it anyway if it&apos;s a different piece.
                   </p>
                 </div>
               )}

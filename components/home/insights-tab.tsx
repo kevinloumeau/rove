@@ -2,6 +2,7 @@
 
 import { TabsContent } from "@/components/ui/tabs";
 import { ClosetInsights, InsightsNextStep, InsightsProgress } from "@/components/closet-insights";
+import { ClosetDoubles } from "@/components/closet-doubles";
 import { DeclutterReview } from "@/components/declutter-review";
 import { ForgottenLooks } from "@/components/forgotten-looks";
 import { Wishlist } from "@/components/wishlist";
@@ -23,6 +24,7 @@ export function InsightsTab({ home }: { home: HomeState }) {
     addToOutfit,
     loadLook,
     planDates,
+    deletePieces,
   } = home;
   const { showRecommendations } = insightStage(items);
   // The let-go review only appears once something has actually sat unworn for the shortest window.
@@ -49,6 +51,7 @@ export function InsightsTab({ home }: { home: HomeState }) {
           setActiveTab("outfits");
         }}
       />
+      <ClosetDoubles items={items.filter((item) => !item.storedAt)} onRemove={(item) => deletePieces([item])} />
       <ClosetInsights items={items} onOpenPiece={openPieceFromInsights} />
       {savedLooks.length > 0 && (
         <ForgottenLooks
