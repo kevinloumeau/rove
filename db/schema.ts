@@ -47,6 +47,8 @@ export const wardrobeItems = sqliteTable(
     keptAt: integer("kept_at"),
     /** When the piece was packed away for the off season. Stored pieces stay out of the closet grid and outfit ideas. */
     storedAt: integer("stored_at"),
+    /** When the current photo was made by Studio photo; null for the on-device cutout. */
+    studioAt: integer("studio_at"),
     createdAt: integer("created_at").notNull(),
   },
   (table) => [

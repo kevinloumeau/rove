@@ -4,8 +4,8 @@ import { apiError, assetUrl, getWardrobeBindings, requireApiUser } from "@/lib/w
 export const dynamic = "force-dynamic";
 
 /**
- * Replaces a piece's cutout (`image`, a PNG from the "Fix cutout" editor), its grid thumbnail
- * (`thumb`, a WebP), or both.
+ * Replaces a piece's cutout (`image`, a PNG from the "Fix cutout" editor or Studio photo with
+ * `studio=1`), its grid thumbnail (`thumb`, a WebP), or both.
  */
 export async function POST(request: Request) {
   try {
@@ -14,6 +14,8 @@ export async function POST(request: Request) {
     const id = form.get("id");
     const image = form.get("image");
     const thumb = form.get("thumb");
+    // Studio photo marks the piece, so the catch-up knows which pieces still have a plain cutout.
+    const studio = form.get("studio") === "1";
     if (typeof id !== "string" || !id) return Response.json({ error: "Choose a closet item." }, { status: 400 });
     const imageOk =
       image instanceof File && image.type === "image/png" && image.size > 0 && image.size <= 8 * 1024 * 1024;
@@ -50,8 +52,11 @@ export async function POST(request: Request) {
       thumbKey = "";
     }
     await db
-      .prepare(`UPDATE wardrobe_items SET image_key = ?, thumb_key = ? WHERE id = ? AND user_id = ?`)
-      .bind(imageKey, thumbKey, id, user.userId)
+      .prepare(
+        `UPDATE wardrobe_items SET image_key = ?, thumb_key = ?, studio_at = CASE WHEN ? THEN ? ELSE studio_at END
+         WHERE id = ? AND user_id = ?`,
+      )
+      .bind(imageKey, thumbKey, studio && imageOk ? 1 : 0, Date.now(), id, user.userId)
       .run();
     await deleteIfUnused(
       db,

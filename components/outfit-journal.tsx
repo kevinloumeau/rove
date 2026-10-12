@@ -476,7 +476,7 @@ function JournalDay({
   );
 }
 
-function PiecePicker({
+export function PiecePicker({
   open,
   date,
   label,

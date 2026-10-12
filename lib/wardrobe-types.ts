@@ -26,6 +26,8 @@ export type WardrobeItem = {
   keptAt?: string | null;
   /** ISO date the piece was packed away for the off season; null while it's in the closet. */
   storedAt?: string | null;
+  /** The photo was made by Studio photo rather than cut out on the device. */
+  studio?: boolean;
   /** donate, sell or archive for pieces in the let-go pile; empty in the closet. */
   archiveReason?: string;
   archivedAt?: string | null;

@@ -71,6 +71,13 @@
       "when": 1791254924319,
       "tag": "0009_look_ratings",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1791829445413,
+      "tag": "0010_studio_photo",
+      "breakpoints": true
     }
   ]
 }

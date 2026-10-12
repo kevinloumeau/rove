@@ -58,12 +58,34 @@ function daysBetween(a: string, b: string) {
   return Math.round((Date.parse(`${b}T00:00:00`) - Date.parse(`${a}T00:00:00`)) / 86_400_000);
 }
 
+/** Today's forecast as outfit ideas use it: the high in °C and the chance of rain (0–100). */
+export type ShuffleWeather = { highC: number; rain: number };
+
+/** The season the day feels like: the calendar's, unless the forecast says clearly warmer or colder. */
+export function feelsLikeSeason(today: string, weather?: ShuffleWeather) {
+  const calendar = seasonOf(new Date(`${today}T00:00:00`));
+  if (!weather) return calendar;
+  if (weather.highC >= 24) return "summer";
+  if (weather.highC <= 8) return "winter";
+  if (weather.highC <= 16 && calendar === "summer") return "fall";
+  return calendar;
+}
+
+/** Whether a layer belongs in the look: always when it's cold or wet, never when it's hot. */
+function wantsLayer(season: string, weather: ShuffleWeather | undefined, random: () => number) {
+  if (weather) {
+    if (weather.highC >= 24 && weather.rain < 50) return false;
+    if (weather.highC < 18 || weather.rain >= 50) return true;
+  }
+  return OPTIONAL_LAYER_SEASONS.has(season) || random() < 0.3;
+}
+
 /** Pairs of piece ids ("a|b", sorted) scored by how the wearer rated outfits that had both. */
 export type PairScores = Map<string, number>;
 
 /** Higher is better. Exposed for tests. */
-export function scoreLook(pieces: ShufflePiece[], today: string, pairs?: PairScores) {
-  const season = seasonOf(new Date(`${today}T00:00:00`));
+export function scoreLook(pieces: ShufflePiece[], today: string, pairs?: PairScores, weather?: ShuffleWeather) {
+  const season = feelsLikeSeason(today, weather);
   const statements = [...new Set(pieces.map((piece) => piece.color).filter((color) => !NEUTRALS.has(color)))];
   let score = 0;
   // One statement color reads as intentional; several start to compete.
@@ -94,13 +116,20 @@ const OPTIONAL_LAYER_SEASONS = new Set(["spring", "fall", "winter"]);
  */
 export function suggestLook<T extends ShufflePiece>(
   pieces: T[],
-  options: { today: string; current?: Array<number | string>; random?: () => number; pairs?: PairScores },
+  options: {
+    today: string;
+    current?: Array<number | string>;
+    random?: () => number;
+    pairs?: PairScores;
+    /** With a forecast, the look dresses for the temperature instead of only the calendar. */
+    weather?: ShuffleWeather;
+  },
 ): T[] {
   const random = options.random ?? Math.random;
   const clean = pieces.filter((piece) => !piece.inLaundry && !piece.storedAt);
   const of = (...categories: string[]) => clean.filter((piece) => categories.includes(piece.category));
   const pick = <P>(list: P[]) => list[Math.floor(random() * list.length)];
-  const season = seasonOf(new Date(`${options.today}T00:00:00`));
+  const season = feelsLikeSeason(options.today, options.weather);
   const currentKey = (options.current ?? []).map(String).sort().join("|");
 
   const candidates: Array<{ look: T[]; score: number }> = [];
@@ -113,13 +142,13 @@ export function suggestLook<T extends ShufflePiece>(
       if (bottom) look.push(bottom);
     }
     const layers = of("Outerwear");
-    if (layers.length && (OPTIONAL_LAYER_SEASONS.has(season) || random() < 0.3)) look.push(pick(layers));
+    if (layers.length && wantsLayer(season, options.weather, random)) look.push(pick(layers));
     const shoes = pick(of("Shoes"));
     if (shoes) look.push(shoes);
     const extra = pick(of("Accessories", "Other"));
     if (extra && random() < 0.6) look.push(extra);
     if (!look.length) continue;
-    let score = scoreLook(look, options.today, options.pairs);
+    let score = scoreLook(look, options.today, options.pairs, options.weather);
     if (
       look
         .map((piece) => String(piece.id))

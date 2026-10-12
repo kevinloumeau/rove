@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       .prepare(
         `
       SELECT i.id, i.import_id, i.name, i.category, i.color, i.season, i.description, i.image_key, i.thumb_key,
-        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.kept_at, i.stored_at, i.created_at,
+        i.tags, i.favorite, i.brand, i.size, i.notes, i.price_cents, i.in_laundry, i.kept_at, i.stored_at, i.studio_at, i.created_at,
         COUNT(w.id) AS wear_count, MAX(w.worn_on) AS last_worn
       FROM wardrobe_items i
       LEFT JOIN wardrobe_wears w ON w.item_id = i.id AND w.user_id = i.user_id

@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { TabsContent } from "@/components/ui/tabs";
 import { OutfitOfTheDay } from "@/components/outfit-of-the-day";
+import { EveningCheckin } from "@/components/evening-checkin";
+import { StudioCatchUp } from "@/components/studio-catch-up";
 import { SeasonalSwapCard, SeasonalSwapDialog } from "@/components/seasonal-swap";
 import { isLetGoReason, letGoLabels, letGoReasons } from "@/lib/declutter";
 import { pieceCategories, seasons } from "@/lib/wardrobe-types";
@@ -75,6 +77,13 @@ export function ClosetTab({ home }: { home: HomeState }) {
     filtersActive,
     selected,
     todayIso,
+    ratedDays,
+    rateToday,
+    weather,
+    studioBacklog,
+    studioStopped,
+    studioPending,
+    catchUpStudio,
     toggleFavorite,
     logWear,
     deletePieces,
@@ -91,7 +100,6 @@ export function ClosetTab({ home }: { home: HomeState }) {
     toggleStored,
     lovedLook,
     setOutfit,
-    studioPending,
   } = home;
   const storedView = activeCategory === "Stored";
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -158,6 +166,15 @@ export function ClosetTab({ home }: { home: HomeState }) {
             />
           </div>
         </div>
+        <EveningCheckin
+          items={items}
+          looks={savedLooks}
+          plans={plans}
+          todayIso={todayIso}
+          ratedDays={ratedDays}
+          onWear={logWear}
+          onRate={rateToday}
+        />
         {items.length > 0 && (
           <OutfitOfTheDay
             items={items}
@@ -167,6 +184,7 @@ export function ClosetTab({ home }: { home: HomeState }) {
             onOpenLook={loadLook}
             onWear={logWear}
             lovedLook={lovedLook}
+            weather={weather}
             onStyle={(pieces) => {
               setOutfit(pieces.map((piece) => piece.id));
               setCanvasLookId(null);
@@ -187,6 +205,12 @@ export function ClosetTab({ home }: { home: HomeState }) {
           />
         )}
         {items.length > 0 && <SeasonalSwapCard items={items} todayIso={todayIso} onReview={() => setSwapOpen(true)} />}
+        <StudioCatchUp
+          backlog={studioBacklog}
+          stopped={studioStopped}
+          running={studioPending.length > 0}
+          onStart={catchUpStudio}
+        />
         <div className="phone-filter-row">
           <button
             className={`filter-button ${filterCount ? "active" : ""}`}

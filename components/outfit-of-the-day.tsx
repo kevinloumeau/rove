@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,11 +12,11 @@ import {
   MapPin,
   Shuffle,
 } from "lucide-react";
-import { type DayWeather, forecastUrl, parseForecast, weatherEmoji, weatherHint, weatherLabel } from "@/lib/weather";
+import { weatherEmoji, weatherHint, weatherLabel } from "@/lib/weather";
+import { type Forecast } from "@/hooks/use-forecast";
 import type { SavedLook, WardrobeItem } from "@/lib/wardrobe-types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
-const COORDS_KEY = "rove-weather-coords";
 const COLLAPSED_KEY = "rove-ootd-collapsed";
 
 /**
@@ -39,65 +39,6 @@ function rememberCollapsed(collapsed: boolean) {
 }
 const noSubscribe = () => () => {};
 
-function usesFahrenheit() {
-  return /^en-(US|LR)|^my\b/i.test(navigator.language);
-}
-
-/** Forecast for the week strip. Location is asked for only when the person taps "Show weather". */
-function useForecast() {
-  const [days, setDays] = useState<DayWeather[]>([]);
-  const [state, setState] = useState<"off" | "loading" | "ready" | "denied" | "error">("off");
-  const [fahrenheit, setFahrenheit] = useState(false);
-
-  // State is only set once the request settles, so this is safe to start from an effect.
-  const load = useCallback((latitude: number, longitude: number) => {
-    const imperial = usesFahrenheit();
-    fetch(forecastUrl(latitude, longitude, imperial))
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("forecast"))))
-      .then((payload) => {
-        setFahrenheit(imperial);
-        setDays(parseForecast(payload));
-        setState("ready");
-      })
-      .catch(() => setState("error"));
-  }, []);
-
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(COORDS_KEY) ?? "null") as [number, number] | null;
-      if (Array.isArray(saved) && saved.length === 2) load(saved[0], saved[1]);
-    } catch {
-      /* storage unavailable: weather stays off until asked */
-    }
-  }, [load]);
-
-  function ask() {
-    if (!("geolocation" in navigator)) {
-      setState("denied");
-      return;
-    }
-    setState("loading");
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        try {
-          // Rounded to about 1 km; only used to look up the forecast.
-          localStorage.setItem(
-            COORDS_KEY,
-            JSON.stringify([Number(coords.latitude.toFixed(2)), Number(coords.longitude.toFixed(2))]),
-          );
-        } catch {
-          /* not remembered, asked again next visit */
-        }
-        load(coords.latitude, coords.longitude);
-      },
-      () => setState("denied"),
-      { maximumAge: 3_600_000, timeout: 10_000 },
-    );
-  }
-
-  return { days, state, fahrenheit, ask };
-}
-
 function isoDate(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -119,6 +60,7 @@ export function OutfitOfTheDay({
   onSurprise,
   lovedLook,
   onStyle,
+  weather,
 }: {
   items: WardrobeItem[];
   looks: SavedLook[];
@@ -132,10 +74,11 @@ export function OutfitOfTheDay({
   lovedLook?: { date: string; pieces: WardrobeItem[] } | null;
   /** Opens pieces on the outfit canvas. */
   onStyle?: (pieces: WardrobeItem[]) => void;
+  /** The week's forecast, shared with outfit ideas. */
+  weather: Forecast;
 }) {
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date(`${todayIso}T00:00:00`)));
   const [day, setDay] = useState(todayIso);
-  const weather = useForecast();
   const stored = useSyncExternalStore(noSubscribe, storedCollapsed, () => "");
   const phone = useMediaQuery("(max-width: 760px)");
   const [collapsedChoice, setCollapsedChoice] = useState<boolean | null>(null);

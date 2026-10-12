@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { scoreLook, seasonOf, suggestLook } from "../lib/outfit-shuffle.ts";
+import { feelsLikeSeason, scoreLook, seasonOf, suggestLook } from "../lib/outfit-shuffle.ts";
 
 function seeded(seed: number) {
   return () => {
@@ -86,4 +86,30 @@ test("favors pieces worn together on loved days", () => {
   const plain = scoreLook(look, "2026-10-06");
   assert.equal(scoreLook(look, "2026-10-06", new Map([["jeans|tee", 2]])), plain + 2);
   assert.equal(scoreLook(look, "2026-10-06", new Map([["jeans|tee", -6]])), plain - 4);
+});
+
+test("the forecast can overrule the calendar season", () => {
+  assert.equal(feelsLikeSeason("2026-10-12"), "fall");
+  assert.equal(feelsLikeSeason("2026-10-12", { highC: 27, rain: 0 }), "summer");
+  assert.equal(feelsLikeSeason("2026-10-12", { highC: 4, rain: 0 }), "winter");
+  assert.equal(feelsLikeSeason("2026-07-12", { highC: 14, rain: 0 }), "fall");
+  assert.equal(feelsLikeSeason("2026-10-12", { highC: 15, rain: 0 }), "fall");
+});
+
+test("hot days leave the layer off, cold or wet days always add one", () => {
+  for (let seed = 1; seed < 20; seed += 1) {
+    const hot = suggestLook(closet, { today: "2026-10-12", random: seeded(seed), weather: { highC: 28, rain: 0 } });
+    assert.ok(!hot.some((piece) => piece.category === "Outerwear"));
+    const wet = suggestLook(closet, { today: "2026-07-12", random: seeded(seed), weather: { highC: 22, rain: 80 } });
+    assert.ok(wet.some((piece) => piece.category === "Outerwear"));
+  }
+});
+
+test("a warm forecast favors summer pieces over winter ones", () => {
+  const warm = { highC: 27, rain: 0 };
+  const winterTop = { id: "wool", category: "Tops", color: "Gray", season: "Fall / winter" };
+  const summerTop = { id: "linen", category: "Tops", color: "Gray", season: "Spring / summer" };
+  assert.ok(
+    scoreLook([summerTop], "2026-10-12", undefined, warm) > scoreLook([winterTop], "2026-10-12", undefined, warm),
+  );
 });
