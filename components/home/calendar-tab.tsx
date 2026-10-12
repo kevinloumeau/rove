@@ -1,10 +1,13 @@
 "use client";
 
-import { CalendarDays, Check, ChevronLeft, ChevronRight, Luggage, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Luggage, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { OutfitJournal } from "@/components/outfit-journal";
-import { occasions, weekdayLabels, sameId, LOOK_DRAG_TYPE, isNarrow, scrollIntoViewSoon } from "@/lib/home-utils";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { occasions, weekdayLabels, sameId, LOOK_DRAG_TYPE, isNarrow } from "@/lib/home-utils";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { type HomeState } from "@/hooks/use-home";
 
 export function CalendarTab({ home }: { home: HomeState }) {
@@ -51,12 +54,103 @@ export function CalendarTab({ home }: { home: HomeState }) {
     armedLookId,
     setArmedLookId,
   } = home;
+  // Phones plan a day from a bottom sheet; wider screens keep the day panel beside the calendar.
+  const phone = useMediaQuery("(max-width: 760px)");
+  const [daySheetOpen, setDaySheetOpen] = useState(false);
   const armedLook = savedLooks.find((look) => look.id === armedLookId && look.id === lookToPlan);
   const selectedShort = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
+  const weekday = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" });
+  const dayDetails = (
+    <>
+      <p>{selectedDateLabel}</p>
+      <h2>{plannedLook ? plannedLook.name : "Nothing planned"}</h2>
+      {plannedLook ? (
+        <>
+          <div className="day-look">
+            {plannedLook.itemIds.map((id) => {
+              const item = items.find((piece) => sameId(piece.id, id));
+              return item ? <img key={id} src={item.thumb ?? item.image} alt={item.name} /> : null;
+            })}
+          </div>
+          <div className="day-look-meta">
+            <span>
+              {plannedLook.occasion} · {plannedLook.itemIds.length} pieces
+            </span>
+            <Button variant="outline" size="sm" onClick={() => loadLook(plannedLook)}>
+              Open look
+            </Button>
+          </div>
+        </>
+      ) : (
+        <p className="day-empty">
+          {savedLooks.length ? "Pick a saved look below." : "Save a look in Outfits, then plan it here."}
+        </p>
+      )}
+      {savedLooks.length > 0 && (
+        <div className="plan-control">
+          <span className="plan-label" id="plan-look-label">
+            {plannedLook ? "Swap for" : "Wear"}
+          </span>
+          {filteredLooks.length ? (
+            <div className="plan-pick" role="radiogroup" aria-labelledby="plan-look-label">
+              {filteredLooks.map((look) => (
+                <button
+                  key={look.id}
+                  role="radio"
+                  aria-checked={lookToPlan === look.id}
+                  aria-label={`${look.name} · ${look.occasion}`}
+                  onClick={() => setPlanLookId(look.id)}
+                >
+                  <span className="plan-look-thumbs" aria-hidden>
+                    {lookThumbs(look, 3).map((item) => (
+                      <img key={item.id} src={item.thumb ?? item.image} alt="" />
+                    ))}
+                  </span>
+                  <span>{look.name}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="day-empty">No looks for this occasion.</p>
+          )}
+          <span className="plan-label" id="plan-repeat-label">
+            Repeat
+          </span>
+          <div className="plan-repeat" role="radiogroup" aria-labelledby="plan-repeat-label">
+            {[0, 4, 8, 12].map((weeks) => (
+              <button
+                key={weeks}
+                role="radio"
+                aria-checked={repeatWeeks === weeks}
+                onClick={() => setRepeatWeeks(weeks)}
+                aria-label={weeks ? `Every ${weekday} for ${weeks} weeks` : "Just this day"}
+              >
+                {weeks ? `${weeks} weeks` : "Once"}
+              </button>
+            ))}
+          </div>
+          <Button
+            disabled={!lookToPlan}
+            onClick={() => {
+              planSelectedLook();
+              setDaySheetOpen(false);
+            }}
+          >
+            {repeatWeeks ? `Plan ${repeatWeeks} weeks` : plannedLook ? "Replace planned look" : "Plan this look"}
+          </Button>
+          {plannedLook && (
+            <button className="remove-plan" onClick={removePlan}>
+              Remove from day
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  );
   return (
     <TabsContent value="calendar" className="calendar-view">
       <section className="calendar-intro">
@@ -109,6 +203,9 @@ export function CalendarTab({ home }: { home: HomeState }) {
       ) : (
         <>
           <section className="calendar-intro calendar-occasions">
+            <Button variant="outline" size="sm" className="pack-button" onClick={() => setPackingOpen(true)}>
+              <Luggage /> Pack for a trip
+            </Button>
             <div className="occasion-list">
               {occasions.map((occasion) => (
                 <button
@@ -204,7 +301,7 @@ export function CalendarTab({ home }: { home: HomeState }) {
                           onClick={() => {
                             setSelectedDate(date);
                             // While a look is chosen, the sticky Plan bar confirms, so the page stays put.
-                            if (isNarrow(760) && !armedLook) scrollIntoViewSoon(dayPanelRef.current);
+                            if (phone && !armedLook) setDaySheetOpen(true);
                           }}
                           {...lookDropProps(date)}
                         >
@@ -270,7 +367,7 @@ export function CalendarTab({ home }: { home: HomeState }) {
                       onClick={() => {
                         setSelectedDate(date);
                         // While a look is chosen, the sticky Plan bar confirms, so the page stays put.
-                        if (isNarrow(760) && !armedLook) scrollIntoViewSoon(dayPanelRef.current);
+                        if (phone && !armedLook) setDaySheetOpen(true);
                       }}
                       {...lookDropProps(date)}
                     >
@@ -281,81 +378,21 @@ export function CalendarTab({ home }: { home: HomeState }) {
                 })}
               </div>
             </section>
-            <aside className="day-panel" ref={dayPanelRef}>
-              <p>{selectedDateLabel}</p>
-              <h2>{plannedLook ? plannedLook.name : "Nothing planned"}</h2>
-              {plannedLook ? (
-                <>
-                  <div className="day-look">
-                    {plannedLook.itemIds.map((id) => {
-                      const item = items.find((piece) => sameId(piece.id, id));
-                      return item ? <img key={id} src={item.thumb ?? item.image} alt={item.name} /> : null;
-                    })}
-                  </div>
-                  <span>
-                    {plannedLook.occasion} · {plannedLook.itemIds.length} pieces
-                  </span>
-                  <Button variant="outline" onClick={() => loadLook(plannedLook)}>
-                    Open look
-                  </Button>
-                </>
-              ) : (
-                <div className="day-empty">
-                  <CalendarDays />
-                  <span>Pick a saved look for this day.</span>
-                </div>
-              )}
-              <div className="plan-control">
-                <label htmlFor="plan-look">Saved look</label>
-                <select
-                  id="plan-look"
-                  value={lookToPlan}
-                  disabled={!filteredLooks.length}
-                  onChange={(event) => setPlanLookId(event.target.value)}
-                >
-                  {!filteredLooks.length && (
-                    <option value="">{savedLooks.length ? "No looks for this occasion" : "Save a look first"}</option>
-                  )}
-                  {filteredLooks.map((look) => (
-                    <option key={look.id} value={look.id}>
-                      {look.name} · {look.occasion}
-                    </option>
-                  ))}
-                </select>
-                <label htmlFor="plan-repeat">Repeat</label>
-                <select
-                  id="plan-repeat"
-                  value={repeatWeeks}
-                  onChange={(event) => setRepeatWeeks(Number(event.target.value))}
-                >
-                  <option value={0}>Just this day</option>
-                  <option value={4}>
-                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
-                    4 weeks
-                  </option>
-                  <option value={8}>
-                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
-                    8 weeks
-                  </option>
-                  <option value={12}>
-                    Every {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })} for
-                    12 weeks
-                  </option>
-                </select>
-                <Button disabled={!lookToPlan} onClick={planSelectedLook}>
-                  {repeatWeeks ? `Plan ${repeatWeeks} weeks` : plannedLook ? "Replace planned look" : "Plan this look"}
-                </Button>
-                {plannedLook && (
-                  <button className="remove-plan" onClick={removePlan}>
-                    Remove from day
-                  </button>
-                )}
-              </div>
-              <Button variant="outline" className="pack-button" onClick={() => setPackingOpen(true)}>
-                <Luggage /> Pack for a trip
-              </Button>
-            </aside>
+            {!phone && (
+              <aside className="day-panel" ref={dayPanelRef}>
+                {dayDetails}
+              </aside>
+            )}
           </div>
+          {phone && (
+            <Sheet open={daySheetOpen} onOpenChange={setDaySheetOpen}>
+              <SheetContent side="bottom" className="day-sheet">
+                <SheetTitle className="sr-only">{selectedDateLabel}</SheetTitle>
+                <SheetDescription className="sr-only">Plan a saved look for this day.</SheetDescription>
+                <div className="day-panel">{dayDetails}</div>
+              </SheetContent>
+            </Sheet>
+          )}
           {armedLook && (
             <div className="plan-confirm" role="region" aria-label="Plan the chosen look">
               <span className="plan-look-thumbs" aria-hidden>

@@ -28,5 +28,5 @@ test("choose a look, pick a day, and confirm from the sticky bar", async ({ page
   await expect(bar).toContainText(lookName);
   await bar.getByRole("button", { name: "Plan", exact: true }).click();
   await expect(bar).toBeHidden();
-  await expect(page.locator(".day-panel h2")).toHaveText(lookName);
+  await expect(page.locator('.week-list button[aria-current="true"]')).toContainText(lookName);
 });
